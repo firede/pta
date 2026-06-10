@@ -3,10 +3,10 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "vp run --filter '!pta' build",
-    "check": "vp check && vp run --filter '!pta' check",
     "format": "vp fmt --write",
-    "lint": "vp lint"
+    "lint": "vp lint",
+    "ready": "vp check && vp run -r check && vp run -r build",
+    "setup": "vp install && vp config"
   },
   "devDependencies": {
     "vite-plus": "^0.1.24"

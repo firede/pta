@@ -9,10 +9,10 @@ Project Truth Architecture / 项目真相架构。
 ## 命令
 
 ```sh
-vp install
+vp run setup
 vp run www#dev
-vp run check
-vp run build
+vp run ready
+vp run -r build
 vp run www#preview
 ```
 
