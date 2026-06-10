@@ -1,0 +1,15 @@
+{
+  "name": "pta",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "vp run --filter '!pta' build",
+    "check": "vp check && vp run --filter '!pta' check",
+    "format": "vp fmt --write",
+    "lint": "vp lint"
+  },
+  "devDependencies": {
+    "vite-plus": "^0.1.24"
+  },
+  "packageManager": "pnpm@11.5.1"
+}
