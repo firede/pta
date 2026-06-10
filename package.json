@@ -5,8 +5,8 @@
   "scripts": {
     "format": "vp fmt --write",
     "lint": "vp lint",
-    "ready": "vp check && vp run -r check && vp run -r build",
-    "setup": "vp install && vp config"
+    "prepare": "vp config",
+    "ci": "vp check && vp run -r check && vp run -r build"
   },
   "devDependencies": {
     "vite-plus": "^0.1.24"

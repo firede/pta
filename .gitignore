@@ -21,6 +21,10 @@ pnpm-debug.log*
 !.env.example
 !.env.*.example
 
+# local mise overrides
+mise.local.*
+.mise.local.*
+
 # local editor settings
 .vscode/
 .idea/
