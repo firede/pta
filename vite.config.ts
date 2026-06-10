@@ -14,7 +14,8 @@ export default defineConfig({
     ignorePatterns: ['**/node_modules/**', '**/dist/**', '**/.astro/**', '**/*.astro'],
   },
   staged: {
-    '*.{js,cjs,mjs,ts,tsx,json,jsonc,css,md,mdx}': ['vp fmt --write', 'vp lint --fix'],
+    '*.{json,jsonc,css,md,mdx}': 'vp fmt --write',
+    '*.{js,cjs,mjs,ts,tsx}': ['vp fmt --write', 'vp lint --fix'],
     'www/**/*.{astro,md,mdx,ts}': () => 'vp run www#check',
   },
 });
