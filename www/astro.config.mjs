@@ -8,6 +8,9 @@ export default defineConfig({
   integrations: [
     starlight({
       title: 'PTA',
+      logo: {
+        src: './src/assets/pta-logo.svg',
+      },
       locales: {
         root: {
           label: '简体中文',

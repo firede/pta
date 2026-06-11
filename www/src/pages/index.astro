@@ -1,4 +1,6 @@
 ---
+import LogoMark from '../assets/pta-logo.svg';
+
 const links = [
 	{ href: '/specification/', label: '标准', description: '阅读 PTA 的核心定义与约束。' },
 	{ href: '/guide/', label: '指南', description: '了解如何在项目中应用 PTA。' },
@@ -20,7 +22,14 @@ const links = [
 		<main>
 			<section class="hero" aria-labelledby="title">
 				<p class="eyebrow">Project Truth Architecture</p>
-				<h1 id="title">PTA</h1>
+				<div class="brand-row">
+					<LogoMark
+						class="logo-mark"
+						aria-hidden="true"
+						focusable="false"
+					/>
+					<h1 id="title">PTA</h1>
+				</div>
 				<p class="lead">项目真相架构的标准文档入口。</p>
 				<nav aria-label="主要入口">
 					{
@@ -73,6 +82,19 @@ const links = [
 		font-weight: 650;
 		letter-spacing: 0;
 		text-transform: uppercase;
+	}
+
+	.brand-row {
+		display: flex;
+		align-items: center;
+		gap: clamp(16px, 4vw, 32px);
+	}
+
+	.logo-mark {
+		width: clamp(72px, 12vw, 112px);
+		height: auto;
+		flex: 0 0 auto;
+		filter: drop-shadow(0 16px 32px rgba(14, 27, 24, 0.16));
 	}
 
 	h1 {
@@ -156,6 +178,10 @@ const links = [
 
 		.lead {
 			color: #ccd3d7;
+		}
+
+		.logo-mark {
+			filter: drop-shadow(0 16px 32px rgba(0, 0, 0, 0.3));
 		}
 
 		a {
