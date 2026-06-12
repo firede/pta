@@ -12,7 +12,7 @@ export default defineConfig({
   integrations: [
     starlight({
       title: 'PTA',
-      customCss: ['./src/styles/global.css'],
+      customCss: ['./src/styles/global.css', './src/styles/starlight.css'],
       logo: {
         src: './src/assets/pta-logo.svg',
       },

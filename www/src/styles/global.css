@@ -1,12 +1,10 @@
-@layer base, starlight, theme, components, utilities;
-
-@import '@astrojs/starlight-tailwind';
-@import 'tailwindcss/theme.css' layer(theme);
-@import 'tailwindcss/utilities.css' layer(utilities);
+@import 'tailwindcss';
 @import 'tw-animate-css';
 @import 'shadcn/tailwind.css';
 @import '@fontsource-variable/noto-serif';
 @import '@fontsource-variable/noto-sans';
+
+@custom-variant dark (&:is(.dark *, :root[data-theme='dark'] *));
 
 :root {
   --background: oklch(1 0 0);
@@ -43,8 +41,8 @@
   --sidebar-ring: oklch(0.737 0.021 106.9);
 }
 
-:root[data-theme='dark'],
-.dark {
+.dark,
+:root[data-theme='dark'] {
   --background: oklch(0.153 0.006 107.1);
   --foreground: oklch(0.988 0.003 106.5);
   --card: oklch(0.228 0.013 107.4);
@@ -79,12 +77,20 @@
 }
 
 @theme inline {
-  --font-sans: 'Noto Serif Variable', serif;
+  --font-sans:
+    'Noto Sans Variable', 'Noto Sans CJK SC', 'Noto Sans SC', 'Source Han Sans SC',
+    'Source Han Sans CN', 'Source Han Sans', 'PingFang SC', 'Hiragino Sans GB', 'Heiti SC',
+    'Microsoft YaHei', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI',
+    sans-serif;
+  --font-serif:
+    'Noto Serif Variable', 'Noto Serif CJK SC', 'Noto Serif SC', 'Source Han Serif SC',
+    'Source Han Serif CN', 'Source Han Serif', 'Songti SC', STSong, SimSun, ui-serif, Georgia,
+    Cambria, 'Times New Roman', Times, serif;
+  --font-body: var(--font-serif);
+  --font-heading: var(--font-sans);
   --font-mono:
     ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New',
     monospace;
-  --font-serif: 'Noto Serif Variable', serif;
-  --font-heading: 'Noto Sans Variable', sans-serif;
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -129,10 +135,17 @@
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-body;
   }
-  html {
-    @apply font-serif;
+
+  :where(h1, h2, h3, h4, h5, h6) {
+    @apply font-heading;
+    letter-spacing: 0;
+  }
+
+  :where(button, input, select, textarea, [data-slot]) {
+    @apply font-sans;
   }
 }

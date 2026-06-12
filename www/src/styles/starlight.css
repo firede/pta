@@ -1,0 +1,24 @@
+@layer base, starlight, theme, components, utilities;
+
+@import '@astrojs/starlight-tailwind';
+
+@layer utilities {
+  :root {
+    --sl-font: var(--font-sans);
+    --sl-font-mono: var(--font-mono);
+  }
+
+  #_top,
+  .sl-markdown-content :is(h1, h2, h3, h4, h5, h6):not(:where(.not-content *)) {
+    font-family: var(--font-heading);
+    letter-spacing: 0;
+  }
+
+  .sl-markdown-content {
+    font-family: var(--font-body);
+  }
+
+  .sl-markdown-content :where([data-slot], button, input, select, textarea) {
+    font-family: var(--font-sans);
+  }
+}
