@@ -2,12 +2,17 @@
 import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
 
+import react from '@astrojs/react';
+import tailwindcss from '@tailwindcss/vite';
+
 // https://astro.build/config
 export default defineConfig({
   site: 'https://pta.pub',
+
   integrations: [
     starlight({
       title: 'PTA',
+      customCss: ['./src/styles/global.css'],
       logo: {
         src: './src/assets/pta-logo.svg',
       },
@@ -22,5 +27,10 @@ export default defineConfig({
         { label: '指南', slug: 'guide' },
       ],
     }),
+    react(),
   ],
+
+  vite: {
+    plugins: [tailwindcss()],
+  },
 });
