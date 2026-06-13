@@ -9,23 +9,23 @@ Project Truth Architecture / 项目真相架构。
 ## 命令
 
 ```sh
-vp run www#dev
-vp run ci
-vp run -r build
-vp run www#preview
+pnpm --filter www dev
+pnpm run ci
+pnpm -r build
+pnpm --filter www preview
 ```
 
 提交前检查：
 
 ```sh
-vp staged
+pnpm run staged
 ```
 
 格式化和 lint：
 
 ```sh
-vp fmt --write
-vp lint
+pnpm run format
+pnpm run lint
 ```
 
 ## 环境

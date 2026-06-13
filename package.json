@@ -3,13 +3,22 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "format": "vp fmt --write",
-    "lint": "vp lint",
-    "prepare": "vp config",
-    "ci": "vp check && vp run -r check && vp run -r build"
+    "check": "pnpm run format:check && pnpm run lint && pnpm -r check",
+    "ci": "pnpm run check && pnpm -r build",
+    "format": "oxfmt --write",
+    "format:check": "oxfmt --check",
+    "lint": "oxlint",
+    "lint:fix": "oxlint --fix",
+    "postinstall": "simple-git-hooks",
+    "staged": "nano-staged"
   },
   "devDependencies": {
-    "vite-plus": "^0.1.24"
+    "nano-staged": "^1.0.2",
+    "oxfmt": "^0.52.0",
+    "oxlint": "^1.67.0",
+    "simple-git-hooks": "^2.13.1"
   },
-  "packageManager": "pnpm@11.5.1"
+  "simple-git-hooks": {
+    "pre-commit": "pnpm exec nano-staged"
+  }
 }

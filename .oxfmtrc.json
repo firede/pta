@@ -1,0 +1,13 @@
+{
+  "$schema": "./node_modules/oxfmt/configuration_schema.json",
+  "ignorePatterns": [
+    "**/node_modules/**",
+    "**/dist/**",
+    "**/.astro/**",
+    "**/*.astro",
+    "pnpm-lock.yaml"
+  ],
+  "semi": true,
+  "singleQuote": true,
+  "sortPackageJson": true
+}
