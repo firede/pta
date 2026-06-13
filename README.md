@@ -15,12 +15,6 @@ pnpm -r build
 pnpm --filter www preview
 ```
 
-提交前检查：
-
-```sh
-pnpm run staged
-```
-
 格式化和 lint：
 
 ```sh

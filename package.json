@@ -9,8 +9,7 @@
     "format:check": "oxfmt --check",
     "lint": "oxlint",
     "lint:fix": "oxlint --fix",
-    "postinstall": "simple-git-hooks",
-    "staged": "nano-staged"
+    "postinstall": "simple-git-hooks"
   },
   "devDependencies": {
     "nano-staged": "^1.0.2",
