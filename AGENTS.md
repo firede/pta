@@ -1,0 +1,8 @@
+# AGENTS 指南
+
+## 迭代约定
+
+- 使用 mise 管理工具链，新 worktree 用 `mise trust` 和 `mise install` 初始化环境。
+- 在 worktree 环境启动服务时，如遇非本会话导致的端口占用冲突，则改用新端口并告知用户。
+- 仅在用户要求时提交，commit message 使用 `type: 简短中文说明`，如 `feat: 添加深色模式主题`。
+- 若 Astro 开发服务由 agent 启动，默认保留供用户确认；提交完成后停止该服务；用户启动的服务不处理。
