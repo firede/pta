@@ -4,3 +4,6 @@ lockfile = true
 [tools]
 node = "24"
 pnpm = "11"
+
+[hooks]
+postinstall = "pnpm install"
