@@ -1,11 +1,57 @@
+@layer base, starlight, theme, components, utilities;
+
+/* 基础入口 */
 @import 'tailwindcss';
 @import 'tw-animate-css';
 @import 'shadcn/tailwind.css';
+@import '@astrojs/starlight-tailwind';
 @import '@fontsource-variable/noto-serif';
 @import '@fontsource-variable/noto-sans';
 
 @custom-variant dark (&:is(.dark *, :root[data-theme='dark'] *));
 
+/* 自定义 token */
+@theme inline {
+  --color-brand-50: var(--color-teal-50);
+  --color-brand-100: var(--color-teal-100);
+  --color-brand-200: var(--color-teal-200);
+  --color-brand-300: var(--color-teal-300);
+  --color-brand-400: var(--color-teal-400);
+  --color-brand-500: var(--color-teal-500);
+  --color-brand-600: var(--color-teal-600);
+  --color-brand-700: var(--color-teal-700);
+  --color-brand-800: var(--color-teal-800);
+  --color-brand-900: var(--color-teal-900);
+  --color-brand-950: var(--color-teal-950);
+  --color-neutral-50: var(--color-olive-50);
+  --color-neutral-100: var(--color-olive-100);
+  --color-neutral-200: var(--color-olive-200);
+  --color-neutral-300: var(--color-olive-300);
+  --color-neutral-400: var(--color-olive-400);
+  --color-neutral-500: var(--color-olive-500);
+  --color-neutral-600: var(--color-olive-600);
+  --color-neutral-700: var(--color-olive-700);
+  --color-neutral-800: var(--color-olive-800);
+  --color-neutral-900: var(--color-olive-900);
+  --color-neutral-950: var(--color-olive-950);
+
+  --font-sans:
+    'Noto Sans Variable', 'Noto Sans CJK SC', 'Noto Sans SC', 'Source Han Sans SC',
+    'Source Han Sans CN', 'Source Han Sans', 'PingFang SC', 'Hiragino Sans GB', 'Heiti SC',
+    'Microsoft YaHei', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI',
+    sans-serif;
+  --font-serif:
+    'Noto Serif Variable', 'Noto Serif CJK SC', 'Noto Serif SC', 'Source Han Serif SC',
+    'Source Han Serif CN', 'Source Han Serif', 'Songti SC', STSong, SimSun, ui-serif, Georgia,
+    Cambria, 'Times New Roman', Times, serif;
+  --font-body: var(--font-serif);
+  --font-heading: var(--font-sans);
+  --font-mono:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New',
+    monospace;
+}
+
+/* shadcn/ui 定义 */
 :root {
   --background: oklch(1 0 0);
   --foreground: oklch(0.153 0.006 107.1);
@@ -77,47 +123,6 @@
 }
 
 @theme inline {
-  /* 项目色板 token */
-  --color-brand-50: var(--color-teal-50);
-  --color-brand-100: var(--color-teal-100);
-  --color-brand-200: var(--color-teal-200);
-  --color-brand-300: var(--color-teal-300);
-  --color-brand-400: var(--color-teal-400);
-  --color-brand-500: var(--color-teal-500);
-  --color-brand-600: var(--color-teal-600);
-  --color-brand-700: var(--color-teal-700);
-  --color-brand-800: var(--color-teal-800);
-  --color-brand-900: var(--color-teal-900);
-  --color-brand-950: var(--color-teal-950);
-  --color-neutral-50: var(--color-olive-50);
-  --color-neutral-100: var(--color-olive-100);
-  --color-neutral-200: var(--color-olive-200);
-  --color-neutral-300: var(--color-olive-300);
-  --color-neutral-400: var(--color-olive-400);
-  --color-neutral-500: var(--color-olive-500);
-  --color-neutral-600: var(--color-olive-600);
-  --color-neutral-700: var(--color-olive-700);
-  --color-neutral-800: var(--color-olive-800);
-  --color-neutral-900: var(--color-olive-900);
-  --color-neutral-950: var(--color-olive-950);
-
-  /* 项目字体 token */
-  --font-sans:
-    'Noto Sans Variable', 'Noto Sans CJK SC', 'Noto Sans SC', 'Source Han Sans SC',
-    'Source Han Sans CN', 'Source Han Sans', 'PingFang SC', 'Hiragino Sans GB', 'Heiti SC',
-    'Microsoft YaHei', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI',
-    sans-serif;
-  --font-serif:
-    'Noto Serif Variable', 'Noto Serif CJK SC', 'Noto Serif SC', 'Source Han Serif SC',
-    'Source Han Serif CN', 'Source Han Serif', 'Songti SC', STSong, SimSun, ui-serif, Georgia,
-    Cambria, 'Times New Roman', Times, serif;
-  --font-body: var(--font-serif);
-  --font-heading: var(--font-sans);
-  --font-mono:
-    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New',
-    monospace;
-
-  /* shadcn/ui 语义 token */
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -175,4 +180,55 @@
   :where(button, input, select, textarea, [data-slot]) {
     @apply font-sans;
   }
+}
+
+/* Starlight 定义 */
+@layer utilities {
+  #_top,
+  .sl-markdown-content :is(h1, h2, h3, h4, h5, h6):not(:where(.not-content *)) {
+    font-family: var(--font-heading);
+    letter-spacing: 0;
+  }
+
+  .sl-markdown-content {
+    font-family: var(--font-body);
+  }
+
+  .sl-markdown-content :where([data-slot], button, input, select, textarea) {
+    font-family: var(--font-sans);
+  }
+}
+
+:root,
+::backdrop {
+  --sl-font: var(--font-sans);
+  --sl-font-mono: var(--font-mono);
+
+  --sl-color-white: var(--color-white);
+  --sl-color-gray-1: var(--color-neutral-200);
+  --sl-color-gray-2: var(--color-neutral-300);
+  --sl-color-gray-3: var(--color-neutral-400);
+  --sl-color-gray-4: var(--color-neutral-600);
+  --sl-color-gray-5: var(--color-neutral-700);
+  --sl-color-gray-6: var(--color-neutral-800);
+  --sl-color-black: var(--color-neutral-900);
+  --sl-color-accent-low: var(--color-brand-950);
+  --sl-color-accent: var(--color-brand-600);
+  --sl-color-accent-high: var(--color-brand-200);
+}
+
+:root[data-theme='light'],
+[data-theme='light'] ::backdrop {
+  --sl-color-white: var(--color-neutral-900);
+  --sl-color-gray-1: var(--color-neutral-800);
+  --sl-color-gray-2: var(--color-neutral-700);
+  --sl-color-gray-3: var(--color-neutral-500);
+  --sl-color-gray-4: var(--color-neutral-400);
+  --sl-color-gray-5: var(--color-neutral-300);
+  --sl-color-gray-6: var(--color-neutral-200);
+  --sl-color-gray-7: var(--color-neutral-100);
+  --sl-color-black: var(--color-white);
+  --sl-color-accent-low: var(--color-brand-200);
+  --sl-color-accent: var(--color-brand-600);
+  --sl-color-accent-high: var(--color-brand-900);
 }

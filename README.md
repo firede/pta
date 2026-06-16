@@ -4,7 +4,7 @@ Project Truth Architecture / 项目真相架构。
 
 ## 结构
 
-- `www`: PTA 标准文档网站，域名目标为 `pta.pub`。
+- `www`: PTA 文档网站，域名目标为 `pta.pub`。
 
 ## 命令
 

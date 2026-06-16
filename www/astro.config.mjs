@@ -12,9 +12,10 @@ export default defineConfig({
   integrations: [
     starlight({
       title: 'PTA',
-      customCss: ['./src/styles/global.css', './src/styles/starlight.css'],
+      customCss: ['./src/styles/global.css'],
       logo: {
         src: './src/assets/pta-logo.svg',
+        replacesTitle: true,
       },
       locales: {
         root: {
@@ -23,7 +24,7 @@ export default defineConfig({
         },
       },
       sidebar: [
-        { label: '标准', slug: 'specification' },
+        { label: '规范', slug: 'specification' },
         { label: '指南', slug: 'guide' },
         { label: '立论', slug: 'rationale' },
       ],
