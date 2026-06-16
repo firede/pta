@@ -41,9 +41,9 @@
     'Microsoft YaHei', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI',
     sans-serif;
   --font-serif:
-    'Noto Serif Variable', 'Noto Serif CJK SC', 'Noto Serif SC', 'Source Han Serif SC',
-    'Source Han Serif CN', 'Source Han Serif', 'Songti SC', STSong, SimSun, ui-serif, Georgia,
-    Cambria, 'Times New Roman', Times, serif;
+    'Noto Serif Variable', 'LXGW WenKai', 'Noto Serif CJK SC', 'Noto Serif SC',
+    'Source Han Serif SC', 'Source Han Serif CN', 'Source Han Serif', 'Songti SC', STSong, SimSun,
+    ui-serif, Georgia, Cambria, 'Times New Roman', Times, serif;
   --font-body: var(--font-serif);
   --font-heading: var(--font-sans);
   --font-mono:
@@ -172,36 +172,22 @@
     @apply bg-background text-foreground font-body;
   }
 
-  :where(h1, h2, h3, h4, h5, h6) {
-    @apply font-heading;
-    letter-spacing: 0;
-  }
-
   :where(button, input, select, textarea, [data-slot]) {
-    @apply font-sans;
+    font-family: inherit;
   }
 }
 
 /* Starlight 定义 */
 @layer utilities {
-  #_top,
-  .sl-markdown-content :is(h1, h2, h3, h4, h5, h6):not(:where(.not-content *)) {
+  :where(h1, h2, h3, h4, h5, h6, [data-page-title]) {
     font-family: var(--font-heading);
     letter-spacing: 0;
-  }
-
-  .sl-markdown-content {
-    font-family: var(--font-body);
-  }
-
-  .sl-markdown-content :where([data-slot], button, input, select, textarea) {
-    font-family: var(--font-sans);
   }
 }
 
 :root,
 ::backdrop {
-  --sl-font: var(--font-sans);
+  --sl-font: var(--font-body);
   --sl-font-mono: var(--font-mono);
 
   --sl-color-white: var(--color-white);

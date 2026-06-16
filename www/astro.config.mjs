@@ -11,12 +11,16 @@ export default defineConfig({
 
   integrations: [
     starlight({
-      title: 'PTA',
+      title: {
+        'zh-CN': '项目真相架构',
+        en: 'Project Truth Architecture',
+      },
       customCss: ['./src/styles/global.css'],
       logo: {
         src: './src/assets/pta-logo.svg',
         replacesTitle: true,
       },
+      defaultLocale: 'root',
       locales: {
         root: {
           label: '简体中文',
