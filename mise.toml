@@ -7,3 +7,7 @@ pnpm = "11"
 
 [hooks]
 postinstall = "pnpm install"
+
+[tasks.clean]
+description = "清除依赖目录和 Astro 生成产物"
+run = "rm -rf node_modules www/node_modules www/.astro www/dist"
