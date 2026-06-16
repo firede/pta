@@ -4,6 +4,7 @@ import starlight from '@astrojs/starlight';
 
 import react from '@astrojs/react';
 import tailwindcss from '@tailwindcss/vite';
+import starlightLinksValidator from 'starlight-links-validator';
 
 // https://astro.build/config
 export default defineConfig({
@@ -32,6 +33,7 @@ export default defineConfig({
         { label: '指南', slug: 'guide' },
         { label: '立论', slug: 'rationale' },
       ],
+      plugins: [starlightLinksValidator()],
     }),
     react(),
   ],
