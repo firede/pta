@@ -34,7 +34,10 @@ export default defineConfig({
       sidebar: [
         { label: '规范', slug: 'specification' },
         { label: '指南', slug: 'guide' },
-        { label: '立论', items: ['argument/project-truth-in-codebase'] },
+        {
+          label: '立论',
+          items: ['argument/what-is-project-truth', 'argument/project-truth-in-codebase'],
+        },
       ],
       plugins: [starlightLinksValidator()],
     }),
