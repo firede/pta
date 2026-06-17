@@ -21,6 +21,9 @@ export default defineConfig({
         src: './src/assets/pta-logo.svg',
         replacesTitle: true,
       },
+      components: {
+        Pagination: './src/components/starlight/Pagination.astro',
+      },
       defaultLocale: 'root',
       locales: {
         root: {

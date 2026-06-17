@@ -1,0 +1,45 @@
+---
+import { RiArrowLeftLine, RiArrowRightLine } from '@remixicon/react';
+
+import { buttonVariants } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
+
+const { dir, pagination } = Astro.locals.starlightRoute;
+const { prev, next } = pagination;
+const isRtl = dir === 'rtl';
+
+const previousText = Astro.locals.t('page.previousLink');
+const nextText = Astro.locals.t('page.nextLink');
+const navClass =
+  'flex flex-wrap items-center gap-2 max-[40rem]:flex-col max-[40rem]:items-stretch';
+const linkClass = cn(
+  buttonVariants({ variant: 'ghost', size: 'lg' }),
+  'min-w-0 max-w-[calc(50%_-_0.25rem)] shrink no-underline text-muted-foreground hover:text-foreground max-[40rem]:max-w-full',
+);
+const PreviousIcon = isRtl ? RiArrowRightLine : RiArrowLeftLine;
+const NextIcon = isRtl ? RiArrowLeftLine : RiArrowRightLine;
+---
+
+<nav class={cn(navClass, 'print:hidden')} dir={dir} aria-label="页面导航">
+  {
+    prev && (
+      <a href={prev.href} rel="prev" aria-label={`${previousText}: ${prev.label}`} class={linkClass}>
+        <PreviousIcon data-icon="inline-start" aria-hidden="true" />
+        <span class="min-w-0 truncate">{prev.label}</span>
+      </a>
+    )
+  }
+  {
+    next && (
+      <a
+        href={next.href}
+        rel="next"
+        aria-label={`${nextText}: ${next.label}`}
+        class={cn(linkClass, 'ms-auto max-[40rem]:self-end')}
+      >
+        <span class="min-w-0 truncate">{next.label}</span>
+        <NextIcon data-icon="inline-end" aria-hidden="true" />
+      </a>
+    )
+  }
+</nav>
