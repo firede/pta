@@ -5,8 +5,6 @@ dependsOn:
   - argument/what-is-project-truth
 ---
 
-## 主张
-
 在 coding agent 参与长期迭代的软件项目中，项目真相必须进入代码库，并与实现共享版本边界。
 
 本文沿用 [什么是项目真相](/argument/what-is-project-truth/) 的定义：项目真相是当前项目实际依照的内容。其中一部分存在于代码实现中，另一部分由自然语言、术语表、决策记录和必要的历史记忆补足。
