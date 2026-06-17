@@ -24,6 +24,7 @@ export default defineConfig({
       components: {
         Pagination: './src/components/starlight/Pagination.astro',
       },
+      social: [{ icon: 'github', label: 'GitHub', href: 'https://github.com/firede/pta' }],
       defaultLocale: 'root',
       locales: {
         root: {
