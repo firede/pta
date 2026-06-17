@@ -183,6 +183,10 @@
     font-family: var(--font-heading);
     letter-spacing: 0;
   }
+
+  :where(.sl-markdown-content p:has(> strong:only-child)) {
+    font-family: var(--font-heading);
+  }
 }
 
 :root,
