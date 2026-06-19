@@ -6,6 +6,7 @@ import tailwindcss from '@tailwindcss/vite';
 import starlightLinksValidator from 'starlight-links-validator';
 
 import { argumentIds } from './src/data/arguments';
+import { getRootMessage, getStarlightTranslations, starlightI18n } from './src/lib/i18n';
 
 // https://astro.build/config
 export default defineConfig({
@@ -13,11 +14,7 @@ export default defineConfig({
 
   integrations: [
     starlight({
-      title: {
-        'zh-Hans': '项目真相架构',
-        'zh-Hant': '項目真相架構',
-        en: 'Project Truth Architecture',
-      },
+      title: starlightI18n.title,
       customCss: ['./src/styles/global.css'],
       logo: {
         src: './src/assets/pta-logo.svg',
@@ -28,22 +25,22 @@ export default defineConfig({
         Pagination: './src/components/starlight/Pagination.astro',
       },
       social: [{ icon: 'github', label: 'GitHub', href: 'https://github.com/firede/pta' }],
-      defaultLocale: 'root',
-      locales: {
-        root: { label: '简体中文', lang: 'zh-Hans' },
-        'zh-hant': { label: '繁體中文', lang: 'zh-Hant' },
-        en: { label: 'English' },
-      },
+      defaultLocale: starlightI18n.defaultLocale,
+      locales: starlightI18n.locales,
       sidebar: [
         {
-          label: '规范',
-          translations: { 'zh-Hant': '規範', en: 'Specification' },
+          label: getRootMessage('specification'),
+          translations: getStarlightTranslations('specification'),
           slug: 'specification',
         },
-        { label: '指南', translations: { 'zh-Hant': '指南', en: 'Guide' }, slug: 'guide' },
         {
-          label: '立论',
-          translations: { 'zh-Hant': '立論', en: 'Arguments' },
+          label: getRootMessage('guide'),
+          translations: getStarlightTranslations('guide'),
+          slug: 'guide',
+        },
+        {
+          label: getRootMessage('arguments'),
+          translations: getStarlightTranslations('arguments'),
           items: [...argumentIds],
         },
       ],

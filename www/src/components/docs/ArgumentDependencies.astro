@@ -1,11 +1,14 @@
 ---
 import { getEntry } from 'astro:content';
 
+import { getDocsEntryHref } from '@/lib/i18n';
+
 interface Props {
   ids: readonly string[];
 }
 
 const { ids } = Astro.props;
+const { locale } = Astro.locals.starlightRoute;
 const titleId = 'argument-dependencies-title';
 
 const entries = await Promise.all(
@@ -19,10 +22,6 @@ const entries = await Promise.all(
     return entry;
   }),
 );
-
-function getHref(id: string) {
-  return id === 'index' ? '/' : `/${id}/`;
-}
 ---
 
 {
@@ -38,7 +37,7 @@ function getHref(id: string) {
         {
           entries.map((entry) => (
             <li>
-              <a href={getHref(entry.id)}>{entry.data.title}</a>
+              <a href={getDocsEntryHref(entry.id, locale)}>{entry.data.title}</a>
             </li>
           ))
         }

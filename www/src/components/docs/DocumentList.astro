@@ -2,11 +2,14 @@
 import { getEntry } from 'astro:content';
 import { LinkCard } from '@astrojs/starlight/components';
 
+import { getDocsEntryHref } from '@/lib/i18n';
+
 interface Props {
   ids: readonly string[];
 }
 
 const { ids } = Astro.props;
+const { locale } = Astro.locals.starlightRoute;
 
 const entries = await Promise.all(
   ids.map(async (id) => {
@@ -19,17 +22,13 @@ const entries = await Promise.all(
     return entry;
   }),
 );
-
-function getHref(id: string) {
-  return id === 'index' ? '/' : `/${id}/`;
-}
 ---
 
 <div class="my-6 grid gap-4 *:mt-0!">
   {
     entries.map((entry) => (
       <LinkCard
-        href={getHref(entry.id)}
+        href={getDocsEntryHref(entry.id, locale)}
         title={entry.data.title}
         description={entry.data.description}
       />
