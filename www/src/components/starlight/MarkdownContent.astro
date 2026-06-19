@@ -1,0 +1,12 @@
+---
+import DefaultMarkdownContent from '@astrojs/starlight/components/MarkdownContent.astro';
+
+import ArgumentDependencies from '@/components/docs/ArgumentDependencies.astro';
+
+const dependsOn = Astro.locals.starlightRoute.entry.data.dependsOn ?? [];
+---
+
+<DefaultMarkdownContent>
+  <slot />
+  <ArgumentDependencies ids={dependsOn} />
+</DefaultMarkdownContent>

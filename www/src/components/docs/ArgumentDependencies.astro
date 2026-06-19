@@ -1,0 +1,48 @@
+---
+import { getEntry } from 'astro:content';
+
+interface Props {
+  ids: readonly string[];
+}
+
+const { ids } = Astro.props;
+const titleId = 'argument-dependencies-title';
+
+const entries = await Promise.all(
+  ids.map(async (id) => {
+    const entry = await getEntry('docs', id);
+
+    if (!entry) {
+      throw new Error(`ArgumentDependencies could not find docs entry "${id}".`);
+    }
+
+    return entry;
+  }),
+);
+
+function getHref(id: string) {
+  return id === 'index' ? '/' : `/${id}/`;
+}
+---
+
+{
+  entries.length > 0 && (
+    <section aria-labelledby={titleId} class="mt-8">
+      <p
+        id={titleId}
+        class="mt-0! mb-2 font-heading text-sm font-semibold text-muted-foreground"
+      >
+        {Astro.locals.t('argumentDependencies.title')}
+      </p>
+      <ul class="my-0 list-disc ps-5">
+        {
+          entries.map((entry) => (
+            <li>
+              <a href={getHref(entry.id)}>{entry.data.title}</a>
+            </li>
+          ))
+        }
+      </ul>
+    </section>
+  )
+}

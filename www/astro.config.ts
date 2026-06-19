@@ -23,6 +23,7 @@ export default defineConfig({
         replacesTitle: true,
       },
       components: {
+        MarkdownContent: './src/components/starlight/MarkdownContent.astro',
         Pagination: './src/components/starlight/Pagination.astro',
       },
       social: [{ icon: 'github', label: 'GitHub', href: 'https://github.com/firede/pta' }],
