@@ -1,0 +1,38 @@
+---
+import { getEntry } from 'astro:content';
+import { LinkCard } from '@astrojs/starlight/components';
+
+interface Props {
+  ids: readonly string[];
+}
+
+const { ids } = Astro.props;
+
+const entries = await Promise.all(
+  ids.map(async (id) => {
+    const entry = await getEntry('docs', id);
+
+    if (!entry) {
+      throw new Error(`DocumentList could not find docs entry "${id}".`);
+    }
+
+    return entry;
+  }),
+);
+
+function getHref(id: string) {
+  return id === 'index' ? '/' : `/${id}/`;
+}
+---
+
+<div class="my-6 grid gap-4 *:mt-0!">
+  {
+    entries.map((entry) => (
+      <LinkCard
+        href={getHref(entry.id)}
+        title={entry.data.title}
+        description={entry.data.description}
+      />
+    ))
+  }
+</div>

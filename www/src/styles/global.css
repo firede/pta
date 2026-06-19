@@ -184,6 +184,10 @@
     letter-spacing: 0;
   }
 
+  :where(.sl-link-card .title) {
+    font-family: var(--font-heading);
+  }
+
   :where(.sl-markdown-content p:has(> strong:only-child)) {
     font-family: var(--font-heading);
   }

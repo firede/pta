@@ -1,10 +1,11 @@
-// @ts-check
 import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
 
 import react from '@astrojs/react';
 import tailwindcss from '@tailwindcss/vite';
 import starlightLinksValidator from 'starlight-links-validator';
+
+import { argumentIds } from './src/data/arguments';
 
 // https://astro.build/config
 export default defineConfig({
@@ -37,11 +38,7 @@ export default defineConfig({
         { label: '指南', slug: 'guide' },
         {
           label: '立论',
-          items: [
-            'argument/what-is-project-truth',
-            'argument/project-truth-in-codebase',
-            'argument/project-truth-by-domain',
-          ],
+          items: [...argumentIds],
         },
       ],
       plugins: [starlightLinksValidator()],
