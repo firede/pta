@@ -37,7 +37,11 @@ export default defineConfig({
         { label: '指南', slug: 'guide' },
         {
           label: '立论',
-          items: ['argument/what-is-project-truth', 'argument/project-truth-in-codebase'],
+          items: [
+            'argument/what-is-project-truth',
+            'argument/project-truth-in-codebase',
+            'argument/project-truth-by-domain',
+          ],
         },
       ],
       plugins: [starlightLinksValidator()],
