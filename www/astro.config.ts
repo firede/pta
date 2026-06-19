@@ -14,7 +14,8 @@ export default defineConfig({
   integrations: [
     starlight({
       title: {
-        'zh-CN': '项目真相架构',
+        'zh-Hans': '项目真相架构',
+        'zh-Hant': '項目真相架構',
         en: 'Project Truth Architecture',
       },
       customCss: ['./src/styles/global.css'],
@@ -29,16 +30,20 @@ export default defineConfig({
       social: [{ icon: 'github', label: 'GitHub', href: 'https://github.com/firede/pta' }],
       defaultLocale: 'root',
       locales: {
-        root: {
-          label: '简体中文',
-          lang: 'zh-CN',
-        },
+        root: { label: '简体中文', lang: 'zh-Hans' },
+        'zh-hant': { label: '繁體中文', lang: 'zh-Hant' },
+        en: { label: 'English' },
       },
       sidebar: [
-        { label: '规范', slug: 'specification' },
-        { label: '指南', slug: 'guide' },
+        {
+          label: '规范',
+          translations: { 'zh-Hant': '規範', en: 'Specification' },
+          slug: 'specification',
+        },
+        { label: '指南', translations: { 'zh-Hant': '指南', en: 'Guide' }, slug: 'guide' },
         {
           label: '立论',
+          translations: { 'zh-Hant': '立論', en: 'Arguments' },
           items: [...argumentIds],
         },
       ],
