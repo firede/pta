@@ -58,7 +58,8 @@ export function getStarlightTranslations(key: GlobalMessageKey) {
 }
 
 function localizeHref(href: string, locale: string | undefined) {
-  if (!locale || !href.startsWith('/') || href.startsWith('//')) return href;
+  if (!locale || locale === rootLocale || !href.startsWith('/') || href.startsWith('//'))
+    return href;
 
   const [pathPrefix] = href.slice(1).split('/');
 
@@ -71,4 +72,10 @@ function localizeHref(href: string, locale: string | undefined) {
 export function getDocsEntryHref(id: string, locale: string | undefined) {
   const path = id === 'index' ? '/' : `/${id}/`;
   return localizeHref(path, locale);
+}
+
+/** 根据当前 Starlight locale 生成文档条目的内容集合 id。 */
+export function getLocalizedDocsEntryId(id: string, locale: string | undefined) {
+  if (!locale || locale === rootLocale) return id;
+  return `${locale}/${id}`;
 }

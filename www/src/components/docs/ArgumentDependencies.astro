@@ -1,7 +1,7 @@
 ---
 import { getEntry } from 'astro:content';
 
-import { getDocsEntryHref } from '@/lib/i18n';
+import { getDocsEntryHref, getLocalizedDocsEntryId } from '@/lib/i18n';
 
 interface Props {
   ids: readonly string[];
@@ -11,21 +11,27 @@ const { ids } = Astro.props;
 const { locale } = Astro.locals.starlightRoute;
 const titleId = 'argument-dependencies-title';
 
-const entries = await Promise.all(
+const dependencies = await Promise.all(
   ids.map(async (id) => {
-    const entry = await getEntry('docs', id);
+    const entryId = getLocalizedDocsEntryId(id, locale);
+    const entry = await getEntry('docs', entryId);
 
     if (!entry) {
-      throw new Error(`ArgumentDependencies could not find docs entry "${id}".`);
+      throw new Error(
+        `ArgumentDependencies could not find docs entry "${entryId}" for source "${id}".`,
+      );
     }
 
-    return entry;
+    return {
+      sourceId: id,
+      title: entry.data.title,
+    };
   }),
 );
 ---
 
 {
-  entries.length > 0 && (
+  dependencies.length > 0 && (
     <section aria-labelledby={titleId} class="mt-8">
       <p
         id={titleId}
@@ -35,9 +41,9 @@ const entries = await Promise.all(
       </p>
       <ul class="my-0 list-disc ps-5">
         {
-          entries.map((entry) => (
+          dependencies.map((dependency) => (
             <li>
-              <a href={getDocsEntryHref(entry.id, locale)}>{entry.data.title}</a>
+              <a href={getDocsEntryHref(dependency.sourceId, locale)}>{dependency.title}</a>
             </li>
           ))
         }

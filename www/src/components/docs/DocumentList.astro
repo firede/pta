@@ -2,7 +2,7 @@
 import { getEntry } from 'astro:content';
 import { LinkCard } from '@astrojs/starlight/components';
 
-import { getDocsEntryHref } from '@/lib/i18n';
+import { getDocsEntryHref, getLocalizedDocsEntryId } from '@/lib/i18n';
 
 interface Props {
   ids: readonly string[];
@@ -11,26 +11,31 @@ interface Props {
 const { ids } = Astro.props;
 const { locale } = Astro.locals.starlightRoute;
 
-const entries = await Promise.all(
+const documents = await Promise.all(
   ids.map(async (id) => {
-    const entry = await getEntry('docs', id);
+    const entryId = getLocalizedDocsEntryId(id, locale);
+    const entry = await getEntry('docs', entryId);
 
     if (!entry) {
-      throw new Error(`DocumentList could not find docs entry "${id}".`);
+      throw new Error(`DocumentList could not find docs entry "${entryId}" for source "${id}".`);
     }
 
-    return entry;
+    return {
+      sourceId: id,
+      title: entry.data.title,
+      description: entry.data.description,
+    };
   }),
 );
 ---
 
 <div class="my-6 grid gap-4 *:mt-0!">
   {
-    entries.map((entry) => (
+    documents.map((document) => (
       <LinkCard
-        href={getDocsEntryHref(entry.id, locale)}
-        title={entry.data.title}
-        description={entry.data.description}
+        href={getDocsEntryHref(document.sourceId, locale)}
+        title={document.title}
+        description={document.description}
       />
     ))
   }
