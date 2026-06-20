@@ -2,7 +2,7 @@
 title: Glossary
 description: Core terms used in the Arguments section.
 tableOfContents: false
-sourceHash: da498a9b55b918b686234e3e3c4b72f53672e9924f36774431c0f3234b20b352
+sourceHash: 7ddc9b2de3e3c09d300e3b436aca6e00c4b62a99dcd3b1105c43097d1166440c
 ---
 
 **Project Truth**
@@ -12,6 +12,10 @@ Project truth is the content that the current project actually follows. It deter
 **Glossary**
 
 A glossary maintains the stable vocabulary of a project. It lets people, LLMs, and agents work in the same semantic space, reducing ambiguity caused by synonyms, near-synonyms, industry colloquialisms, and incorrect spellings.
+
+**Working Language**
+
+The working language is the natural language a project uses in practice to understand business meaning, name it, make judgments about it, record it, and maintain it over time. Its primary maintainers can keep using it continuously. It is formed by the stable wording used for business concepts, business rules, customer-facing explanations, product tradeoffs, and everyday records.
 
 **Projection View**
 
