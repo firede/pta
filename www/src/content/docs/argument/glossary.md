@@ -1,6 +1,7 @@
 ---
 title: 术语表
 description: 立论中使用的核心术语。
+tableOfContents: false
 ---
 
 **项目真相**
