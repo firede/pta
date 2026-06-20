@@ -41,7 +41,7 @@ export default defineConfig({
         {
           label: getRootMessage('arguments'),
           translations: getStarlightTranslations('arguments'),
-          items: [...argumentIds],
+          items: ['argument', ...argumentIds, 'argument/glossary'],
         },
       ],
       plugins: [starlightLinksValidator()],
