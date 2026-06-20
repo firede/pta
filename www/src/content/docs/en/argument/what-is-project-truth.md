@@ -1,24 +1,24 @@
 ---
 title: What Is Project Truth
-description: Project truth is the content that the current project actually follows. It is expressed collectively through code, natural language, glossaries, decision records, and other materials, serves the continuous iteration of the project, and provides the basis for generating projection views.
+description: Project truth is the content the current project actually relies on. It is expressed through code, natural language, glossaries, decision records, and other materials, supports continuous project iteration, and provides the basis for generating projection views.
 sourceHash: 0fd146db8f2bd3b9e63414b6f6a982cf64f6d25eeb1c429a6a1e0edf538fe3ee
 ---
 
-Project truth is the content that the current project actually follows. It determines how the project runs now, how it should be understood, what later changes and judgments must reference, and what provides the basis for generating projection views in different task contexts.
+Project truth is the content the current project actually relies on. It determines how the project runs now, how it should be understood, what later changes and judgments must take into account, and what provides the basis for generating projection views in different task contexts.
 
-Project truth mainly serves the continuous iteration of a project. As long as a project will continue to be understood, changed, explained, audited, or used to generate projection views, it needs a current basis. The user of this basis may be a person or an agent; project truth is meant for understanding and judgment within continuous change.
+Project truth mainly serves the continuous iteration of a project. As long as a project will continue to be understood, changed, explained, audited, or used to generate projection views, it needs a current basis. That basis may be used by people or by agents; project truth is meant for understanding and judgment as the project changes.
 
 ## Background
 
-The phrase project truth emphasizes current validity. It refers to the core content that the project actually follows in the current version. This content can change across versions, and its scope is limited by what the project adopts and what is currently effective.
+The phrase project truth emphasizes current validity. It refers to the core content the project actually relies on in the current version. This content can change across versions, and its scope is limited by what the project adopts and what is currently in effect.
 
 Documents, context, and facts point to different problems: documents emphasize the form of expression; context is usually bound to a scenario, more like a slice from a particular task or viewpoint; facts are objective statements about a domain or the real world. Project truth is concerned with what the project actually adopts from these materials, and on what basis it is valid, operates, and evolves.
 
-Therefore, when defining project truth, the central question is: what does the current project actually follow? Which content, once changed, would affect the project's operation, understanding, maintenance, judgment, or projection view generation?
+Therefore, when defining project truth, the central question is: what does the current project actually rely on? Which content, once changed, would affect the project's operation, understanding, maintenance, judgment, or projection view generation?
 
 ## Rationale
 
-**Part of project truth exists in the code implementation.**
+**Part of project truth lives in code.**
 
 The current implementation already expresses how the product actually runs, how data is organized, how rules are implemented, and how boundaries are handled. Truth already expressed clearly by code can remain in code; there is no need to rewrite the same truth in documentation. Rewriting creates synchronization cost and makes understanding harder.
 
@@ -36,7 +36,7 @@ The value of unified vocabulary is that it lets people and agents work in the sa
 
 **Project truth also needs to preserve a small amount of historical memory.**
 
-Historical memory here records the reasons for key changes. The full discussion process can remain in commit history, issues, or external materials. When reading the project in ordinary work, one can first look at the decisions, rules, and tradeoffs that are still currently effective; this content should be reflected directly in the current project truth.
+Historical memory here records the reasons for key changes. The full discussion process can remain in commit history, issues, or external materials. In ordinary project reading, one can first look at the decisions, rules, and tradeoffs that are still in effect; this content should be reflected directly in the current project truth.
 
 The role of history is to provide low-cost time-dimensional clues when someone needs to ask "why was this changed this way." Git can usually answer what changed, when it changed, and who changed it; historical records in project truth mainly answer why it changed this way. It is therefore suitable for recording the reasons behind key changes in domain strategy, business logic, product tradeoffs, external delivery semantics, important terms, and similar content.
 
@@ -68,7 +68,7 @@ This article only defines what project truth is. How project truth enters the re
 
 This concern is valid. Once project truth lacks governance, it will degrade into an accumulation of materials. Therefore, project truth must have a governance mechanism: entry has standards, changes have review, and it is maintained together with the repository.
 
-The content that enters project truth should be content that the current project actually follows. Content that the current version has stopped adopting should be modified and committed together with project changes, avoiding its continued mixture with the current truth.
+The content that enters project truth should be content the current project actually relies on. Content that the current version has stopped adopting should be modified and committed together with project changes, so it does not remain mixed into the current truth.
 
 **If project truth changes across versions, why call it truth?**
 
@@ -76,12 +76,12 @@ Truth here emphasizes current validity and allows change across versions.
 
 A business rule, term, implementation approach, or product tradeoff may once have been project truth and may be replaced in a new version. This kind of change fits the versioned existence of software projects.
 
-For any version, people and agents should understand, change, and judge the project according to what the project actually follows. The meaning of project truth lies precisely in making explicit the effective core of the current version.
+For any version, people and agents should understand, change, and judge the project according to what the project actually relies on. The meaning of project truth lies precisely in making the effective core of the current version explicit.
 
 ## Conclusion
 
-Project truth is the content that the current project actually follows. Part of it is expressed by code implementation, and another part is supplemented by natural language, glossaries, decision records, and necessary historical memory.
+Project truth is the content the current project actually relies on. Part of it is expressed by code, and another part is supplemented by natural language, glossaries, decision records, and necessary historical memory.
 
-It focuses on how the current project runs, how it is understood, what must be respected in later changes, and where projection views in different task contexts can be generated from. Factual materials can serve as input, and projection views can serve as output; only content adopted by the current project and continuously affecting judgment needs to be captured as project truth.
+It focuses on how the current project runs, how it is understood, what must be respected in later changes, and what projection views in different task contexts can be generated from. Factual materials can serve as input, and projection views can serve as output; only content adopted by the current project and continuously affecting judgment needs to be captured as project truth.
 
 Only after explaining what project truth is can the project truth architecture have a clear foundation.

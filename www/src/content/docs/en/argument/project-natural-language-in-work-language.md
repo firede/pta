@@ -12,7 +12,7 @@ The working language is the natural language a project uses in practice to under
 
 ## Background
 
-Part of project truth is expressed through implementation carriers such as code, tests, and configuration; another part is supplemented by natural language, glossaries, decision records, and necessary historical memory. This article discusses the text in that second part that carries business meaning, including code comments that explain business meaning, domain rules, and product tradeoffs.
+Part of project truth is expressed through implementation artifacts such as code, tests, and configuration; another part is supplemented by natural language, glossaries, decision records, and necessary historical memory. This article discusses the text in that second part that carries business meaning, including code comments that explain business meaning, domain rules, and product tradeoffs.
 
 This kind of text carries the work of understanding and judgment. It records how business concepts are named, how rules hold, how customer-facing explanations are phrased, and how product tradeoffs are maintained over time. Its language choice directly affects how people, LLMs, and agents retrieve, understand, and update the project.
 

@@ -7,7 +7,7 @@ sourceHash: 7ddc9b2de3e3c09d300e3b436aca6e00c4b62a99dcd3b1105c43097d1166440c
 
 **Project Truth**
 
-Project truth is the content that the current project actually follows. It determines how the project runs now, how it should be understood, what must be referenced in later changes and judgments, and what provides the basis for generating projection views in different task contexts.
+Project truth is the content the current project actually relies on. It determines how the project runs now, how it should be understood, what later changes and judgments must take into account, and what provides the basis for generating projection views in different task contexts.
 
 **Glossary**
 
