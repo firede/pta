@@ -6,7 +6,7 @@ export const globalMessages = {
     arguments: '立论',
   },
   'zh-Hant': {
-    title: '項目真相架構',
+    title: '專案真相架構',
     specification: '規範',
     guide: '指南',
     arguments: '立論',
