@@ -72,14 +72,3 @@ export function getDocsEntryHref(id: string, locale: string | undefined) {
   const path = id === 'index' ? '/' : `/${id}/`;
   return localizeHref(path, locale);
 }
-
-/** 将正文 HTML 中的根路径站内链接改写到当前语言路径下。 */
-export function localizeHtmlLinks(html: string, locale: string | undefined) {
-  if (!locale) return html;
-
-  return html.replace(
-    /(<a\b[^>]*\bhref=)(["'])([^"']*)\2/g,
-    (_match, prefix: string, quote: string, href: string) =>
-      `${prefix}${quote}${localizeHref(href, locale)}${quote}`,
-  );
-}

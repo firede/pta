@@ -2,14 +2,11 @@
 import DefaultMarkdownContent from '@astrojs/starlight/components/MarkdownContent.astro';
 
 import ArgumentDependencies from '@/components/docs/ArgumentDependencies.astro';
-import { localizeHtmlLinks } from '@/lib/i18n';
 
 const dependsOn = Astro.locals.starlightRoute.entry.data.dependsOn ?? [];
-const { locale } = Astro.locals.starlightRoute;
-const contentHtml = localizeHtmlLinks(await Astro.slots.render('default'), locale);
 ---
 
 <DefaultMarkdownContent>
-  <Fragment set:html={contentHtml} />
+  <slot />
   <ArgumentDependencies ids={dependsOn} />
 </DefaultMarkdownContent>
