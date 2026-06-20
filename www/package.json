@@ -9,6 +9,8 @@
     "build": "astro build",
     "check": "astro check",
     "preview": "astro preview",
+    "i18n:check": "node scripts/i18n/check.mjs",
+    "i18n:hash": "node scripts/i18n/hash.mjs",
     "astro": "astro"
   },
   "dependencies": {
