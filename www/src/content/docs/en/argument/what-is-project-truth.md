@@ -22,7 +22,7 @@ Therefore, when defining project truth, the central question is: what does the c
 
 The current implementation already expresses how the product actually runs, how data is organized, how rules are implemented, and how boundaries are handled. Truth already expressed clearly by code can remain in code; there is no need to rewrite the same truth in documentation. Rewriting creates synchronization cost and makes understanding harder.
 
-**Natural language is better suited to supplement what code does not express, is difficult for code to express, or is easy to misread.**
+**Natural language is better suited to supplement what code does not express, what is difficult for code to express, or what is easy to misread.**
 
 This includes domain knowledge, tacit knowledge, real-world knowledge, business rules, commercial constraints, and actual product tradeoffs that code cannot fully express. For example, certain facts may indeed exist in a domain, but what the project truly needs to record is how it adopts those facts and how it grounds them in product behavior and implementation.
 
@@ -50,7 +50,7 @@ The facts discussed here are objective statements about a domain or the real wor
 
 **Project truth can be expressed through many forms.**
 
-Code, tests, configuration, natural-language documents, glossaries, and decision records can all express project truth. The parts already expressed clearly by code can remain directly in code; documentation mainly supplements what code does not express, is difficult for code to express, or is not suitable for code to carry.
+Code, tests, configuration, natural-language documents, glossaries, and decision records can all express project truth. The parts already expressed clearly by code can remain directly in code; documentation mainly supplements what code does not express, what is difficult for code to express, or what is not suitable for code to carry.
 
 **The scope of project truth is determined by project needs.**
 
