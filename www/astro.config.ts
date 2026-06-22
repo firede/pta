@@ -29,19 +29,24 @@ export default defineConfig({
       locales: starlightI18n.locales,
       sidebar: [
         {
-          label: getRootMessage('specification'),
-          translations: getStarlightTranslations('specification'),
-          slug: 'specification',
-        },
-        {
           label: getRootMessage('guide'),
           translations: getStarlightTranslations('guide'),
           slug: 'guide',
         },
         {
+          label: getRootMessage('specification'),
+          translations: getStarlightTranslations('specification'),
+          slug: 'specification',
+        },
+        {
           label: getRootMessage('arguments'),
           translations: getStarlightTranslations('arguments'),
           items: ['argument', ...argumentIds, 'argument/glossary'],
+        },
+        {
+          label: getRootMessage('topics'),
+          translations: getStarlightTranslations('topics'),
+          items: ['topic', { autogenerate: { directory: 'topic' } }],
         },
       ],
       plugins: [starlightLinksValidator()],

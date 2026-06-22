@@ -1,0 +1,59 @@
+---
+import { getCollection, type CollectionEntry } from 'astro:content';
+import { LinkCard } from '@astrojs/starlight/components';
+
+import { getDocsEntryHref, getLocalizedDocsEntryId } from '@/lib/i18n';
+
+const { locale } = Astro.locals.starlightRoute;
+const topicId = getLocalizedDocsEntryId('topic', locale);
+const topicPrefix = `${topicId}/`;
+
+const topics = (await getCollection('docs'))
+  .filter((entry) => {
+    if (!entry.id.startsWith(topicPrefix)) return false;
+    if (entry.id === topicId) return false;
+
+    return import.meta.env.PROD ? entry.data.draft !== true : true;
+  })
+  .sort((a, b) => {
+    const orderDifference = getTopicOrder(a) - getTopicOrder(b);
+    if (orderDifference !== 0) return orderDifference;
+
+    return a.id.localeCompare(b.id);
+  })
+  .map((entry) => {
+    const sourceId = locale && locale !== 'root' ? entry.id.replace(`${locale}/`, '') : entry.id;
+
+    return {
+      sourceId,
+      title: entry.data.title,
+      description: entry.data.description,
+    };
+  });
+
+function getTopicOrder(entry: CollectionEntry<'docs'>) {
+  const order = entry.data.sidebar.order;
+
+  if (typeof order !== 'number') {
+    throw new Error(`TopicList requires sidebar.order for topic entry "${entry.id}".`);
+  }
+
+  return order;
+}
+---
+
+{
+  topics.length > 0 && (
+    <div class="my-6 grid gap-4 *:mt-0!">
+      {
+        topics.map((topic) => (
+          <LinkCard
+            href={getDocsEntryHref(topic.sourceId, locale)}
+            title={topic.title}
+            description={topic.description}
+          />
+        ))
+      }
+    </div>
+  )
+}
