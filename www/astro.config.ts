@@ -24,6 +24,7 @@ export default defineConfig({
         MarkdownContent: './src/components/starlight/MarkdownContent.astro',
         Pagination: './src/components/starlight/Pagination.astro',
       },
+      routeMiddleware: ['./src/lib/starlight/toc.ts'],
       social: [{ icon: 'github', label: 'GitHub', href: 'https://github.com/firede/pta' }],
       defaultLocale: starlightI18n.defaultLocale,
       locales: starlightI18n.locales,

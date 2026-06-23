@@ -192,6 +192,19 @@
   :where(.sl-markdown-content p:has(> strong:only-child)) {
     font-family: var(--font-heading);
   }
+
+  :where(.sl-markdown-content [data-footnotes] > .sl-heading-wrapper) {
+    margin: 0;
+    line-height: 0;
+  }
+
+  :where(.sl-markdown-content [data-footnotes] > .sl-heading-wrapper .sl-anchor-link) {
+    display: none;
+  }
+
+  :where(.sl-markdown-content [data-footnotes] > ol) {
+    margin-top: 0;
+  }
 }
 
 :root,
