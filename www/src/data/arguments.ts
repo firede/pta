@@ -1,6 +1,6 @@
 export const argumentIds = [
   'argument/what-is-project-truth',
-  'argument/project-truth-in-codebase',
+  'argument/basis-part-versioned-with-execution-part',
   'argument/project-truth-by-domain',
   'argument/project-natural-language-in-work-language',
 ] as const;
