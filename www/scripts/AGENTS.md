@@ -12,3 +12,4 @@
 - `extension-mismatch`：译文后缀与原文不一致。
 - `invalid`：译文 frontmatter 无法用于检查，例如缺少 `sourceHash`。
 - `stale`：译文 `sourceHash` 与当前原文 hash 不一致。
+- `orphan`：目标语言译文缺少对应原文。

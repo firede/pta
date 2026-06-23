@@ -64,14 +64,29 @@ export function isLocaleRelativePath(relativePath) {
   return targetLocales.includes(firstSegment);
 }
 
+export function getLocaleRelativePathInfo(relativePath) {
+  const [locale, ...sourcePathSegments] = relativePath.split('/');
+
+  if (!targetLocales.includes(locale) || sourcePathSegments.length === 0) return undefined;
+
+  return {
+    locale,
+    sourceRelativePath: sourcePathSegments.join('/'),
+  };
+}
+
 export function getTranslationPath(sourceRelativePath, locale) {
   return join(docsDir, locale, sourceRelativePath);
 }
 
-export function getAlternateExtensionPath(sourceRelativePath, locale) {
-  const source = parse(sourceRelativePath);
+export function getAlternateExtensionRelativePath(relativePath) {
+  const source = parse(relativePath);
   const alternateExt = source.ext === '.md' ? '.mdx' : '.md';
-  return join(docsDir, locale, source.dir, `${source.name}${alternateExt}`);
+  return join(source.dir, `${source.name}${alternateExt}`).split(sep).join('/');
+}
+
+export function getAlternateExtensionPath(sourceRelativePath, locale) {
+  return join(docsDir, locale, getAlternateExtensionRelativePath(sourceRelativePath));
 }
 
 export function isDraft(frontmatter) {

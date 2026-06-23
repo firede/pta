@@ -4,6 +4,8 @@ import { access } from 'node:fs/promises';
 import {
   computeFileHash,
   getAlternateExtensionPath,
+  getAlternateExtensionRelativePath,
+  getLocaleRelativePathInfo,
   getSourceHash,
   getTranslationPath,
   isDraft,
@@ -15,7 +17,12 @@ import {
 } from './lib.mjs';
 
 const issues = [];
-const sourceFiles = await getSourceFiles();
+const markdownFiles = await listMarkdownFiles();
+const sourceFiles = getSourceFiles(markdownFiles);
+const translationFiles = getTranslationFiles(markdownFiles);
+const sourceRelativePaths = new Set(
+  sourceFiles.map((sourcePath) => toDocsRelativePath(sourcePath)),
+);
 
 for (const sourcePath of sourceFiles) {
   const sourceRelativePath = toDocsRelativePath(sourcePath);
@@ -34,6 +41,8 @@ for (const sourcePath of sourceFiles) {
   }
 }
 
+checkOrphanTranslations({ sourceRelativePaths, translationFiles });
+
 if (issues.length > 0) {
   printIssues(issues);
   process.exit(1);
@@ -41,9 +50,12 @@ if (issues.length > 0) {
 
 console.log(`i18n check passed for ${sourceFiles.length} source document(s).`);
 
-async function getSourceFiles() {
-  const files = await listMarkdownFiles();
+function getSourceFiles(files) {
   return files.filter((filePath) => !isLocaleRelativePath(toDocsRelativePath(filePath)));
+}
+
+function getTranslationFiles(files) {
+  return files.filter((filePath) => isLocaleRelativePath(toDocsRelativePath(filePath)));
 }
 
 async function checkTranslation({ expectedHash, locale, sourceRelativePath }) {
@@ -113,6 +125,33 @@ async function checkTranslation({ expectedHash, locale, sourceRelativePath }) {
   }
 }
 
+function checkOrphanTranslations({ sourceRelativePaths, translationFiles }) {
+  for (const translationPath of translationFiles) {
+    const translationRelativePath = toDocsRelativePath(translationPath);
+    const localePathInfo = getLocaleRelativePathInfo(translationRelativePath);
+
+    if (!localePathInfo) continue;
+
+    const alternateSourceRelativePath = getAlternateExtensionRelativePath(
+      localePathInfo.sourceRelativePath,
+    );
+
+    if (
+      sourceRelativePaths.has(localePathInfo.sourceRelativePath) ||
+      sourceRelativePaths.has(alternateSourceRelativePath)
+    ) {
+      continue;
+    }
+
+    issues.push({
+      type: 'orphan',
+      locale: localePathInfo.locale,
+      file: translationRelativePath,
+      source: localePathInfo.sourceRelativePath,
+    });
+  }
+}
+
 async function exists(filePath) {
   try {
     await access(filePath);
@@ -125,7 +164,7 @@ async function exists(filePath) {
 function printIssues(items) {
   console.error(`i18n check failed with ${items.length} issue(s).`);
 
-  for (const type of ['missing', 'extension-mismatch', 'invalid', 'stale']) {
+  for (const type of ['missing', 'extension-mismatch', 'invalid', 'stale', 'orphan']) {
     const typedIssues = items.filter((issue) => issue.type === type);
     if (typedIssues.length === 0) continue;
 
@@ -142,6 +181,8 @@ function printIssues(items) {
         console.error(`  - ${issue.file} (source: ${issue.source})`);
         console.error(`    expected: ${issue.expectedHash}`);
         console.error(`    actual:   ${issue.actualHash}`);
+      } else if (issue.type === 'orphan') {
+        console.error(`  - ${issue.file} (missing source: ${issue.source})`);
       }
     }
   }
