@@ -16,7 +16,7 @@
     "oxfmt": "^0.55.0",
     "oxlint": "^1.70.0",
     "simple-git-hooks": "^2.13.1",
-    "wrangler": "^4.102.0"
+    "wrangler": "^4.103.0"
   },
   "simple-git-hooks": {
     "pre-commit": "pnpm exec nano-staged",
