@@ -1,64 +1,76 @@
 ---
 title: What Is Project Truth
-description: Project truth is the content the current project actually relies on. It is expressed through code, natural language, glossaries, decision records, and other materials, supports continuous project iteration, and provides the basis for generating projection views.
-sourceHash: 0fd146db8f2bd3b9e63414b6f6a982cf64f6d25eeb1c429a6a1e0edf538fe3ee
+description: Project truth is the content the current project actually relies on. It consists of the execution part and the reference basis, supports continuous project iteration, and provides the basis for generating projection views.
+sourceHash: ac24d96d495e229503fef049d26bfc4dbf8c429d4bddefa4495698f40b73d2bd
 ---
 
-Project truth is the content the current project actually relies on. It determines how the project runs now, how it should be understood, what later changes and judgments must take into account, and what provides the basis for generating projection views in different task contexts.
+Project truth is the content the current project actually relies on. It determines how the project runs now, how it is understood, what later changes and judgments must take into account, and provides the basis for generating projection views in different task contexts.
 
-Project truth mainly serves the continuous iteration of a project. As long as a project will continue to be understood, changed, explained, audited, or used to generate projection views, it needs a current basis. That basis may be used by people or by agents; project truth is meant for understanding and judgment as the project changes.
+Project truth primarily serves continuous project iteration. As long as a project will continue to be understood, changed, explained, audited, or used to generate projection views, it needs a current basis. This basis may be used by people or by AI; project truth is meant for understanding and judgment while the project keeps changing.
+
+Project truth consists of the execution part and the reference basis. The execution part is the part of project truth that participates in the current execution flow and determines the current version's result; the reference basis is the part of project truth that does not participate in the current execution flow, but affects later iteration judgments and results.
+
+In a new iteration, the project truth available to people and AI is determined by both the execution part and the reference basis. Both affect later iteration judgments and results; the distinction is whether they are part of the current execution flow: the execution part is, and the reference basis is not.
 
 ## Background
 
-The phrase project truth emphasizes current validity. It refers to the core content the project actually relies on in the current version. This content can change across versions, and its scope is limited by what the project adopts and what is currently in effect.
+The phrase project truth emphasizes current validity. It refers to the content the project actually relies on in the current version. When the version changes, the content actually adopted by the project and still in effect may also change, and project truth changes with it.
 
-Documents, context, and facts point to different problems: documents emphasize the form of expression; context is usually bound to a scenario, more like a slice from a particular task or viewpoint; facts are objective statements about a domain or the real world. Project truth is concerned with what the project actually adopts from these materials, and on what basis it is valid, operates, and evolves.
+In long-lived projects, project-related information is scattered across files, tools, collaboration records, and the context formed during a particular task. Without a clear distinction, project truth can easily expand into all related materials, or shrink into the context needed for one task.
 
 Therefore, when defining project truth, the central question is: what does the current project actually rely on? Which content, once changed, would affect the project's operation, understanding, maintenance, judgment, or projection view generation?
 
 ## Rationale
 
-**Part of project truth lives in code.**
+**The execution part carries project truth that has already landed.**
 
-The current implementation already expresses how the product actually runs, how data is organized, how rules are implemented, and how boundaries are handled. Truth already expressed clearly by code can remain in code; there is no need to rewrite the same truth in documentation. Rewriting creates synchronization cost and makes understanding harder.
+Whether the current version can produce a valid result depends first on the execution part. After the structures, rules, processes, and verification methods adopted by the project enter the execution flow, they directly constrain how results are produced, checked, and delivered. In code projects, this usually takes the form of runnable, verifiable objects in the repository; in other projects, it appears as the objects that actually drive production and verification in their own workflows.
 
-**Natural language is better suited to supplement what code does not express, what is difficult for code to express, or what is easy to misread.**
+Therefore, the execution part itself carries project truth that has already landed. Later iterations need to treat the execution part as part of the current basis for understanding the project.
 
-This includes domain knowledge, tacit knowledge, real-world knowledge, business rules, commercial constraints, and actual product tradeoffs that code cannot fully express. For example, certain facts may indeed exist in a domain, but what the project truly needs to record is how it adopts those facts and how it grounds them in product behavior and implementation.
+**The reference basis supplements the current basis that the execution part cannot reliably carry.**
 
-"Humans have permanent teeth and deciduous teeth" is a domain fact; "this system uses FDI notation to record teeth, did not distinguish permanent teeth from deciduous teeth in the early stage, now uniformly records teeth with permanent-tooth numbering, and adds a boolean variable to distinguish permanent teeth from deciduous teeth" is project truth. The former is domain knowledge; the latter is the current system's adopted recording rule and historical tradeoff.
+The reference basis preserves the current basis that later iterations must follow when that basis cannot be reliably carried by the execution part. This basis usually concerns project semantics, real-world constraints, product tradeoffs, and necessary historical reasons.
+
+It records rules, constraints, tradeoffs, and necessary reasons that the project has adopted and that will continue to affect iteration.
+
+Details already expressed clearly by the execution part are not duplicated in the reference basis.
 
 **A stable glossary is also part of project truth.**
 
-A project needs to be understood and changed within the same vocabulary. The role of a glossary is to remove room for ambiguity and reduce confusion caused by synonyms, near-synonyms, industry colloquialisms, and incorrect spellings. In agent coding, this is especially important: an agent builds contextual associations from vocabulary. If a project has no stable glossary, it can easily conflate terms such as "user" and "account," "customer" and "client," or even specialized domain terms such as "diagnosis" and "finding."
+A project needs to be understood and changed within the same vocabulary. The role of a glossary is to reduce ambiguity caused by synonyms, near-synonyms, industry colloquialisms, and incorrect spellings. When AI handles project-level tasks, this is especially important: AI builds contextual associations from vocabulary. If a project has no stable glossary, the same object may be written as "account" or "user account" across code, interfaces, and explanations; in business contexts, "lead" and "customer" may also be conflated, though they usually correspond to different lifecycle stages and process rules.
 
-The value of unified vocabulary is that it lets people and agents work in the same semantic space.
+The value of unified vocabulary is that it lets people and AI work in the same semantic space.
 
-**Project truth also needs to preserve a small amount of historical memory.**
+**The reference basis needs to preserve a small number of necessary historical reasons.**
 
-Historical memory here records the reasons for key changes. The full discussion process can remain in commit history, issues, or external materials. In ordinary project reading, one can first look at the decisions, rules, and tradeoffs that are still in effect; this content should be reflected directly in the current project truth.
+Some current rules cannot be fully understood from the current state alone; the reasons behind key changes also matter. Necessary historical reasons explain changes that still affect later judgments: why a rule was kept, why a constraint exists, and why a tradeoff holds.
 
-The role of history is to provide low-cost time-dimensional clues when someone needs to ask "why was this changed this way." Git can usually answer what changed, when it changed, and who changed it; historical records in project truth mainly answer why it changed this way. It is therefore suitable for recording the reasons behind key changes in domain strategy, business logic, product tradeoffs, external delivery semantics, important terms, and similar content.
+It preserves only the reasons that can guide later iterations, not the full discussion process. Version history can usually answer what changed and when it changed; historical reasons in project truth answer why the change still matters.
 
-This kind of historical record should be written carefully and handled carefully. After it is written, deletion or compression requires explicit project judgment; a single agent's inability to see its use at the moment is not enough reason to clean it up. Future traceability, audits, projection generation, or external delivery explanations may need precisely these reasons for change.
+This kind of content needs to be written carefully and deleted carefully. If a single task does not need it right now, that is not enough to show that it has become invalid. Deletion or compression should depend on whether it still affects later understanding and judgment.
 
 ## Boundaries
 
-**Domain facts can become a source of project truth.**
+**Project truth is judged by the current reliance relationship.**
 
-The facts discussed here are objective statements about a domain or the real world. A fact becomes project truth only when it is adopted by the current project and affects product behavior, business explanation, implementation judgment, terminology, external delivery, or later maintenance.
+To judge whether some content belongs to project truth, the key question is whether it has already become content the current project actually relies on, and whether it affects the current result or later iteration.
 
-**Project truth can be expressed through many forms.**
+**Facts themselves are not project truth.**
 
-Code, tests, configuration, natural-language documents, glossaries, and decision records can all express project truth. The parts already expressed clearly by code can remain directly in code; documentation mainly supplements what code does not express, what is difficult for code to express, or what is not suitable for code to carry.
+Facts are objective statements about specialized knowledge or the real world. Project truth does not list facts themselves; it records how the project relies on these facts to form the current basis. Facts need to enter project truth only when they are adopted by the current project and affect the current result or later iteration.
 
-**The scope of project truth is determined by project needs.**
+**Process materials are not project truth.**
 
-Content held by developers, product managers, designers, domain experts, or business stakeholders can all contribute to project truth. What truly enters project truth is the part that the current project needs to reuse continuously. Its scope may span implementation, domain, business operations, commercial constraints, product concerns, and real-world limitations.
+Process materials document fact-finding, discussion, and decision-making. Full ADRs, meeting notes, research materials, issue discussions, agent conversations, and user feedback are all process materials; project truth records only the content the current project actually relies on.
 
-**Projection views are the consumed results of project truth.**
+**Final outputs are judged by their relationship to later iterations.**
 
-A projection view is for a specific task, an agent execution context, an audit, business understanding, product research, or management review; it extracts, reorganizes, and presents part of project truth. It can be generated, displayed, cached, and passed to agents for use. As long as it can be reproduced from the semantics of project truth, it can usually remain a generated result or cached result.
+A final output does not automatically become project truth. It should be maintained as project truth only when it continues to affect later versions, quality judgments, or external delivery explanations.
+
+**Context and projection views are derived from project truth.**
+
+Context is a session projection formed from project truth, the task goal, and the current conversation state, used for a specific act of understanding or execution. A projection view targets a specific usage context and extracts, reorganizes, and presents content from project truth. They can be generated, displayed, cached, and passed to AI for use. Content that can be regenerated from project truth and the usage context can usually remain a derived result.
 
 This article only defines what project truth is. How project truth enters the repository, and how it is reviewed, updated, deprecated, and governed, are outside the scope of this article.
 
@@ -66,22 +78,30 @@ This article only defines what project truth is. How project truth enters the re
 
 **Will project truth become a place where everything gets thrown in?**
 
-This concern is valid. Once project truth lacks governance, it will degrade into an accumulation of materials. Therefore, project truth must have a governance mechanism: entry has standards, changes have review, and it is maintained together with the repository.
+This risk exists. Project truth contains only the content the current project actually relies on, and that content affects the current result or later iteration. Related materials, process records, and one-off context may all be valuable, but that does not automatically make them project truth.
 
-The content that enters project truth should be content the current project actually relies on. Content that the current version has stopped adopting should be modified and committed together with project changes, so it does not remain mixed into the current truth.
+Content that the current version has stopped adopting should not remain in the current project truth.
+
+**If the execution part already contains business logic, why is the reference basis still needed?**
+
+The reference basis is needed because the execution part cannot reliably carry the entire current basis. Business logic already expressed clearly by the execution part should remain in the execution part. When business semantics, real-world constraints, product tradeoffs, and necessary historical reasons cannot be reliably obtained from the execution part, the reference basis should supplement them.
+
+**Will the reference basis become an accumulation of ADRs and discussion records?**
+
+This risk comes from treating process materials as project truth. ADRs, meeting notes, issue discussions, and agent conversations record discussion and decision-making processes. They are not project truth. The reference basis records only the content the current project actually relies on.
 
 **If project truth changes across versions, why call it truth?**
 
 Truth here emphasizes current validity and allows change across versions.
 
-A business rule, term, implementation approach, or product tradeoff may once have been project truth and may be replaced in a new version. This kind of change fits the versioned existence of software projects.
+A business rule, term, implementation approach, or product tradeoff may once have been project truth and may be replaced in a new version. This kind of change fits the versioned existence of long-lived projects.
 
-For any version, people and agents should understand, change, and judge the project according to what the project actually relies on. The meaning of project truth lies precisely in making the effective core of the current version explicit.
+For any version, people and AI should understand, change, and judge the project according to what the project actually relies on. The value of project truth is that it makes the effective core of the current version explicit.
 
 ## Conclusion
 
-Project truth is the content the current project actually relies on. Part of it is expressed by code, and another part is supplemented by natural language, glossaries, decision records, and necessary historical memory.
+Project truth is the content the current project actually relies on, consisting of the execution part and the reference basis. It supports continuous iteration and helps people and AI judge how the current project runs, how it is understood, and what later changes must be based on.
 
-It focuses on how the current project runs, how it is understood, what must be respected in later changes, and what projection views in different task contexts can be generated from. Factual materials can serve as input, and projection views can serve as output; only content adopted by the current project and continuously affecting judgment needs to be captured as project truth.
+Facts, process materials, final outputs, context, and projection views all need to be distinguished from project truth. Only content adopted by the current project and affecting the current result or later iteration belongs to project truth.
 
-Only after explaining what project truth is can the project truth architecture have a clear foundation.
+Defining project truth clearly gives project truth architecture a stable foundation.
