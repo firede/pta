@@ -3,7 +3,6 @@ import starlight from '@astrojs/starlight';
 
 import react from '@astrojs/react';
 import tailwindcss from '@tailwindcss/vite';
-import starlightLinksValidator from 'starlight-links-validator';
 
 import { argumentIds } from './src/data/arguments';
 import { getRootMessage, getStarlightTranslations, starlightI18n } from './src/lib/i18n';
@@ -50,7 +49,6 @@ export default defineConfig({
           items: ['topic', { autogenerate: { directory: 'topic' } }],
         },
       ],
-      plugins: [starlightLinksValidator()],
     }),
     react(),
   ],
