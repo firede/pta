@@ -1,57 +1,55 @@
 ---
-title: Project Text Should Use the Working Language
-description: Project text that carries business meaning should use the working language, reducing translation loss, stabilizing terms, and improving retrieval efficiency.
+title: Project Language Should Match Working Language
+description: Natural language expression in the reference basis of project truth should match the working language, improving understandability and reducing translation loss, term drift, and retrieval gaps.
 dependsOn:
   - argument/what-is-project-truth
-sourceHash: 8c28d44cabcb0fa6b69355cdd770a7506501d752cc21fac3e512caa65b79b990
+sourceHash: 45eb16bd24359bf7347a5023354e1ef51868dd87adebbb344b2eacc4284190ed
 ---
 
-Project text that carries business meaning should use the working language.
+Natural language expression in the reference basis of project truth should match the working language.
 
-The working language is the natural language a project uses in practice to understand business meaning, name it, make judgments about it, record it, and maintain it over time. Its primary maintainers can keep using it continuously. It is formed by the stable wording used for business concepts, business rules, customer-facing explanations, product tradeoffs, and everyday records; it can appear in team collaboration or in an independent developer's personal work.
+The working language is the natural language that the project's primary maintainers continuously use to understand, discuss, record, and maintain the project. It is formed by expression patterns that are reused consistently in the project, and is the default language for project explanations.
 
 ## Background
 
-Part of project truth is expressed through implementation artifacts such as code, tests, and configuration; another part is supplemented by natural language, glossaries, decision records, and necessary historical memory. This article discusses the text in that second part that carries business meaning, including code comments that explain business meaning, domain rules, and product tradeoffs.
+Project truth consists of the execution part and the reference basis. This article discusses natural language expression in the reference basis.
 
-This kind of text carries the work of understanding and judgment. It records how business concepts are named, how rules hold, how customer-facing explanations are phrased, and how product tradeoffs are maintained over time. Its language choice directly affects how people, LLMs, and agents retrieve, understand, and update the project.
+The reference basis relies heavily on natural language. It records the concepts, rules, shared interpretations, tradeoffs, and necessary historical reasons the project currently relies on, and may also explain engineering constraints and maintenance conventions. Whether natural language remains consistent directly affects whether people can understand and maintain the project smoothly.
+
+Engineering symbols usually need to follow ecosystem, interface, and tooling constraints; natural language expression is responsible for helping maintainers read, judge, and collaborate. This article discusses the language choice for the latter kind of expression.
 
 ## Rationale
 
-Project text should use the working language because that language is closest to how the project actually handles business meaning.
+Natural language expression in the reference basis directly affects the cost of understanding and maintaining the project, so it should use the project's established working language. The key is a stable default natural language: whether the working language is Chinese, English, or another natural language the team has long used, maintainers should be able to read, discuss, and update the current basis through the same main language. When the language is stable, the path to understanding is more direct, and the cost of reading, changing, and reviewing is lower.
 
-If a team, its customers, and its day-to-day business work use Chinese terms, but the project's natural-language records are kept in English over the long term, the project keeps paying a translation cost. LLMs can understand many languages, but cross-language rewriting still brings approximate translation, term drift, scattered wording, and weaker retrieval. When the same business concept appears under several names across business work, the glossary, requirement notes, code comments, and test descriptions, later maintainers must repeatedly judge whether those names point to the same thing.
+Language inconsistency increases the cost for AI to locate the basis. AI can handle multiple languages, but multilingual processing does not cost the same. When AI participates in a project, it often needs to locate relevant basis content through text search, retrieval, and context extraction; natural language lacks stable mechanisms comparable to code symbol indexes. Language inconsistency lowers keyword match quality, forcing AI to try multiple phrasings, cross-language keywords, or broader scans, and makes relevant content easier to miss.
 
-Using the working language lets business concepts stay stable inside the project. The glossary can be built around the terms that are actually used. Full-text search, script-based retrieval, context extraction, and projection view generation can also find the target content more easily. When people, LLMs, and agents enter the project, they directly encounter the business meaning the project actually uses and rely less on approximate cross-language wording.
-
-Implementation names and natural-language names can each remain stable. A project may have an English component name, function name, or table name that expresses the current program structure; the corresponding business concept in text can use the stable wording from the working language. After a refactor, implementation names may change while the business concept remains stable. Implementation names record implementation structure, project text records business meaning, and the two are connected through glossaries, references, and context.
-
-Using the working language keeps business meaning stable while allowing implementation structure to evolve according to engineering needs.
+Using a unified working language lets the reference basis accumulate in the same language. The glossary can be built around the words that are actually used; rule explanations, historical reasons, and maintenance conventions can also reuse the same wording. This reduces translation loss, term drift, scattered expression, and retrieval gaps, allowing the reference basis to remain a current basis that people and AI can keep locating, reusing, and maintaining.
 
 ## Boundaries
 
-This article discusses project text that carries business meaning. To judge whether a piece of text falls under this principle, look at whether it helps the project understand concepts, explain rules, establish shared interpretations, and record tradeoffs. It may appear in documents, glossaries, test descriptions, or code comments; the carrier may differ, but the language principle is the same.
+This article discusses natural language expression in the reference basis. To judge whether a piece of text falls under this principle, the key question is whether it explains the project, explains the basis, or supports collaborative judgment.
 
-Implementation symbols follow engineering constraints. Program, data, interface, and third-party system names can follow the relevant ecosystem and team conventions. The key requirement is that the same business concept maintain a stable correspondence across the whole system, avoiding a split into multiple phrasings between natural-language explanations and implementation aliases that can no longer be matched.
+Engineering symbol names follow engineering constraints. Code identifiers, interface fields, and other engineering symbols can follow the relevant ecosystem and team conventions; the key is that they maintain stable correspondence with project concepts in the working language.
 
-Explanations that mainly serve technical maintenance can follow engineering collaboration habits. They concern engineering operations, framework constraints, build processes, and implementation details; their language choice is determined by the team's engineering practice.
+Engineering proper names can remain in their original language, such as commands, configuration items, API names, and error messages. Keeping the original language should be limited to the engineering proper names themselves; the surrounding explanation should still be organized in the working language. Engineering operation instructions aim at accurate execution, and their language choice follows the team's engineering practice.
 
 ## Objections
 
-**If each project uses its own working language, will cross-project reuse become harder?**
+**If working languages differ, will cross-project reuse of domain knowledge become harder?**
 
-Cross-project reuse is mainly semantic migration. An LLM can read domain knowledge, rule patterns, and term relationships from the source project, then combine them with the target project's glossary, existing project truth, code structure, and working language to generate a version that fits the target project's expression habits.
+Cross-project reuse at the implementation level usually depends on compatible programming languages, package management systems, and runtime environments. Cross-project reuse in the reference basis is mainly about moving domain knowledge, rule patterns, term relationships, and modeling experience into the target project.
 
-Content migrated in this way can participate in retrieval, review, and continuous maintenance as if it were written natively for the target project. What can be migrated includes domain knowledge, rule patterns, modeling experience, term relationships, and inspiration from historical decisions; only content that the target project confirms and adopts becomes project truth in the target project.
+When this content enters the target project, it needs to be re-expressed in terms of the target project's existing project truth, execution structure, and working language. Only after the migrated content is adopted by the target project and becomes content it currently relies on does it enter project truth in the target project.
 
-**Will differences between natural language and implementation names create confusion?**
+**Will differences between natural language expression and engineering symbol names create confusion?**
 
-Implementation names and natural-language names express different parts of project truth. Implementation names express program structure and are affected by component division, refactoring, framework conventions, database design, and symbol systems. Natural-language names express business meaning and need to stay stable with the working language.
+Engineering symbol names and natural language expression in the reference basis play different roles. Engineering symbol names express implementation structure and are affected by component boundaries, refactoring, framework conventions, database design, and symbol systems. Natural language expression in the reference basis serves understanding and judgment, and needs to remain stable with the working language.
 
-After a project refactor, implementation names may change while business concepts can remain stable. The two are connected through glossaries, references, and context, supporting both code navigation and business understanding.
+After a project refactor, engineering symbol names may change while project concepts can remain stable. The two can be connected through the glossary, references, and necessary explanations, supporting both engineering location and project understanding.
 
 ## Conclusion
 
-Project text should use the working language. The working language carries how the project actually handles business meaning and can be reused continuously by the primary maintainers.
+Natural language expression in the reference basis should match the working language. The working language is the default language continuously used by primary maintainers to understand, discuss, record, and maintain the project.
 
-This principle keeps project truth expressed in text, glossaries, business rules, acceptance criteria, decision records, and comments that explain business meaning in the same semantic space, reducing translation loss and term drift while improving retrieval, extraction, and projection view generation. Implementation names can evolve under engineering constraints, while project text should carry business meaning in a stable way.
+This principle lets explanations, rules, shared interpretations, tradeoffs, and necessary historical reasons in project truth accumulate in the same language. It makes the project easier for people to understand and reduces the cost for AI to locate the basis. Engineering symbol names can evolve under engineering constraints; natural language expression in the reference basis should remain stable and continuously support retrieval, reuse, and maintenance.
