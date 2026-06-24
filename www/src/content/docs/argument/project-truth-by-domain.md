@@ -3,14 +3,14 @@ title: 项目真相应按领域组织
 description: 依据部分进入版本库后，应按领域组织并贴近相关执行部分；依据部分无法放在对应领域目录中，或目录无法表达边界时，再用外置领域声明补足。
 dependsOn:
   - argument/what-is-project-truth
-  - argument/basis-part-versioned-with-execution-part
+  - argument/reference-basis-versioned-with-execution-part
 ---
 
 项目真相应按领域组织。领域，是项目中稳定的理解和维护范围。一个领域内的执行部分和依据部分，需要在后续迭代中被共同理解、修改、验证和审查。
 
 领域组织的基本做法，是让依据部分贴近相关执行部分，并沿用执行部分已经形成的目录边界。目录能够同时表达位置和范围。上级目录承载更大范围的依据，下级目录承载更具体范围的依据。当依据部分无法放在对应领域目录中，或目录无法清楚表达领域边界时，可以用外置领域声明补足。
 
-> 本文承接 [依据部分必须随执行部分版本化](/argument/basis-part-versioned-with-execution-part/) 的判断，只讨论依据部分进入版本库后应如何组织。
+> 本文承接 [依据部分必须随执行部分版本化](/argument/reference-basis-versioned-with-execution-part/) 的判断，只讨论依据部分进入版本库后应如何组织。
 
 ## 背景
 
