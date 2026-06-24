@@ -2,25 +2,33 @@
 title: Glossary
 description: Core terms used in the Arguments section.
 tableOfContents: false
-sourceHash: 7ddc9b2de3e3c09d300e3b436aca6e00c4b62a99dcd3b1105c43097d1166440c
+sourceHash: 395397616a4be5f9d45b7cfad10359a10dde50fd41f7eb0c41077d6bba56cae9
 ---
 
 **Project Truth**
 
-Project truth is the content the current project actually relies on. It determines how the project runs now, how it should be understood, what later changes and judgments must take into account, and what provides the basis for generating projection views in different task contexts.
+Project truth is the content the current project actually relies on. It determines how the project runs now, how it is understood, what later changes and judgments must take into account, and provides the basis for generating projection views in different task contexts. Project truth consists of the execution part and the reference basis.
+
+**Execution Part**
+
+The execution part is the part of project truth that participates in the current execution flow and determines the current version's result. It usually takes an operable, verifiable form; its specific form depends on the project type and workflow.
+
+**Reference Basis**
+
+The reference basis is the part of project truth that does not participate in the current execution flow, but affects later iteration judgments and results. It preserves the current basis that later iterations must follow when that basis cannot be reliably carried by the execution part itself.
 
 **Glossary**
 
-A glossary maintains the stable vocabulary of a project. It lets people, LLMs, and agents work in the same semantic space, reducing ambiguity caused by synonyms, near-synonyms, industry colloquialisms, and incorrect spellings.
+A glossary maintains the stable vocabulary of a project. It lets people and AI work in the same semantic space, reducing ambiguity caused by synonyms, near-synonyms, industry colloquialisms, and incorrect spellings.
 
 **Working Language**
 
-The working language is the natural language a project uses in practice to understand business meaning, name it, make judgments about it, record it, and maintain it over time. Its primary maintainers can keep using it continuously. It is formed by the stable wording used for business concepts, business rules, customer-facing explanations, product tradeoffs, and everyday records.
+The working language is the natural language a project actually uses when working with business semantics, and that its primary maintainers can continue using over time. It is formed by the stable business expressions used in the project.
 
 **Projection View**
 
-A projection view is a portion of project truth extracted, reorganized, and presented for a specific task, an agent execution context, an audit, business understanding, product research, or management review.
+A projection view is a portion of project truth extracted, reorganized, and presented for a specific usage context.
 
 **Domain**
 
-A domain is the organizational unit of project truth. It organizes, within one scope, the code implementation, terms, constraints, rules, decision records, and necessary historical memory that need to be understood, changed, reviewed, and continuously maintained together.
+A domain is the organizational unit of project truth. It organizes the execution part and reference basis that belong to the same long-term maintenance unit.
