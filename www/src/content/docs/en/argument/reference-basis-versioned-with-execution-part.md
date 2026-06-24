@@ -28,7 +28,7 @@ The reference basis affects later iterations, but does not enter the current exe
 
 After the reference basis is versioned with the execution part, the current basis can be judged within the same version boundary. When people and AI understand the project, they do not first need to decide whether external documents still match the current execution state, nor do they need to piece together version relationships across multiple tools.
 
-**A shared version boundary lets the basis be maintained with changes.**
+**A shared version boundary lets the current basis be maintained with changes.**
 
 A single iteration may change both the execution result and the basis for later judgment. Rule changes, terminology convergence, constraint changes, and added historical reasons may all require updates to the reference basis. After the reference basis is versioned with the execution part, these changes can be maintained within the same commit, review, and rollback boundary.
 
@@ -44,7 +44,7 @@ Each round trip introduces information loss, retelling bias, version mismatch, a
 
 When AI participates in later maintenance, it usually needs to locate, change, and verify results in the repository where the execution part lives. If the reference basis stays in another version space, every AI change depends on user retelling, ad hoc search, or extra context assembly. Natural-language basis content does not have stable mechanisms comparable to code symbol indexes, and version mismatch further reduces the reliability of search and judgment.
 
-After the reference basis is versioned with the execution part, AI can discover the current basis in the same repository, and put basis changes and execution changes into the same review. Human reviewers can also judge both whether the result is correct and whether the basis still holds.
+After the reference basis is versioned with the execution part, AI can discover the current basis in the same repository, and include reference-basis changes and execution changes in the same review. Human reviewers can also judge both whether the result is correct and whether the current basis still holds.
 
 ## Boundaries
 
@@ -76,7 +76,7 @@ External systems can continue to serve collaboration and access, while the refer
 
 It adds explicit maintenance work, but reduces hidden understanding costs. When the reference basis stays outside, maintainers still need to judge which materials are valid, which rules are outdated, and which constraints still apply. Those judgments are simply scattered across communication, search, and context stitching.
 
-After the reference basis is versioned with the execution part, the maintenance burden enters the normal change flow. When changing the execution part, maintainers can also check whether the related basis needs updating. When reviewing changes, they can also confirm whether the current basis and the execution result remain consistent.
+After the reference basis is versioned with the execution part, the maintenance burden enters the normal change flow. When changing the execution part, maintainers can also check whether the related basis content needs updating. When reviewing changes, they can also confirm whether the current basis and the execution result remain consistent.
 
 ## Conclusion
 
@@ -84,4 +84,4 @@ The reference basis must be versioned with the execution part. Project truth con
 
 The core judgment is that it should be possible to review, trace, roll back, and maintain the content the current project actually relies on together with the current result.
 
-This lets people, AI, and tools judge whether the basis is valid on the same current version, and maintain the basis and execution result together through changes.
+This lets people, AI, and tools judge whether the current basis is valid on the same current version, and maintain the current basis and execution result together through changes.
