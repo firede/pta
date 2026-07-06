@@ -2,7 +2,7 @@
 title: 術語表
 description: 立論中使用的核心術語。
 tableOfContents: false
-sourceHash: 395397616a4be5f9d45b7cfad10359a10dde50fd41f7eb0c41077d6bba56cae9
+sourceHash: b7b6098b04fa5a1e8473207a8f7bd257a69449de0eb35b217a14b8101e3506a2
 ---
 
 **專案真相**
@@ -23,7 +23,7 @@ sourceHash: 395397616a4be5f9d45b7cfad10359a10dde50fd41f7eb0c41077d6bba56cae9
 
 **工作語言**
 
-工作語言，是專案處理業務語義時實際使用，並且能夠被主要維護者持續複用的自然語言。它由專案中穩定使用的業務表達共同形成。
+工作語言，是專案主要維護者理解、討論、記錄和維護專案時持續使用的自然語言。它由專案中穩定複用的表達習慣形成，是專案說明的預設語言。
 
 **投影視圖**
 

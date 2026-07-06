@@ -2,7 +2,7 @@
 title: Glossary
 description: Core terms used in the Arguments section.
 tableOfContents: false
-sourceHash: 395397616a4be5f9d45b7cfad10359a10dde50fd41f7eb0c41077d6bba56cae9
+sourceHash: b7b6098b04fa5a1e8473207a8f7bd257a69449de0eb35b217a14b8101e3506a2
 ---
 
 **Project Truth**
@@ -23,7 +23,7 @@ A glossary maintains the stable vocabulary of a project. It lets people and AI w
 
 **Working Language**
 
-The working language is the natural language a project actually uses when working with business semantics, and that its primary maintainers can continue using over time. It is formed by the stable business expressions used in the project.
+The working language is the natural language that the project's primary maintainers continuously use to understand, discuss, record, and maintain the project. It is formed by expression patterns that are reused consistently in the project, and is the default language for project explanations.
 
 **Projection View**
 

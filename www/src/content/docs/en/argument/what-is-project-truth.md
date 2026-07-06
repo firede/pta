@@ -1,12 +1,14 @@
 ---
 title: What Is Project Truth
 description: Project truth is the content the current project actually relies on. It consists of the execution part and the reference basis, supports continuous project iteration, and provides the basis for generating projection views.
-sourceHash: ac24d96d495e229503fef049d26bfc4dbf8c429d4bddefa4495698f40b73d2bd
+sourceHash: 33d057145e0da20180ff33531040d6da8e4a46007c4ad4b422ec7e0b625a3f4b
 ---
 
 Project truth is the content the current project actually relies on. It determines how the project runs now, how it is understood, what later changes and judgments must take into account, and provides the basis for generating projection views in different task contexts.
 
 Project truth primarily serves continuous project iteration. As long as a project will continue to be understood, changed, explained, audited, or used to generate projection views, it needs a current basis. This basis may be used by people or by AI; project truth is meant for understanding and judgment while the project keeps changing.
+
+Maintaining project truth also economizes maintainers' attention. A substantial part of what a project actually relies on exists only in maintainers' heads; when that content is not made explicit, people must restate it in every task, and restating consumes attention and introduces drift in retelling. Human attention is a limited resource, and once AI participates, the occasions that require restating multiply, amplifying this cost. Project truth makes this content explicit once and keeps it in effect, so people and AI can obtain the current basis directly when needed.
 
 Project truth consists of the execution part and the reference basis. The execution part is the part of project truth that participates in the current execution flow and determines the current version's result; the reference basis is the part of project truth that does not participate in the current execution flow, but affects later iteration judgments and results.
 

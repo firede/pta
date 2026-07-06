@@ -3,7 +3,7 @@ title: Reference Basis Must Share Execution Version Boundaries
 description: In long-lived iterative projects, whenever the execution part is managed in a repository and AI will participate in later maintenance, the reference basis of project truth must be versioned with the execution part.
 dependsOn:
   - argument/what-is-project-truth
-sourceHash: 2b5520bfee65af9cdc90691bb129ea637c34056ad803df3d58c41e4b7a459f51
+sourceHash: 4ddb7b888b1a469707194abfc9beba704e779a9e669330a6f84ef6e9af069c9b
 ---
 
 In long-lived iterative projects, whenever the execution part is managed in a repository and AI will participate in later maintenance, the reference basis of project truth must be versioned with the execution part.
@@ -74,7 +74,7 @@ External systems can continue to serve collaboration and access, while the refer
 
 **Will versioning the reference basis with the execution part increase maintenance burden?**
 
-It adds explicit maintenance work, but reduces hidden understanding costs. When the reference basis stays outside, maintainers still need to judge which materials are valid, which rules are outdated, and which constraints still apply. Those judgments are simply scattered across communication, search, and context stitching.
+It adds explicit maintenance work, but reduces hidden understanding costs. When the reference basis stays outside, maintainers still need to judge which materials are valid, which rules are outdated, and which constraints still apply. Those judgments are simply scattered across communication, search, and context stitching. The explicit maintenance work is a one-time investment; the scattered hidden judgments are paid again in every iteration, and keep accumulating as iterations continue.
 
 After the reference basis is versioned with the execution part, the maintenance burden enters the normal change flow. When changing the execution part, maintainers can also check whether the related basis content needs updating. When reviewing changes, they can also confirm whether the current basis and the execution result remain consistent.
 
