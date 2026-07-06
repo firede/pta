@@ -4,7 +4,7 @@ description: After the grounding part enters the repository, it should be organi
 dependsOn:
   - argument/what-is-project-truth
   - argument/grounding-part-versioned-with-execution-part
-sourceHash: 23ab21cd8294de71580f99f96a3611de1c61f3f8b2b3c71080b02f62f95c6812
+sourceHash: b371cb6b1c4dbf9c9c563f43af2b123cda5c7a312b9bdb83a02faaaf2bb3144d
 ---
 
 Project truth should be organized by domain. A domain is a stable scope for understanding and maintaining a project. The execution part and the grounding part within a domain need to be understood, changed, verified, and reviewed together in later iterations.
@@ -51,13 +51,11 @@ When the grounding part cannot be placed in the corresponding domain directory, 
 
 When project truth is organized by domain, directories are the most common way to express domain boundaries. Whether a directory forms a domain unit needs to be made clear by project convention. This convention lets people and AI judge whether the directory stores grounding-part content, and what scope that content applies to.
 
-Some domains need an external domain declaration to connect the grounding part and the execution part. An external declaration should point to a directory path first. It may point only to a directory, or it may declare a limited file list under that directory. When it points only to a directory, the directory expresses the domain scope. When it also declares a file list, the domain scope is jointly defined by the directory path and the file list.
+Some domains need an external domain declaration to connect the grounding part and the execution part. An external declaration should point to a directory path first, and declare a limited file list under that directory only when necessary: when it points only to a directory, the directory expresses the domain scope; when it declares a file list, the domain scope is jointly defined by the directory path and the file list.
 
-A domain defined by a file list within a directory should remain small, explicit, and enumerable. A limited file list is the expressive limit for this kind of domain; if a domain needs complex rules to define it, it has exceeded the complexity that a discrete file set is suited to carry.
+A limited file list is the expressive limit of an external declaration. A domain defined by a file list should remain small, explicit, and enumerable, and exists as a final domain unit — hierarchy semantics are carried by directories, and a discrete file set provides no lower-level space and produces no lower-level domain relationships. If a domain needs complex rules to describe it, it has exceeded the complexity that a discrete file set is suited to carry; when this persists, it usually indicates insufficient domain abstraction in the execution part, and the fix belongs in the execution part itself.
 
-A domain defined by a file list within a directory should be treated as a final domain unit. It does not rely on the directory hierarchy to provide lower-level space, and does not produce further lower-level domain relationships.
-
-Organizing project truth by domain does not require a project to immediately rearrange its existing structure just to record project truth. When the grounding part cannot be placed in the corresponding domain directory, or when the existing structure cannot sufficiently express domain boundaries, an external domain declaration can fill the gap. When a domain can only be defined through complex file rules over a long period, that usually indicates insufficient domain abstraction in the execution part.
+Organizing project truth by domain does not require a project to immediately rearrange its existing structure just to record project truth. When the existing structure cannot yet sufficiently express domain boundaries, an external domain declaration can fill the gap first.
 
 This article discusses organization principles. It does not define specific file names, directory names, declaration formats, or scanning rules. Those belong to later specification work.
 
@@ -73,13 +71,9 @@ The primary maintenance structure of project truth should prioritize the reposit
 
 Knowledge graphs can be used to generate projection views. They can extract, reorganize, and present relationships from project truth for cross-domain search, relationship browsing, audit, or analysis. Project truth itself carries the currently valid basis content; graph-like structures are better suited as projection views generated from project truth.
 
-**What if some domains cannot be maintained directly by directory?**
+**Does this tie project truth to directory structure?**
 
-The organizational unit of project truth is the domain. The directory is only one natural form of domain boundary.
-
-When a directory already expresses a domain boundary, the grounding part should first be placed near that directory. If the grounding part cannot be placed in the corresponding domain directory, or if the domain involves only a small number of files under that directory, an external domain declaration can connect the grounding part with the corresponding execution part.
-
-This preserves the principle of domain organization and avoids treating directories as the only organizational form. An external declaration should point to a directory path first, and may also declare a limited file list under that directory. When file boundaries are complex enough to require complex rules, the better direction is to improve the domain abstraction in the execution part.
+No. The organizational unit of project truth is the domain; the directory is only the most natural form of domain boundary. When directories can express domain boundaries, placing the grounding part nearby yields the most benefit; when they cannot, an external domain declaration can equally connect the grounding part with the execution part. The principle of domain organization does not depend on directories as its only form.
 
 **How is this domain different from a domain in DDD?**
 
@@ -95,4 +89,4 @@ If a project uses DDD, the business boundaries it forms can become an important 
 
 Project truth should be organized by domain. A domain places the execution part and the grounding part that need to be understood, changed, verified, and reviewed together within the same maintenance scope, allowing related basis content to be maintained with execution changes.
 
-Directory structure is the preferred form of domain organization because it stays close to the execution part, is easy to discover, and can reuse the maintenance boundaries already formed in the project. When the grounding part cannot be placed in the corresponding domain directory, or when the domain boundary cannot be clearly expressed by directories, an external domain declaration can connect the grounding part with the execution part. The external declaration should point to a directory path first, and declare a limited file list within that directory only when necessary.
+Directory structure is the preferred form of domain organization because it stays close to the execution part, is easy to discover, and can reuse the maintenance boundaries already formed in the project. When the grounding part cannot be placed in the corresponding domain directory, or when the domain boundary cannot be clearly expressed by directories, an external domain declaration can connect the grounding part with the execution part.
