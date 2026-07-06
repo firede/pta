@@ -3,12 +3,12 @@ title: The Grounding Part Must Be Versioned with the Execution Part
 description: In long-lived iterative projects, whenever the execution part is managed in a repository and AI will participate in later maintenance, the grounding part of project truth must be versioned with the execution part.
 dependsOn:
   - argument/what-is-project-truth
-sourceHash: bfcea337a4dd14d7ce1bf30f7222ba47442104166e54a0e8be577e25f1d9a83a
+sourceHash: 7d0dd8775216024d7c87d8de64e234ac34c9d2ee4bb253af2982f2f22e5bc00a
 ---
 
 In long-lived iterative projects, whenever the execution part is managed in a repository and AI will participate in later maintenance, the grounding part of project truth must be versioned with the execution part.
 
-What matters here is sharing the same version boundary. Changes to the grounding part should be committed, reviewed, rolled back, and traced together with the related execution changes.
+Versioning here means sharing the same version boundary: changes to the grounding part should be committed, reviewed, rolled back, and traced together with the related execution changes.
 
 > This article builds on the distinction between the execution part and the grounding part in [What Is Project Truth](/en/argument/what-is-project-truth/), and discusses only their version boundary relationship.
 
@@ -30,7 +30,7 @@ After the grounding part is versioned with the execution part, whether basis con
 
 **A shared version boundary lets basis content be maintained with changes.**
 
-A single iteration may change both the execution result and the basis for later judgment. Rule changes, terminology convergence, constraint changes, and added historical reasons may all require updates to the grounding part. After the grounding part is versioned with the execution part, these changes can be maintained within the same commit, review, and rollback boundary.
+A single iteration may change both the execution result and the basis for later judgment. Rule changes, terminology convergence, constraint changes, and added historical reasons may all require updates to the grounding part. Once the two share a version boundary, these changes can be maintained within the same commit, review, and rollback boundary.
 
 This does not require the grounding part to duplicate details already expressed clearly by the execution part. What needs to be maintained together is content that later iterations must follow, but that the execution part cannot reliably carry.
 
@@ -44,7 +44,7 @@ Each round trip introduces information loss, retelling bias, version mismatch, a
 
 When AI participates in later maintenance, it usually needs to locate, change, and verify results in the repository where the execution part lives. If the grounding part stays in another version space, every AI change depends on user retelling, ad hoc search, or extra context assembly. Natural-language basis content does not have stable mechanisms comparable to code symbol indexes, and version mismatch further reduces the reliability of search and judgment.
 
-After the grounding part is versioned with the execution part, AI can discover the currently valid basis content in the same repository, and include grounding-part changes and execution changes in the same review. Human reviewers can also judge both whether the result is correct and whether the related basis content still holds.
+Once the grounding part lives in the same repository, AI can discover the currently valid basis content directly, and include grounding-part changes and execution changes in the same review. Human reviewers can also judge both whether the result is correct and whether the related basis content still holds.
 
 ## Boundaries
 

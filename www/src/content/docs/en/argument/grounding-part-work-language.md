@@ -3,7 +3,7 @@ title: Natural Language Expression Should Match the Working Language
 description: Natural language expression in the grounding part of project truth should match the working language, improving understandability and reducing translation loss, term drift, and retrieval gaps.
 dependsOn:
   - argument/what-is-project-truth
-sourceHash: f1867c5753b47264f817b9f9d064f29285a9a165837019688c756fc01a3cd084
+sourceHash: a9fb2610ceb6b14bb387f77c58162692b04638a82b97703e46a2402faadd4bdc
 ---
 
 Natural language expression in the grounding part of project truth should match the working language.
@@ -20,11 +20,17 @@ Engineering symbols usually need to follow ecosystem, interface, and tooling con
 
 ## Rationale
 
-Natural language expression in the grounding part directly affects the cost of understanding and maintaining the project, so it should use the project's established working language. The key is a stable default natural language: whether the working language is Chinese, English, or another natural language the team has long used, maintainers should be able to read, discuss, and update the grounding part through the same main language. When the language is stable, the path to understanding is more direct, and the cost of reading, changing, and reviewing is lower.
+**A unified working language lowers the cost of human understanding and maintenance.**
 
-Language inconsistency increases the cost for AI to find the right basis content. AI can handle multiple languages, but multilingual processing does not cost the same. When AI participates in a project, it often follows text search, retrieval, and context extraction to locate relevant basis content; natural language lacks stable mechanisms comparable to code symbol indexes. Language inconsistency lowers keyword match quality, forcing AI to try multiple phrasings, cross-language keywords, or broader scans, and makes relevant content easier to miss.
+The key is a stable default natural language: whether the working language is Chinese, English, or another natural language the team has long used, maintainers should be able to read, discuss, and update the grounding part through the same main language. When the language is stable, the path to understanding is more direct, and the cost of reading, changing, and reviewing is lower.
 
-Using a unified working language lets the grounding part accumulate in the same language. The glossary can be built around the words that are actually used; rule explanations, historical reasons, and maintenance conventions can also reuse the same wording. This reduces translation loss, term drift, scattered expression, and retrieval gaps, allowing the grounding part to remain valid basis content that people and AI can keep locating, reusing, and maintaining.
+**Language inconsistency increases the cost for AI to find the right basis content.**
+
+AI can handle multiple languages, but multilingual processing does not cost the same. When AI participates in a project, it often depends on text search, retrieval, and context extraction to locate relevant basis content; natural language lacks stable mechanisms comparable to code symbol indexes. Language inconsistency lowers keyword match quality, forcing AI to try multiple phrasings, cross-language keywords, or broader scans, and makes relevant content easier to miss.
+
+**A unified working language lets basis content accumulate in the same set of expressions.**
+
+The glossary can be built around the words that are actually used; rule explanations, historical reasons, and maintenance conventions can also reuse the same wording. This reduces translation loss, term drift, scattered expression, and retrieval gaps, allowing the grounding part to remain valid basis content that people and AI can keep locating, reusing, and maintaining.
 
 ## Boundaries
 
