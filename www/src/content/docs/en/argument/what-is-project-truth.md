@@ -1,7 +1,7 @@
 ---
 title: What Is Project Truth
 description: Project truth is the content the current project actually follows. It consists of the execution part and the grounding part, supports continuous project iteration, and provides the basis for generating projection views.
-sourceHash: 0bbf4225b8652a349c257d5f1bc04e6d3fd34aed4ef4c0d794d2c39fd9454262
+sourceHash: 8f019a33147065e6a82a202f0a83fa59482977cf87538ce14f0581927de079a4
 ---
 
 Project truth is the content the current project actually follows. It determines how the project runs now, how it is understood, what later changes and judgments must take into account, and provides the basis for generating projection views in different task contexts.
@@ -11,8 +11,6 @@ Project truth primarily serves continuous project iteration. As long as a projec
 Maintaining project truth also economizes maintainers' attention. A substantial part of what a project actually follows exists only in maintainers' heads; when that content is not made explicit, people must restate it in every task, and restating consumes attention and introduces drift in retelling. Human attention is a limited resource, and once AI participates, the occasions that require restating multiply, amplifying this cost. Project truth makes this content explicit once and keeps it in effect, so people and AI can draw on it directly when needed.
 
 Project truth consists of the execution part and the grounding part. The execution part is the part of project truth that participates in the current execution flow and determines the current version's result; the grounding part is the part of project truth that does not participate in the current execution flow, but affects later iteration judgments and results.
-
-In a new iteration, the project truth available to people and AI is determined by both the execution part and the grounding part. Both affect later iteration judgments and results; the distinction is whether they are part of the current execution flow: the execution part is, and the grounding part is not.
 
 ## Background
 
@@ -33,8 +31,6 @@ Therefore, the execution part itself carries project truth that has already land
 **The grounding part supplements content that the execution part cannot reliably carry.**
 
 The grounding part preserves content that later iterations must follow but that the execution part cannot reliably carry. This content usually concerns project semantics, real-world constraints, product tradeoffs, and necessary historical reasons.
-
-It records rules, constraints, tradeoffs, and necessary reasons that the project has adopted and that will continue to affect iteration.
 
 Details already expressed clearly by the execution part are not duplicated in the grounding part.
 
@@ -80,9 +76,9 @@ This article only defines what project truth is. How project truth enters the re
 
 **Will project truth become a place where everything gets thrown in?**
 
-This risk exists. Project truth contains only the content the current project actually follows, and that content affects the current result or later iteration. Related materials, process records, and one-off context may all be valuable, but that does not automatically make them project truth.
+This risk exists. The test for controlling it is the definition applied in reverse: if deleting or changing a piece of content would change neither the current result nor later iteration judgments, it does not belong to project truth. Related materials, process records, and one-off context may be valuable, but most of them fail this test.
 
-Content that the current version has stopped adopting should not remain in the current project truth.
+By the same test, content that the current version has stopped adopting should not remain in the current project truth.
 
 **If the execution part already contains business logic, why is the grounding part still needed?**
 
@@ -90,7 +86,7 @@ The grounding part is needed because the execution part cannot reliably carry al
 
 **Will the grounding part become an accumulation of ADRs and discussion records?**
 
-This risk comes from treating process materials as project truth. ADRs, meeting notes, issue discussions, and agent conversations record discussion and decision-making processes. They are not project truth. The grounding part records only the content the current project actually follows.
+This risk comes from treating process materials as project truth. ADRs, meeting notes, issue discussions, and agent conversations record discussion and decision-making processes. They are not project truth. What enters the grounding part is what these processes finally settle into: conclusions the project still follows.
 
 **If project truth changes across versions, why call it truth?**
 
