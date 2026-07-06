@@ -1,8 +1,8 @@
 export const argumentIds = [
   'argument/what-is-project-truth',
-  'argument/reference-basis-versioned-with-execution-part',
+  'argument/grounding-part-versioned-with-execution-part',
   'argument/project-truth-by-domain',
-  'argument/reference-basis-work-language',
+  'argument/grounding-part-work-language',
 ] as const;
 
 export type ArgumentId = (typeof argumentIds)[number];
