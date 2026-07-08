@@ -2,7 +2,7 @@
 title: Glossary
 description: Core terms used in the Arguments section.
 tableOfContents: false
-sourceHash: 271842034b703de486d0356cc83a5d19682d94fa60bdcf0dacfd49ab15c86382
+sourceHash: dfd9e0637213ecf37e4434e7cc1f317c7d48d51bbc094df1dac74c25d8d1b88e
 ---
 
 **Project Truth**
@@ -32,3 +32,23 @@ A projection view is a portion of project truth extracted, reorganized, and pres
 **Domain**
 
 A domain is the organizational unit of project truth. It organizes the execution part and grounding part that belong to the same long-term maintenance unit.
+
+**Freshness**
+
+Freshness is the degree of consistency between the project truth recorded in the repository and what the project actually follows. Freshness is maintained by change points and inspection points together.
+
+**Internal Drift**
+
+Internal drift is record deviation triggered by changes inside the repository. It takes two forms: the execution part is updated while the same domain's basis content is not; or a domain's basis content is updated while the related domains that reference it are not re-checked.
+
+**External Drift**
+
+External drift is record deviation triggered by changes outside the repository. When the real-world constraints the project follows change, no event appears in the repository, and the record falls out of truth.
+
+**Change Point**
+
+A change point is a checkpoint attached to change actions such as commits, reviews, and merges. It handles internal drift and folds freshness checks into the normal change flow.
+
+**Inspection Point**
+
+An inspection point is a time-triggered checkpoint independent of changes. It handles external drift and takes over domain relatedness that no structure expresses.
