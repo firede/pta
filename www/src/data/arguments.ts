@@ -5,6 +5,7 @@ export const argumentIds = [
   'argument/grounding-part-work-language',
   'argument/projection-view-compiled-on-demand',
   'argument/project-truth-freshness-governance',
+  'argument/domain-knowledge-package',
 ] as const;
 
 export type ArgumentId = (typeof argumentIds)[number];
