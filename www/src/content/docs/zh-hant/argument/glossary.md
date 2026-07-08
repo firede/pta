@@ -2,7 +2,7 @@
 title: 術語表
 description: 立論中使用的核心術語。
 tableOfContents: false
-sourceHash: 406caac4e45a3e56034b9f7058938bc40f33cdf78063be8fcd82211eb6d81de3
+sourceHash: 271842034b703de486d0356cc83a5d19682d94fa60bdcf0dacfd49ab15c86382
 ---
 
 **專案真相**
@@ -27,7 +27,7 @@ sourceHash: 406caac4e45a3e56034b9f7058938bc40f33cdf78063be8fcd82211eb6d81de3
 
 **投影視圖**
 
-投影視圖，是針對具體使用場景，從專案真相中抽取、重組和呈現出來的一部分內容。
+投影視圖，是針對具體使用場景，從專案真相中抽取、重組和呈現出來的一部分內容。它是專案真相的消費結果，可依據專案真相和使用場景按需重新生成；投影中的內容需要修正時，修正落在專案真相上。
 
 **領域**
 

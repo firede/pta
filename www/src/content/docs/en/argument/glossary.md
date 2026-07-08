@@ -2,7 +2,7 @@
 title: Glossary
 description: Core terms used in the Arguments section.
 tableOfContents: false
-sourceHash: 406caac4e45a3e56034b9f7058938bc40f33cdf78063be8fcd82211eb6d81de3
+sourceHash: 271842034b703de486d0356cc83a5d19682d94fa60bdcf0dacfd49ab15c86382
 ---
 
 **Project Truth**
@@ -27,7 +27,7 @@ The working language is the natural language that the project's primary maintain
 
 **Projection View**
 
-A projection view is a portion of project truth extracted, reorganized, and presented for a specific usage context.
+A projection view is a portion of project truth extracted, reorganized, and presented for a specific usage context. It is a derived result of project truth and can be regenerated on demand from project truth and the usage context; when content in a projection needs correction, the correction lands on project truth.
 
 **Domain**
 

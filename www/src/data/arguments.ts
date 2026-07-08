@@ -3,6 +3,7 @@ export const argumentIds = [
   'argument/grounding-part-versioned-with-execution-part',
   'argument/project-truth-by-domain',
   'argument/grounding-part-work-language',
+  'argument/projection-view-compiled-on-demand',
 ] as const;
 
 export type ArgumentId = (typeof argumentIds)[number];
