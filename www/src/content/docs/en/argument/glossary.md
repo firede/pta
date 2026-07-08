@@ -2,7 +2,7 @@
 title: Glossary
 description: Core terms used in the Arguments section.
 tableOfContents: false
-sourceHash: dfd9e0637213ecf37e4434e7cc1f317c7d48d51bbc094df1dac74c25d8d1b88e
+sourceHash: 18b03f9779e5f66337abf4d3164c148c4f9a862a199a14497f83e13dd2f401f0
 ---
 
 **Project Truth**
@@ -52,3 +52,19 @@ A change point is a checkpoint attached to change actions such as commits, revie
 **Inspection Point**
 
 An inspection point is a time-triggered checkpoint independent of changes. It handles external drift and takes over domain relatedness that no structure expresses.
+
+**Domain Knowledge Package**
+
+A domain knowledge package is a sharing unit of domain knowledge extracted from project truth after stripping project coupling and private information, consisting of normative content and informative content. It is not project truth for any project; its content enters the target project's truth only after being re-implemented by the target project, passing verification, and being adopted.
+
+**Normative Content**
+
+Normative content is the part of a domain knowledge package that consuming projects must follow, consisting of the domain's term relationships, rules, edge cases, reasons behind tradeoffs, and verifiers. The range over which it is tested is bounded by the package's sharing scope.
+
+**Informative Content**
+
+Informative content is the part of a domain knowledge package that serves as reference only, represented by the reference implementation. It can be replaced wholesale or regenerated from the normative content, and is not a basis for verification.
+
+**Verifier**
+
+A verifier expresses the machine-verifiable part of domain knowledge as executable verification. It tests domain semantics rather than implementation structure, and is what consumers rely on to judge a package before adoption and to verify results during re-implementation.
