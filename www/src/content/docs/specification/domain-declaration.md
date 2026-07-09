@@ -21,7 +21,7 @@ dependsOn:
 
 `TRUTH.md` 记录该领域依据部分的主要内容：概念、规则、约束、取舍及其原因。执行部分已经清楚表达的细节不复写。
 
-领域以其主张的目录路径为标识。目录内 `TRUTH.md` 的位置即领域边界，**不得** 在 frontmatter 中声明路径；人读的领域名称由正文一级标题承担。frontmatter 全部可选：
+领域以其主张的目录路径为标识。目录内 `TRUTH.md` 的位置即领域边界，**不得** 在 frontmatter 中声明路径。领域不声明名称或描述，供人阅读的显示名由消费界面按需导出。frontmatter 全部可选：
 
 ```markdown
 ---
@@ -29,8 +29,6 @@ dependsOn:
   - path: src/components/screening-form
     reason: 展示规则依赖检查表单的录入口径
 ---
-
-# 牙列可视化
 
 ……
 ```
@@ -70,8 +68,6 @@ files:
   - lexer_test.go
   - parser_test.go
 ---
-
-# 查询 DSL
 
 ……
 ```

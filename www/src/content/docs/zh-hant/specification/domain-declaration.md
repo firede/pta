@@ -5,7 +5,7 @@ dependsOn:
   - argument/what-is-project-truth
   - argument/project-truth-by-domain
   - argument/project-truth-freshness-governance
-sourceHash: fc460345056d4c3d7516fb3f34be57981afe19a4c7ac20d1aa5e2cc7c931b4bd
+sourceHash: f3f648aa97cdf6a935764b6bafd0c53ab884a95887c6be2721a19e6f23f869ea
 ---
 
 領域聲明定義領域如何在版本庫中被界定、標記和連接。
@@ -22,7 +22,7 @@ sourceHash: fc460345056d4c3d7516fb3f34be57981afe19a4c7ac20d1aa5e2cc7c931b4bd
 
 `TRUTH.md` 記錄該領域依據部分的主要內容：概念、規則、約束、取捨及其原因。執行部分已經清楚表達的細節不複寫。
 
-領域以其主張的目錄路徑為標識。目錄內 `TRUTH.md` 的位置即領域邊界，**不得** 在 frontmatter 中聲明路徑；人讀的領域名稱由正文一級標題承擔。frontmatter 全部可選：
+領域以其主張的目錄路徑為標識。目錄內 `TRUTH.md` 的位置即領域邊界，**不得** 在 frontmatter 中聲明路徑。領域不聲明名稱或描述，供人閱讀的顯示名由消費介面按需導出。frontmatter 全部可選：
 
 ```markdown
 ---
@@ -30,8 +30,6 @@ dependsOn:
   - path: src/components/screening-form
     reason: 展示規則依賴檢查表單的錄入口徑
 ---
-
-# 牙列可視化
 
 ……
 ```
@@ -71,8 +69,6 @@ files:
   - lexer_test.go
   - parser_test.go
 ---
-
-# 查詢 DSL
 
 ……
 ```

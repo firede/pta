@@ -5,7 +5,7 @@ dependsOn:
   - argument/what-is-project-truth
   - argument/project-truth-by-domain
   - argument/project-truth-freshness-governance
-sourceHash: fc460345056d4c3d7516fb3f34be57981afe19a4c7ac20d1aa5e2cc7c931b4bd
+sourceHash: f3f648aa97cdf6a935764b6bafd0c53ab884a95887c6be2721a19e6f23f869ea
 ---
 
 Domain declaration defines how domains are delimited, marked, and connected in the repository.
@@ -22,7 +22,7 @@ A directory constitutes a domain by carrying `TRUTH.md`. This is the only criter
 
 `TRUTH.md` records the main content of the domain's grounding part: concepts, rules, constraints, and tradeoffs with their reasons. Details already expressed clearly by the execution part are not duplicated.
 
-A domain is identified by the directory path it claims. For an in-directory `TRUTH.md`, its location is the domain boundary, and the path **must not** be declared in frontmatter; the human-readable domain name is carried by the body's top-level heading. All frontmatter is optional:
+A domain is identified by the directory path it claims. For an in-directory `TRUTH.md`, its location is the domain boundary, and the path **must not** be declared in frontmatter. A domain declares no name or description; the human-readable display name is derived on demand by consuming interfaces. All frontmatter is optional:
 
 ```markdown
 ---
@@ -30,8 +30,6 @@ dependsOn:
   - path: src/components/screening-form
     reason: The display rules depend on the screening form's entry conventions
 ---
-
-# Dentition Visualization
 
 ……
 ```
@@ -71,8 +69,6 @@ files:
   - lexer_test.go
   - parser_test.go
 ---
-
-# Query DSL
 
 ……
 ```
