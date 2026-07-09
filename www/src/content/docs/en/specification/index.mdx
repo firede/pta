@@ -2,15 +2,14 @@
 title: Specification
 description: Specification for Project Truth Architecture.
 tableOfContents: false
-sourceHash: 953c30c55ef7d51c60d7def57b516e7d5cbc4b864047fc706f9aecc210fc176a
+sourceHash: 0d2c1631f1c6683551843b61eb46523375c64ee27640e696b8399143066ea260
 ---
 
-The Project Truth Architecture specification defines how project truth is organized, maintained, used, integrated with tools, and reused across projects.
+import DocumentList from '@/components/docs/DocumentList.astro';
+import { specificationIds } from '@/data/specifications';
 
-- Domain Organization
-- Content Structure
-- Governance
-- Projection Views
-- Compilation
-- Integration
-- Shared Truth Pack
+The Project Truth Architecture specification defines how project truth is organized, maintained, used, integrated with tools, and reused across projects. Specifications are derived from the arguments, and each specification declares the arguments it depends on.
+
+<DocumentList ids={specificationIds} />
+
+Planned specification areas: domain organization, content structure, governance, projection views, compilation, integration, and domain knowledge packages.

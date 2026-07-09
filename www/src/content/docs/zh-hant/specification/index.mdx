@@ -2,15 +2,14 @@
 title: 規範
 description: 專案真相架構規範文件。
 tableOfContents: false
-sourceHash: 953c30c55ef7d51c60d7def57b516e7d5cbc4b864047fc706f9aecc210fc176a
+sourceHash: 0d2c1631f1c6683551843b61eb46523375c64ee27640e696b8399143066ea260
 ---
 
-專案真相架構規範定義專案真相的組織、維護、使用、工具整合和跨專案複用方式。
+import DocumentList from '@/components/docs/DocumentList.astro';
+import { specificationIds } from '@/data/specifications';
 
-- 領域組織
-- 內容結構
-- 治理
-- 投影視圖
-- 編譯
-- 整合
-- 共享真相包
+專案真相架構規範定義專案真相的組織、維護、使用、工具整合和跨專案複用方式。規範由立論推導，每篇規範聲明它所依據的立論。
+
+<DocumentList ids={specificationIds} />
+
+規劃中的規範範圍：領域組織、內容結構、治理、投影視圖、編譯、整合、領域知識包。

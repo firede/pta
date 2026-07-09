@@ -4,12 +4,11 @@ description: 项目真相架构规范文档。
 tableOfContents: false
 ---
 
-项目真相架构规范定义项目真相的组织、维护、使用、工具集成和跨项目复用方式。
+import DocumentList from '@/components/docs/DocumentList.astro';
+import { specificationIds } from '@/data/specifications';
 
-- 领域组织
-- 内容结构
-- 治理
-- 投影视图
-- 编译
-- 集成
-- 共享真相包
+项目真相架构规范定义项目真相的组织、维护、使用、工具集成和跨项目复用方式。规范由立论推导，每篇规范声明它所依据的立论。
+
+<DocumentList ids={specificationIds} />
+
+规划中的规范范围：领域组织、内容结构、治理、投影视图、编译、集成、领域知识包。

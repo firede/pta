@@ -5,6 +5,7 @@ import react from '@astrojs/react';
 import tailwindcss from '@tailwindcss/vite';
 
 import { argumentIds } from './src/data/arguments';
+import { specificationIds } from './src/data/specifications';
 import { getRootMessage, getStarlightTranslations, starlightI18n } from './src/lib/i18n';
 
 // https://astro.build/config
@@ -36,7 +37,7 @@ export default defineConfig({
         {
           label: getRootMessage('specification'),
           translations: getStarlightTranslations('specification'),
-          slug: 'specification',
+          items: ['specification', ...specificationIds],
         },
         {
           label: getRootMessage('arguments'),
