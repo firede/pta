@@ -7,7 +7,7 @@ dependsOn:
   - argument/project-truth-freshness-governance
   - argument/derivable-content-in-tool-layer
   - argument/history-still-in-effect
-sourceHash: f2af2c0d635d38be28bd672e6edc88f90287e3af3829ecc02329ec7d470b87b0
+sourceHash: 2124d0d7e051c904d4910c5234541df4ddad07dce30740518da6396cad256e40
 ---
 
 Content structure defines how domain declaration files are organized internally. The existence, location, and frontmatter fields of the files are defined by the domain declaration specification; this specification defines the body.
@@ -46,6 +46,8 @@ When a judgment depends on an external fact to hold, a review clue — a date or
 
 Judgment entries **must not** be given titles, identifiers, type labels, or status markers, and the variant of using a bold lead as a title **must not** be used either. Such content can be derived from the judgment itself and belongs in the tool-layer cache.
 
+An entry opens with `- ` at the start of the line — a hyphen followed by a single space — and ends at the end of the line, with no leading indentation, and **must not** span multiple lines: the source-text boundary of an entry can therefore be recomputed identically by every implementation, and any non-blank line in the body that does not open with the entry marker is content outside the list.
+
 Inside an entry, block-level structure such as nested lists, tables, or code fences **should not** be used, and the body **should not** place paragraphs or headings outside the list. Content outside the list is directly discoverable by syntax checking; when a judgment seems to need block-level structure to express, that is a check signal — it usually should be split into several judgments, condensed into a term entry, or sunk into the execution part's verification.
 
 ## Entries and the Tool Layer
@@ -60,6 +62,8 @@ The `GLOSSARY.md` body is likewise a flat list consisting of term entries. An en
 - **Permanent Teeth**: teeth that remain in long-term use after replacing the primary teeth, rendered in solid color in the chart.
 - **Primary Teeth**: the first set of teeth in childhood, replaced as permanent teeth erupt.
 ```
+
+A term entry likewise opens with `- ` at the start of the line and ends at the end of the line, and **must not** span multiple lines; the constraints on block-level structure inside the entry and outside the list are the same as for judgment entries.
 
 The glossary records affirmatively only. Consistency checks against confusable words are derived by tooling from the term names and definitions and cached, and belong to the governance specification; when the rejection of a particular word itself carries decision weight, it enters `TRUTH.md` as a judgment entry with its reason.
 
