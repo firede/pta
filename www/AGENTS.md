@@ -1,8 +1,4 @@
-## 内容
-
-- 文档的事实来源为简体中文版(zh-Hans)，其它语言版本均基于此翻译/本地化。
-- 文档物料就近放置在同名目录，如 `src/content/docs/argument/what-is-project-truth.md` 的专有图片、组件放置在 `src/content/docs/argument/what-is-project-truth/` 目录下。
-  - 本地化的文档，在可复用来源文档资源时，优先复用；仅在确有必要时依照以上规则创建目录存放。
+项目遵循的判断记录于 [项目真相](../TRUTH.md)。
 
 ## 项目结构
 
