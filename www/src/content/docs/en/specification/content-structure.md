@@ -6,7 +6,7 @@ dependsOn:
   - argument/grounding-part-work-language
   - argument/project-truth-freshness-governance
   - argument/derivable-content-in-tool-layer
-sourceHash: f3020800004846efc62c15464525806537b04f0e65bf85409a28b7b9af5aa69e
+sourceHash: 31ef4c3860ada8f24284b460db0de275659a3ad0d42ef8809c184329f63c2eb1
 ---
 
 Content structure defines how domain declaration files are organized internally. The existence, location, and frontmatter fields of the files are defined by the domain declaration specification; this specification defines the body.
@@ -62,4 +62,4 @@ The glossary records affirmatively only. Consistency checks against confusable w
 
 ## Out of Scope
 
-The entry requirements of `CHANGELOG.md` are given by the domain declaration specification. The craft of writing judgments — how to phrase them concisely, which reasons to keep — belongs to the guide. How checkpoints consume judgment entries and term-consistency signals, and the concrete mechanics of the tool-layer cache, belong to the governance specification. How projection views present body content belongs to the compilation specification.
+The entry requirements of `RESIDUE.md` are given by the domain declaration specification. The craft of writing judgments — how to phrase them concisely, which reasons to keep — belongs to the guide. How checkpoints consume judgment entries and term-consistency signals, and the concrete mechanics of the tool-layer cache, belong to the governance specification. How projection views present body content belongs to the compilation specification.

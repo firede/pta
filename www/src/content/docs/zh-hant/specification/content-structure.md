@@ -6,7 +6,7 @@ dependsOn:
   - argument/grounding-part-work-language
   - argument/project-truth-freshness-governance
   - argument/derivable-content-in-tool-layer
-sourceHash: f3020800004846efc62c15464525806537b04f0e65bf85409a28b7b9af5aa69e
+sourceHash: 31ef4c3860ada8f24284b460db0de275659a3ad0d42ef8809c184329f63c2eb1
 ---
 
 內容結構定義領域聲明檔案內部如何組織。檔案的存在、位置與 frontmatter 欄位由領域聲明規範定義，本規範定義正文。
@@ -62,4 +62,4 @@ sourceHash: f3020800004846efc62c15464525806537b04f0e65bf85409a28b7b9af5aa69e
 
 ## 範圍之外
 
-`CHANGELOG.md` 的條目要求由領域聲明規範給出。判斷的寫作手藝——如何凝練表述、原因如何取捨——屬於指南。核查節點如何消費判斷條目與術語一致性信號、工具層快取的具體機制，屬於治理規範。投影視圖如何呈現正文內容，屬於編譯規範。
+`RESIDUE.md` 的條目要求由領域聲明規範給出。判斷的寫作手藝——如何凝練表述、原因如何取捨——屬於指南。核查節點如何消費判斷條目與術語一致性信號、工具層快取的具體機制，屬於治理規範。投影視圖如何呈現正文內容，屬於編譯規範。

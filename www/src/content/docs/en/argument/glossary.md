@@ -2,7 +2,7 @@
 title: Glossary
 description: Core terms used in the Arguments section.
 tableOfContents: false
-sourceHash: 4b1652b07edc642c2965491abd87a361ccd62bec0ff907fa07a7568180662399
+sourceHash: 505e8df81c0639f1433f513560bed9657cfc3fc2d2c8c6e46a2843e38b0efe49
 ---
 
 **Project Truth**
@@ -60,6 +60,10 @@ Derivable content is content that machines can re-derive from project truth and 
 **Tool-Layer Cache**
 
 The tool-layer cache is storage outside the repository, managed by tooling, that holds derivable content and the process state of checks and adjudications. It is keyed by the content hash of the source and invalidated when the source changes; it can be discarded at any time, at the cost of one round of re-derivation or re-adjudication.
+
+**Residue**
+
+Residue is the still-effective consequence left by past project states acting on the real world. It has no anchor in the current execution part and cannot be derived from the current version's snapshot; it is recorded explicitly as a non-derivable judgment, with each entry carrying a time or version clue. Its expiry is driven by changes in the world, as external drift, and entries are deleted once they no longer influence later judgments.
 
 **Domain Knowledge Package**
 

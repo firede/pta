@@ -1,11 +1,12 @@
 ---
 title: Domain Declaration
-description: Defines how domains are delimited and declared in the repository — the TRUTH.md domain marker, the optional GLOSSARY.md and CHANGELOG.md companion files, the expression of domain hierarchy and relationships, and external domain declarations under .pta/.
+description: Defines how domains are delimited and declared in the repository — the TRUTH.md domain marker, the optional GLOSSARY.md and RESIDUE.md companion files, the expression of domain hierarchy and relationships, and external domain declarations under .pta/.
 dependsOn:
   - argument/what-is-project-truth
   - argument/project-truth-by-domain
   - argument/project-truth-freshness-governance
-sourceHash: 05e2244126434a1763dee18a894b4a9c541d00b7db4983173891bbc1ed4cf71a
+  - argument/history-still-in-effect
+sourceHash: ebcfb10b14213a043d31ef7d620e5f2e7b0ec3a2f163875a2f5b3e9fcc8dcbaf
 ---
 
 Domain declaration defines how domains are delimited, marked, and connected in the repository.
@@ -52,7 +53,7 @@ When the repository root carries `TRUTH.md`, it forms the root domain, holding p
 
 **`GLOSSARY.md` (optional)** maintains the domain's terms. Terms share background along the hierarchy: a child domain **must not** redefine a parent glossary's terms in conflicting ways, and a conflict constitutes a check signal. `GLOSSARY.md` may be drafted and maintained by an LLM, with adoption adjudicated by maintainers; it is part of project truth, not a projection view.
 
-**`CHANGELOG.md` (optional)** records the domain's necessary historical reasons: explanations of changes not visible in the execution part but still affecting truth judgments and future decisions. Each entry **should** be brief and carry a time or version clue, providing an entry point for browsing commit history. The criterion for inclusion is that it still affects later judgment; entries that no longer do **should** be deleted. `CHANGELOG.md` is not a release log, nor a place to store process materials.
+**`RESIDUE.md` (optional)** records the domain's residue still in effect: consequences left by past versions acting on the real world, with no anchor in the current execution part, but still influencing later judgments. Each entry **should** be brief and carry a time or version clue, providing an entry point into the change record. The criterion for inclusion is that it still affects later judgment; entries that no longer do **should** be deleted. `RESIDUE.md` is not a release log, nor a place to store process materials; historical reasons that explain current judgments are recorded with those judgments in `TRUTH.md` and **must not** be written into residue.
 
 ## External Domain Declarations
 

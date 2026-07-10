@@ -5,7 +5,7 @@ dependsOn:
   - argument/what-is-project-truth
   - argument/project-truth-freshness-governance
   - argument/derivable-content-in-tool-layer
-sourceHash: 1e4af9311229d3b31514fd85d46d473925ad362108087601ba73358d7e8f310d
+sourceHash: 8a0b40d83a9ee74d7380c9c3c963239635688bc995c88e3e35afa5600750e1c6
 ---
 
 History still in effect belongs to project truth. Project truth emphasizes what is currently in effect, but not everything currently in effect originates from the current version: the reasons for some present judgments are anchored in past changes, and the consequences left by past versions acting on the real world may persist into the present. Both kinds of content still influence later iterations, and neither can be read out of the current version's snapshot.
@@ -32,7 +32,7 @@ Most records in the basis part hold together around the current execution part: 
 
 **The reasons for the present state are the other half of the same dimension.**
 
-The definition article points out that some current rules cannot be fully understood from the present state alone, and necessary historical reasons need to be kept. Reasons answer why the present is the way it is; consequences answer how the past persists into the present. The two share the same selection criterion — whether they still influence later judgments — and the same way of exiting: deletion once they no longer do. They belong to the same time dimension of awareness and should be argued and governed by the same criterion.
+The definition article points out that some current rules cannot be fully understood from the present state alone, and necessary historical reasons need to be kept. Reasons answer why the present is the way it is; consequences answer how the past persists into the present. The two share the same selection criterion — whether they still influence later judgments — and the same way of exiting: deletion once they no longer do. They belong to the same time dimension of awareness and are argued and governed by the same criterion; their carriage falls where each belongs — a reason is recorded with the judgment it explains; a consequence constitutes an independent judgment of its own and, having no anchor in the present state, is carried independently as a residue record.
 
 **Selecting from history is a non-derivable judgment.**
 
@@ -40,21 +40,21 @@ The repository preserves every change and answers what changed and when. That re
 
 **Expiry is driven by the world, and deletion is a governance action.**
 
-The expiry of temporal entries is not triggered by changes inside the repository: a migration completes or a contract ends outside the repository — this is external drift. Patrol checkpoints take on this checking, adjudicating whether the consequence still exists; entries that no longer influence later judgments should be deleted. Deletion keeps the window small and trustworthy — every remaining entry is still in effect, and consumers need not sort out for themselves which items are expired exhibits.
+The expiry of residue entries is not triggered by changes inside the repository: a migration completes or a contract ends outside the repository — this is external drift. Patrol checkpoints take on this checking, adjudicating whether the consequence still exists; entries that no longer influence later judgments should be deleted. Deletion keeps the residue record small and trustworthy — every remaining entry is still in effect, and consumers need not sort out for themselves which items are expired exhibits.
 
 ## Boundaries
 
-**This article does not prescribe the carrying form.**
+**This article does not prescribe the file form.**
 
-What file carries the content of the time dimension, what it is named, and how entries are written belong to the specification layer. This article only argues that such content belongs to project truth and needs explicit carriage; the carrying form should let its structural feature (a time or version anchor) and its expiry mechanism (world-driven) be expressed.
+What file carries residue, what it is named, and how entries are written belong to the specification layer. This article only argues that such content belongs to project truth and needs explicit carriage; the file form should let its structural feature (a time or version anchor) and its expiry mechanism (world-driven) be expressed.
 
-**It is not a release log.**
+**A residue record is not a release log.**
 
-A release log faces a release audience, grows by appending, and pursues completeness. The temporal window faces later iterations, keeps selectively, and encourages deletion. The two run in opposite directions in audience, growth mode, and completeness, and cannot substitute for each other.
+A release log faces a release audience, grows by appending, and pursues completeness. The residue record faces later iterations, keeps selectively, and encourages deletion. The two run in opposite directions in audience, growth mode, and completeness, and cannot substitute for each other.
 
 **Process materials remain excluded.**
 
-How a change was discussed and how a decision took shape belong to process materials. Only settled conclusions enter the temporal window: a consequence still in effect, or a reason that still matters.
+How a change was discussed and how a decision took shape belong to process materials. Only settled conclusions enter project truth: consequences still in effect are recorded as residue, and reasons that still matter are recorded with the judgments they explain.
 
 **The complete history stays in the repository's change record.**
 
@@ -68,7 +68,7 @@ The change record answers what changed and when; it does not answer which change
 
 **Won't this become an ever-growing running log?**
 
-A running log comes from treating the window as a mirror of the release log. The criterion that controls it is the same as project truth's general criterion: if deleting an entry leaves the judgments of later iterations unaffected, it should not stay in the window. Clearing expired entries is taken on by governance, adjudicated along the way as patrols check external drift. The window's size tracks the history still in effect, not the whole history.
+A running log comes from treating the residue record as a mirror of the release log. The criterion that controls it is the same as project truth's general criterion: if deleting an entry leaves the judgments of later iterations unaffected, it should not stay in the record. Clearing expired entries is taken on by governance, adjudicated along the way as patrols check external drift. The residue record's size tracks the history still in effect, not the whole history.
 
 **The consequences live outside the repository — how do the records stay accurate?**
 
@@ -80,6 +80,6 @@ The definition article, while delimiting the basis part, points out that necessa
 
 ## Conclusion
 
-History still in effect belongs to project truth. The reasons for the present state are anchored in past changes, and the consequences of past versions acting on the world persist into the present; both still influence later iterations, neither can be read out of the current version's snapshot, and both need to be recorded explicitly as non-derivable judgments.
+History still in effect belongs to project truth. The reasons for the present state are anchored in past changes, and the consequences of past versions acting on the world persist into the present; both still influence later iterations, neither can be read out of the current version's snapshot, and both need to be recorded explicitly as non-derivable judgments: reasons with the judgments they explain, consequences carried independently as residue.
 
-Entries carry a time or version clue pointing into the repository's complete change record; expiry is driven by the world and entries are deleted after patrol adjudication. The temporal window thereby stays small and trustworthy: every item it presents is still in effect, supplying later iterations with awareness along the time dimension.
+Residue entries carry a time or version clue pointing into the repository's complete change record; expiry is driven by the world and entries are deleted after patrol adjudication. The residue record thereby stays small and trustworthy: every item it presents is still in effect, supplying later iterations with awareness along the time dimension.

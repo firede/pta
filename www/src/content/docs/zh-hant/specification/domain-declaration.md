@@ -1,11 +1,12 @@
 ---
 title: 領域聲明
-description: 定義領域如何在版本庫中被界定與聲明：TRUTH.md 領域標記、可選的 GLOSSARY.md 與 CHANGELOG.md 伴隨檔案、領域層級與關係的表達，以及 .pta/ 外置領域聲明。
+description: 定義領域如何在版本庫中被界定與聲明：TRUTH.md 領域標記、可選的 GLOSSARY.md 與 RESIDUE.md 伴隨檔案、領域層級與關係的表達，以及 .pta/ 外置領域聲明。
 dependsOn:
   - argument/what-is-project-truth
   - argument/project-truth-by-domain
   - argument/project-truth-freshness-governance
-sourceHash: 05e2244126434a1763dee18a894b4a9c541d00b7db4983173891bbc1ed4cf71a
+  - argument/history-still-in-effect
+sourceHash: ebcfb10b14213a043d31ef7d620e5f2e7b0ec3a2f163875a2f5b3e9fcc8dcbaf
 ---
 
 領域聲明定義領域如何在版本庫中被界定、標記和連接。
@@ -52,7 +53,7 @@ dependsOn:
 
 **`GLOSSARY.md`（可選）** 維護該領域的術語。術語沿層級共享背景：下級領域 **不得** 與上級術語表發生衝突性重定義，衝突構成核查信號。`GLOSSARY.md` 可以由 LLM 起草和維護，採用與否由維護者裁決；它是專案真相的一部分，不是投影視圖。
 
-**`CHANGELOG.md`（可選）** 記錄該領域的必要歷史原因：執行部分未體現、但仍影響真相判斷和未來決策的變化說明。每條 **應當** 簡短，並附時間或版本線索，為查看歷史提交提供入口。入選判據是仍然影響後續判斷；不再影響的條目 **應當** 刪除。`CHANGELOG.md` 不是版本發佈記錄，也不是過程性材料的存放處。
+**`RESIDUE.md`（可選）** 記錄該領域仍在生效的殘留：過去版本作用於真實世界留下的後果，在當前執行部分沒有錨點，但仍影響後續判斷。每條 **應當** 簡短，並附時間或版本線索，為查看變更記錄提供入口。入選判據是仍然影響後續判斷；不再影響的條目 **應當** 刪除。`RESIDUE.md` 不是版本發佈記錄，也不是過程性材料的存放處；解釋現行判斷的歷史原因隨判斷記錄在 `TRUTH.md`，**不得** 寫入殘留。
 
 ## 外置領域聲明
 

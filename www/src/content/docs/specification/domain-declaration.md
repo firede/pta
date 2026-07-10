@@ -1,10 +1,11 @@
 ---
 title: 领域声明
-description: 定义领域如何在版本库中被界定与声明：TRUTH.md 领域标记、可选的 GLOSSARY.md 与 CHANGELOG.md 伴随文件、领域层级与关系的表达，以及 .pta/ 外置领域声明。
+description: 定义领域如何在版本库中被界定与声明：TRUTH.md 领域标记、可选的 GLOSSARY.md 与 RESIDUE.md 伴随文件、领域层级与关系的表达，以及 .pta/ 外置领域声明。
 dependsOn:
   - argument/what-is-project-truth
   - argument/project-truth-by-domain
   - argument/project-truth-freshness-governance
+  - argument/history-still-in-effect
 ---
 
 领域声明定义领域如何在版本库中被界定、标记和连接。
@@ -51,7 +52,7 @@ dependsOn:
 
 **`GLOSSARY.md`（可选）** 维护该领域的术语。术语沿层级共享背景：下级领域 **不得** 与上级术语表发生冲突性重定义，冲突构成核查信号。`GLOSSARY.md` 可以由 LLM 起草和维护，采用与否由维护者裁决；它是项目真相的一部分，不是投影视图。
 
-**`CHANGELOG.md`（可选）** 记录该领域的必要历史原因：执行部分未体现、但仍影响真相判断和未来决策的变化说明。每条 **应当** 简短，并附时间或版本线索，为查看历史提交提供入口。入选判据是仍然影响后续判断；不再影响的条目 **应当** 删除。`CHANGELOG.md` 不是版本发布记录，也不是过程性材料的存放处。
+**`RESIDUE.md`（可选）** 记录该领域仍在生效的残留：过去版本作用于真实世界留下的后果，在当前执行部分没有锚点，但仍影响后续判断。每条 **应当** 简短，并附时间或版本线索，为查看变更记录提供入口。入选判据是仍然影响后续判断；不再影响的条目 **应当** 删除。`RESIDUE.md` 不是版本发布记录，也不是过程性材料的存放处；解释现行判断的历史原因随判断记录在 `TRUTH.md`，**不得** 写入残留。
 
 ## 外置领域声明
 
