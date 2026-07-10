@@ -37,17 +37,39 @@ export default defineConfig({
         {
           label: getRootMessage('specification'),
           translations: getStarlightTranslations('specification'),
-          items: ['specification', ...specificationIds],
+          items: [
+            {
+              slug: 'specification',
+              label: getRootMessage('overview'),
+              translations: getStarlightTranslations('overview'),
+            },
+            ...specificationIds,
+          ],
         },
         {
           label: getRootMessage('arguments'),
           translations: getStarlightTranslations('arguments'),
-          items: ['argument', ...argumentIds, 'argument/glossary'],
+          items: [
+            {
+              slug: 'argument',
+              label: getRootMessage('overview'),
+              translations: getStarlightTranslations('overview'),
+            },
+            ...argumentIds,
+            'argument/glossary',
+          ],
         },
         {
           label: getRootMessage('topics'),
           translations: getStarlightTranslations('topics'),
-          items: ['topic', { autogenerate: { directory: 'topic' } }],
+          items: [
+            {
+              slug: 'topic',
+              label: getRootMessage('overview'),
+              translations: getStarlightTranslations('overview'),
+            },
+            { autogenerate: { directory: 'topic' } },
+          ],
         },
       ],
     }),

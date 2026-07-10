@@ -5,6 +5,7 @@ export const globalMessages = {
     topics: '议题',
     specification: '规范',
     guide: '指南',
+    overview: '概览',
   },
   'zh-Hant': {
     title: '專案真相架構',
@@ -12,6 +13,7 @@ export const globalMessages = {
     topics: '議題',
     specification: '規範',
     guide: '指南',
+    overview: '概覽',
   },
   en: {
     title: 'Project Truth Architecture',
@@ -19,6 +21,7 @@ export const globalMessages = {
     topics: 'Topics',
     specification: 'Specification',
     guide: 'Guide',
+    overview: 'Overview',
   },
 } as const;
 
