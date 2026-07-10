@@ -5,7 +5,7 @@ dependsOn:
   - argument/projection-view-compiled-on-demand
   - argument/project-truth-by-domain
   - argument/derivable-content-in-tool-layer
-sourceHash: a0d15b4dfb0c86c10eb396a098d3d7db1ebcf0fcecfaa79e0a964a6fa68d9103
+sourceHash: fac2764ec436d22a4bcd423e0c93b30f68650b0610abf085c82cb96c670eed6d
 ---
 
 Compilation defines how projection views are produced: what the inputs are, what obligations a projection carries, and how the cache is invalidated.
@@ -58,4 +58,4 @@ Notices are overlaid when the projection is read and enter neither the projectio
 
 ## Out of Scope
 
-The implementation form, interfaces, and incremental granularity of compilers are not prescribed by this specification. The carrier formats of source identification and freshness notices, the sharing mechanics of the cache, and the landing of concrete projection targets such as AGENTS.md belong to the integration specification. How cross-project background requests are compiled and delivered belongs to the domain knowledge package specification.
+The implementation form, interfaces, and incremental granularity of compilers, as well as how cross-project background requests are compiled and delivered, are not prescribed by this specification. The carrier formats of source identification and freshness notices, the sharing mechanics of the cache, and the landing of concrete projection targets such as AGENTS.md belong to the integration specification.

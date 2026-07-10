@@ -5,7 +5,7 @@ dependsOn:
   - argument/project-truth-freshness-governance
   - argument/projection-view-compiled-on-demand
   - argument/derivable-content-in-tool-layer
-sourceHash: 5311e3cdfd9113cbc5467874dd71d35f282fe2fbe2cbb61bc5f3d6ecb5317762
+sourceHash: 14a06984b2e894a3b4d04d1fa69a64d276fb1574cbd6439403eb50b0c2ccd995
 ---
 
 整合定義架構如何接入既有工程環境：真相入口與生態檔案如何共存，專案級配置放在哪裡，核查節點掛在哪些設施上，共享要滿足什麼最低要求。
@@ -50,4 +50,4 @@ externalRoots = ["packages/web/.pta", "packages/client/.pta"]
 
 ## 範圍之外
 
-候選修訂與核查信號如何呈現給人，是工具的產品設計，本規範不作規定。鉤子的具體命令、巡檢週期的取值，由實作與專案各自決定。跨專案的共享與交付，屬於領域知識包規範。
+候選修訂與核查信號如何呈現給人，是工具的產品設計，本規範不作規定。鉤子的具體命令、巡檢週期的取值，由實作與專案各自決定。跨專案的共享與交付，本規範不作規定。

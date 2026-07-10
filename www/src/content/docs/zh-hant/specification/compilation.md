@@ -5,7 +5,7 @@ dependsOn:
   - argument/projection-view-compiled-on-demand
   - argument/project-truth-by-domain
   - argument/derivable-content-in-tool-layer
-sourceHash: a0d15b4dfb0c86c10eb396a098d3d7db1ebcf0fcecfaa79e0a964a6fa68d9103
+sourceHash: fac2764ec436d22a4bcd423e0c93b30f68650b0610abf085c82cb96c670eed6d
 ---
 
 編譯定義投影視圖如何生產：輸入是什麼，投影承擔什麼義務，快取如何失效。
@@ -58,4 +58,4 @@ sourceHash: a0d15b4dfb0c86c10eb396a098d3d7db1ebcf0fcecfaa79e0a964a6fa68d9103
 
 ## 範圍之外
 
-編譯器的實作形態、介面與增量粒度，本規範不作規定。來源標識與新鮮度提示的載體格式、快取的共享機制，以及 AGENTS.md 等具體投影目標的落地，屬於整合規範。跨專案的背景請求如何編譯與交付，屬於領域知識包規範。
+編譯器的實作形態、介面與增量粒度，以及跨專案背景請求的編譯與交付，本規範不作規定。來源標識與新鮮度提示的載體格式、快取的共享機制，以及 AGENTS.md 等具體投影目標的落地，屬於整合規範。

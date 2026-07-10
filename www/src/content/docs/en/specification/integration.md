@@ -5,7 +5,7 @@ dependsOn:
   - argument/project-truth-freshness-governance
   - argument/projection-view-compiled-on-demand
   - argument/derivable-content-in-tool-layer
-sourceHash: 5311e3cdfd9113cbc5467874dd71d35f282fe2fbe2cbb61bc5f3d6ecb5317762
+sourceHash: 14a06984b2e894a3b4d04d1fa69a64d276fb1574cbd6439403eb50b0c2ccd995
 ---
 
 Integration defines how the architecture plugs into an existing engineering environment: how the truth entry point coexists with ecosystem files, where project-level configuration lives, which facilities checkpoints attach to, and what sharing must satisfy at minimum.
@@ -50,4 +50,4 @@ Shared storage may be a file, a directory, or a service; this specification does
 
 ## Out of Scope
 
-How candidate revisions and check signals are presented to people is a tool's product design and is not prescribed by this specification. Concrete hook commands and inspection period values are decided by implementations and projects respectively. Cross-project sharing and delivery belong to the domain knowledge package specification.
+How candidate revisions and check signals are presented to people is a tool's product design and is not prescribed by this specification. Concrete hook commands and inspection period values are decided by implementations and projects respectively. Cross-project sharing and delivery are not prescribed by this specification.
