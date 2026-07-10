@@ -5,7 +5,7 @@ dependsOn:
   - argument/what-is-project-truth
   - argument/project-truth-by-domain
   - argument/project-truth-freshness-governance
-sourceHash: f3f648aa97cdf6a935764b6bafd0c53ab884a95887c6be2721a19e6f23f869ea
+sourceHash: 05e2244126434a1763dee18a894b4a9c541d00b7db4983173891bbc1ed4cf71a
 ---
 
 Domain declaration defines how domains are delimited, marked, and connected in the repository.
@@ -42,7 +42,7 @@ Relationships derivable from execution-part dependencies, references between bas
 
 ## Domain Hierarchy
 
-A domain's parent is the domain formed by the nearest ancestor directory carrying `TRUTH.md`. Hierarchy is given by the directory structure, and `TRUTH.md` **must not** declare parent-child relationships separately.
+A domain's parent is the domain formed by the nearest ancestor directory carrying `TRUTH.md`. An externally declared domain computes its hierarchy from its declared `path`; for an external domain carrying `files`, when the directory it points to constitutes a domain itself, that domain is its parent. Hierarchy is given by the directory structure, and `TRUTH.md` **must not** declare parent-child relationships separately.
 
 The parent domain's basis content forms the background of its child domains. A child `TRUTH.md` does not restate what already holds at the parent level; it records only the basis content specific to its own domain.
 
@@ -73,12 +73,15 @@ files:
 ……
 ```
 
-`files` is the expression ceiling of external declarations: a domain delimited by a file list should stay small, explicit, and enumerable, and exists as a terminal domain unit providing no space for children. Companion files are placed under `.pta/{name}/`, the same as for in-directory domains.
+A `path`-only external domain is identified by the directory path it claims, consistent with in-directory declarations; an external domain carrying `files` is identified by the directory path where its declaration resides (`.pta/{name}`).
+
+`files` is the expression ceiling of external declarations: the file list should stay small, explicit, and enumerable; a domain so delimited exists as a leaf of the hierarchy, providing no space for children. Companion files are placed under `.pta/{name}/`, the same as for in-directory domains.
 
 External declarations are subject to the following constraints:
 
-- A directory is claimed by at most one domain declaration. When the directory an external declaration points to carries its own `TRUTH.md`, this constitutes a conflict, and the conflict is a check signal.
-- External declarations **should** exist as transitions or exceptions. When the structure can be rearranged, the domain should preferentially return to an in-directory declaration.
+- A declaration claiming an entire directory, whether an in-directory `TRUTH.md` or a `path`-only external declaration, is limited to at most one per directory; a duplicate claim constitutes a conflict, and the conflict is a check signal.
+- An external declaration carrying `files` claims only some of the files and **may** coexist with a whole-directory claim, forming its child; when several coexist, their file lists **must not** overlap, and an overlap likewise constitutes a conflict.
+- External declarations **should** exist as transitions or exceptions: when the structure can be rearranged, prefer returning the domain to an in-directory declaration; when the structure cannot be rearranged, the exception **may** persist long-term.
 
 ## Multi-Package Repositories
 
