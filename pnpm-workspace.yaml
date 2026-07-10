@@ -3,17 +3,8 @@ packages:
 
 autoInstallPeers: false
 
-peerDependencyRules:
-  allowedVersions:
-    astro-expressive-code>astro: ^7.0.0
-
 allowBuilds:
   esbuild: true
   sharp: true
   simple-git-hooks: true
   workerd: true
-
-minimumReleaseAgeExclude:
-  - '@astrojs/markdown-satteri@0.3.2'
-  - '@astrojs/starlight@0.41.0'
-  - astro@7.0.2
