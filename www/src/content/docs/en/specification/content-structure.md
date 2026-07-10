@@ -1,12 +1,13 @@
 ---
 title: Content Structure
-description: 'Defines the content structure inside domain declaration files: judgment entries in the TRUTH.md body — form, admission, expression, and structural constraints — plus term entries in GLOSSARY.md.'
+description: 'Defines the content structure inside domain declaration files: judgment entries in the TRUTH.md body — form, admission, expression, and structural constraints — plus term entries in GLOSSARY.md and residue entries in RESIDUE.md.'
 dependsOn:
   - argument/what-is-project-truth
   - argument/grounding-part-work-language
   - argument/project-truth-freshness-governance
   - argument/derivable-content-in-tool-layer
-sourceHash: 31ef4c3860ada8f24284b460db0de275659a3ad0d42ef8809c184329f63c2eb1
+  - argument/history-still-in-effect
+sourceHash: 3425e7a61bd671c60ba3b44a702d4f38dfe5a9aacf5bb0ed4eb9980d0b92d182
 ---
 
 Content structure defines how domain declaration files are organized internally. The existence, location, and frontmatter fields of the files are defined by the domain declaration specification; this specification defines the body.
@@ -60,6 +61,21 @@ The `GLOSSARY.md` body is likewise a flat list consisting of term entries. An en
 
 The glossary records affirmatively only. Consistency checks against confusable words are derived by tooling from the term names and definitions and cached, and belong to the governance specification; when the rejection of a particular word itself carries decision weight, it enters `TRUTH.md` as a judgment entry with its reason.
 
+## Residue Entries
+
+The `RESIDUE.md` body is likewise a flat list consisting of residue entries. A residue entry states, in natural language, one consequence still in effect, together with what it requires of later judgments. An entry **should** carry only one independently adjudicable consequence: when adjudicating whether it is still in effect, there should be only one answer.
+
+The time or version clue is expressed within the entry's text, and this specification prescribes no separate structure for it: the clue provides people and LLMs an entry point into the change record and needs no machine parsing.
+
+```markdown
+- Before 2024-03-17, tooth-position expression covered single positions only, and interproximal caries could not be distinguished in earlier data from two teeth each having its own caries; reports involving data from that period must factor in this limitation.
+- Share links issued before v2.0.0 carry no signature, and old links already distributed remain accessible within their validity period; invalidate them before tightening access control.
+```
+
+Entries are written in the working language. Unlike judgment entries, historical coordinates in residue — the version numbers, field names, or format names of the time — are frozen and do not break with later refactoring, and **may** be kept to locate the consequence precisely.
+
+The provisions of "Structural Constraints" and "Entries and the Tool Layer" apply equally to residue entries.
+
 ## Out of Scope
 
-The entry requirements of `RESIDUE.md` are given by the domain declaration specification. The craft of writing judgments — how to phrase them concisely, which reasons to keep — belongs to the guide. How checkpoints consume judgment entries and term-consistency signals, and the concrete mechanics of the tool-layer cache, belong to the governance specification. How projection views present body content belongs to the compilation specification.
+The admission criterion and deletion requirements for residue are given by the domain declaration specification. The craft of writing judgments — how to phrase them concisely, which reasons to keep — is not prescribed by this specification. How checkpoints consume judgment entries and term-consistency signals, and the concrete mechanics of the tool-layer cache, belong to the governance specification. How projection views present body content belongs to the compilation specification.
