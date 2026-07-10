@@ -7,7 +7,7 @@ dependsOn:
   - argument/project-truth-freshness-governance
   - argument/derivable-content-in-tool-layer
   - argument/history-still-in-effect
-sourceHash: 3425e7a61bd671c60ba3b44a702d4f38dfe5a9aacf5bb0ed4eb9980d0b92d182
+sourceHash: f2af2c0d635d38be28bd672e6edc88f90287e3af3829ecc02329ec7d470b87b0
 ---
 
 Content structure defines how domain declaration files are organized internally. The existence, location, and frontmatter fields of the files are defined by the domain declaration specification; this specification defines the body.
@@ -40,6 +40,8 @@ A judgment no longer followed **should** be deleted or revised in the change tha
 
 Judgments **should** be expressed in the working language and in project concepts. Implementation coordinates derivable from the execution part, such as file paths, directory names, and symbol names, **should not** be written into judgments: coordinates break when the implementation is refactored, while project concepts stay stable. Engineering proper names can remain in their original language.
 
+When a judgment depends on an external fact to hold, a review clue — a date or a decidable expiry condition — **may** be attached to the entry. The clue internalizes the verifiable part of external drift into the record itself, for inspection to consume; it is expressed within the entry's text, with no separate structure.
+
 ## Structural Constraints
 
 Judgment entries **must not** be given titles, identifiers, type labels, or status markers, and the variant of using a bold lead as a title **must not** be used either. Such content can be derived from the judgment itself and belongs in the tool-layer cache.
@@ -48,7 +50,7 @@ Inside an entry, block-level structure such as nested lists, tables, or code fen
 
 ## Entries and the Tool Layer
 
-The entry is the body's minimal content unit. Check signals, human adjudications, and cross-domain references anchor to entries; tools identify an entry by the hash of its content, so a change in content is a change in identity, invalidating the derived results and adjudications attached to it. The storage form and invalidation rules of the cache are defined by the governance specification.
+The entry is the body's minimal content unit. Human adjudications and cross-domain references anchor to entries, while the anchoring and disposition of check signals are defined by the governance specification; tools identify an entry by the hash of its content, so a change in content is a change in identity, invalidating the derived results and adjudications attached to it. The storage form and invalidation rules of the cache are defined by the governance specification.
 
 ## Term Entries
 

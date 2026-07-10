@@ -2,7 +2,7 @@
 title: Glossary
 description: Core terms used in the Arguments section.
 tableOfContents: false
-sourceHash: 505e8df81c0639f1433f513560bed9657cfc3fc2d2c8c6e46a2843e38b0efe49
+sourceHash: 406021526125ff12d5b64f74478f1b7a968060085479cb38719df5dffe1104a7
 ---
 
 **Project Truth**
@@ -52,6 +52,10 @@ A change point is a checkpoint attached to change actions such as commits, revie
 **Inspection Point**
 
 An inspection point is a time-triggered checkpoint independent of changes. It handles external drift and takes over domain relatedness that no structure expresses.
+
+**Check Signal**
+
+A check signal is a discovery suggesting that a project truth record may have deviated. It sends the related records into checkpoints; it is a candidate rather than a conclusion, and most signals require no record update once checked.
 
 **Derivable Content**
 
