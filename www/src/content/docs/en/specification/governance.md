@@ -5,7 +5,7 @@ dependsOn:
   - argument/project-truth-freshness-governance
   - argument/project-truth-by-domain
   - argument/derivable-content-in-tool-layer
-sourceHash: a8e0f373bb86b28a25a0454a5ae832cbec701db93ab00c9be9c58c3e15e02a22
+sourceHash: 63a1c39579fcfc5c2ffc27fa6ccc577223ed1a5afdcb231cc7ba732cdf106a63
 ---
 
 Governance defines the operating loop of freshness checks: how deviation becomes a signal, at which points signals are consumed, and how adjudication lands back on the records.
@@ -14,7 +14,7 @@ Governance defines the operating loop of freshness checks: how deviation becomes
 
 ## Terminology
 
-This specification expresses requirement levels with the following words: **must** — implementations allow no exceptions; **should** — followed by default, and deviation requires an explainable reason; **may** — left to the project's own decision.
+This specification expresses requirement levels with the following words: **must** — implementations allow no exceptions; **should** — followed by default, and deviation requires an explainable reason; **may** — left to the project's own decision. Negative forms correspond to the levels: **must not** is the must-level prohibition, and **should not** is the should-level prohibition.
 
 ## Check Signals
 
@@ -40,7 +40,7 @@ Discovery is decoupled from repair: submitting a signal does not require the dis
 
 The category list is open: as machine detection expands, new categories join under the qualifications above. The signals already minted by the specifications fall into six categories:
 
-- **Conflict**: two declarations make mutually exclusive claims, and both holding at once violates the uniqueness constraints of the domain declaration specification. Machine-decidable.
+- **Conflict**: two declarations make mutually exclusive claims, and both holding at once violates the uniqueness constraints of the domain declaration or content structure specification. Machine-decidable.
 - **Violation**: content appears where the content structure specification forbids it. Machine-decidable.
 - **Term inconsistency**: a lower-level glossary's conflicting redefinition of a higher-level term, or body wording deviating from the glossary — confusable words are derived by tooling from term names and definitions. The suspicion is produced by machine comparison; whether it holds requires human adjudication.
 - **Drift suspicion**: a change touches a domain's execution part without touching its basis content, or changes only basis content without touching the execution part; also suspected contradictions between records and current reality found by inspection. Whether it holds requires human adjudication.
@@ -69,7 +69,7 @@ A signal **must not** be silently dropped: every signal ends in one traceable di
 
 ## Adjudication Cache
 
-Confirmation adjudications are kept in the tool-layer cache, keyed by three parts: the content hash of the anchor entry, the signal category, and the hash of the evidence source — whatever content or event the evidence was derived from, the source hash is taken from there. Same-category suspicions derived from the same sources are absorbed by the cache and no longer escalated; a new change event, updated source content, and human submissions all form new keys and are not intercepted by old adjudications. When the anchor entry's content changes, the key is invalidated and the record re-enters check candidacy.
+Confirmation adjudications are kept in the tool-layer cache, keyed by three parts: the full identity of the anchor entry — container plus content hash — the signal category, and the hash of the evidence source — whatever content or event the evidence was derived from, the source hash is taken from there. Same-category suspicions derived from the same sources are absorbed by the cache and no longer escalated; a new change event, updated source content, and human submissions all form new keys and are not intercepted by old adjudications. When the anchor entry's content changes, the key is invalidated and the record re-enters check candidacy.
 
 Key invalidation applies equally to undisposed signals: after the anchor entry is revised or deleted, the signals attached to it are invalidated along with it, and when the suspicion still applies to the new content, the point produces a new signal. Whether already-assembled evidence is re-attached to the new content belongs to the tool layer.
 

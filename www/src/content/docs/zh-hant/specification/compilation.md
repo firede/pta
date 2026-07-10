@@ -5,7 +5,7 @@ dependsOn:
   - argument/projection-view-compiled-on-demand
   - argument/project-truth-by-domain
   - argument/derivable-content-in-tool-layer
-sourceHash: 0b9ddfdda88f2a5afe887f24d80ffabb842fcf7d90c2acdfd73ecd8990662022
+sourceHash: a0d15b4dfb0c86c10eb396a098d3d7db1ebcf0fcecfaa79e0a964a6fa68d9103
 ---
 
 編譯定義投影視圖如何生產：輸入是什麼，投影承擔什麼義務，快取如何失效。
@@ -14,7 +14,7 @@ sourceHash: 0b9ddfdda88f2a5afe887f24d80ffabb842fcf7d90c2acdfd73ecd8990662022
 
 ## 約定用語
 
-本規範用以下用語表達要求等級：**必須**，實作沒有例外；**應當**，預設遵循，偏離需要有可說明的理由；**可以**，由專案自行決定。
+本規範用以下用語表達要求等級：**必須**，實作沒有例外；**應當**，預設遵循，偏離需要有可說明的理由；**可以**，由專案自行決定。否定形式與等級對應：**不得** 是必須級的禁止，**不應** 是應當級的禁止。
 
 ## 編譯的輸入
 

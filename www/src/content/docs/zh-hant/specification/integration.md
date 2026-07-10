@@ -5,7 +5,7 @@ dependsOn:
   - argument/project-truth-freshness-governance
   - argument/projection-view-compiled-on-demand
   - argument/derivable-content-in-tool-layer
-sourceHash: 30ac97b0db7efd19950395ebfcd14d9b884b5dfe1ae7f852c457cfac1364030d
+sourceHash: 5311e3cdfd9113cbc5467874dd71d35f282fe2fbe2cbb61bc5f3d6ecb5317762
 ---
 
 整合定義架構如何接入既有工程環境：真相入口與生態檔案如何共存，專案級配置放在哪裡，核查節點掛在哪些設施上，共享要滿足什麼最低要求。
@@ -14,7 +14,7 @@ sourceHash: 30ac97b0db7efd19950395ebfcd14d9b884b5dfe1ae7f852c457cfac1364030d
 
 ## 約定用語
 
-本規範用以下用語表達要求等級：**必須**，實作沒有例外；**應當**，預設遵循，偏離需要有可說明的理由；**可以**，由專案自行決定。
+本規範用以下用語表達要求等級：**必須**，實作沒有例外；**應當**，預設遵循，偏離需要有可說明的理由；**可以**，由專案自行決定。否定形式與等級對應：**不得** 是必須級的禁止，**不應** 是應當級的禁止。
 
 ## 既有工程檔案
 

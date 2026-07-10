@@ -5,7 +5,7 @@ dependsOn:
   - argument/projection-view-compiled-on-demand
   - argument/project-truth-by-domain
   - argument/derivable-content-in-tool-layer
-sourceHash: 0b9ddfdda88f2a5afe887f24d80ffabb842fcf7d90c2acdfd73ecd8990662022
+sourceHash: a0d15b4dfb0c86c10eb396a098d3d7db1ebcf0fcecfaa79e0a964a6fa68d9103
 ---
 
 Compilation defines how projection views are produced: what the inputs are, what obligations a projection carries, and how the cache is invalidated.
@@ -14,7 +14,7 @@ Compilation defines how projection views are produced: what the inputs are, what
 
 ## Terminology
 
-This specification expresses requirement levels with the following words: **must** — implementations allow no exceptions; **should** — followed by default, and deviation requires an explainable reason; **may** — left to the project's own decision.
+This specification expresses requirement levels with the following words: **must** — implementations allow no exceptions; **should** — followed by default, and deviation requires an explainable reason; **may** — left to the project's own decision. Negative forms correspond to the levels: **must not** is the must-level prohibition, and **should not** is the should-level prohibition.
 
 ## Compilation Inputs
 

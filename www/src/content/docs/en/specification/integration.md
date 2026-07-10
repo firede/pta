@@ -5,7 +5,7 @@ dependsOn:
   - argument/project-truth-freshness-governance
   - argument/projection-view-compiled-on-demand
   - argument/derivable-content-in-tool-layer
-sourceHash: 30ac97b0db7efd19950395ebfcd14d9b884b5dfe1ae7f852c457cfac1364030d
+sourceHash: 5311e3cdfd9113cbc5467874dd71d35f282fe2fbe2cbb61bc5f3d6ecb5317762
 ---
 
 Integration defines how the architecture plugs into an existing engineering environment: how the truth entry point coexists with ecosystem files, where project-level configuration lives, which facilities checkpoints attach to, and what sharing must satisfy at minimum.
@@ -14,7 +14,7 @@ Integration defines how the architecture plugs into an existing engineering envi
 
 ## Terminology
 
-This specification expresses requirement levels with the following words: **must** — implementations allow no exceptions; **should** — followed by default, and deviation requires an explainable reason; **may** — left to the project's own decision.
+This specification expresses requirement levels with the following words: **must** — implementations allow no exceptions; **should** — followed by default, and deviation requires an explainable reason; **may** — left to the project's own decision. Negative forms correspond to the levels: **must not** is the must-level prohibition, and **should not** is the should-level prohibition.
 
 ## Existing Engineering Files
 

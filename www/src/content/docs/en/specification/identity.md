@@ -4,7 +4,7 @@ description: 'Defines the identity computation shared across the architecture: n
 dependsOn:
   - argument/grounding-part-versioned-with-execution-part
   - argument/derivable-content-in-tool-layer
-sourceHash: 8ef83203109fc2cac80557085d050b95a08f72bcb149d34299a9a47056e30f36
+sourceHash: f0375a05ab58cc8c67ea5a5799a217717354592e882c851da42bfea86002e4a5
 ---
 
 Identity defines how content acquires an identity that any tool can recompute. The cache keys of governance, the source identification of compilation, and entry identity are all built from the parts defined here; two implementations must compute the same identity for the same content, or sharing and flow cannot hold.
@@ -13,7 +13,7 @@ Identity defines how content acquires an identity that any tool can recompute. T
 
 ## Terminology
 
-This specification expresses requirement levels with the following words: **must** — implementations allow no exceptions; **should** — followed by default, and deviation requires an explainable reason; **may** — left to the project's own decision.
+This specification expresses requirement levels with the following words: **must** — implementations allow no exceptions; **should** — followed by default, and deviation requires an explainable reason; **may** — left to the project's own decision. Negative forms correspond to the levels: **must not** is the must-level prohibition, and **should not** is the should-level prohibition.
 
 ## Entry Identity
 
@@ -26,6 +26,8 @@ An entry's identity is the hash of its content. The content structure specificat
 A change in a bolded term name is a change of identity, and that is correct behavior.
 
 The normalized text is encoded as UTF-8 and hashed with SHA-256; the identity is its lowercase hexadecimal representation. Truncated display belongs to the tool layer and does not affect the stored full identity.
+
+An entry's full identity consists of its container and its content hash; the container is the identity of the domain it belongs to plus the kind of file it sits in. A content hash alone cannot locate an entry across containers: entries with identical text legitimately exist in different domains, and they are different records.
 
 ## File and Version Identity
 

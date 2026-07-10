@@ -6,7 +6,7 @@ dependsOn:
   - argument/project-truth-by-domain
   - argument/project-truth-freshness-governance
   - argument/history-still-in-effect
-sourceHash: ebcfb10b14213a043d31ef7d620e5f2e7b0ec3a2f163875a2f5b3e9fcc8dcbaf
+sourceHash: a79cf188cd34f3245aa7910318f60d06adfb2de312b8887edd60122ce043a3d0
 ---
 
 Domain declaration defines how domains are delimited, marked, and connected in the repository.
@@ -15,7 +15,7 @@ Domain declaration defines how domains are delimited, marked, and connected in t
 
 ## Terminology
 
-This specification expresses requirement levels with the following words: **must** — implementations allow no exceptions; **should** — followed by default, and deviation requires an explainable reason; **may** — left to the project's own decision.
+This specification expresses requirement levels with the following words: **must** — implementations allow no exceptions; **should** — followed by default, and deviation requires an explainable reason; **may** — left to the project's own decision. Negative forms correspond to the levels: **must not** is the must-level prohibition, and **should not** is the should-level prohibition.
 
 ## Domain Marker
 
@@ -59,7 +59,7 @@ When the repository root carries `TRUTH.md`, it forms the root domain, holding p
 
 When a domain cannot appear as a single directory, or files cannot be placed in the target directory, an external domain declaration **may** be used.
 
-External declarations are collected under `.pta/` at the repository root, organized as a single level of directories by domain name, with **no** nesting allowed. Each external domain's entry point is `.pta/{name}/TRUTH.md`, whose frontmatter **must** include `path` pointing to a real directory; `files` is optional and used only when the domain needs to be limited to some of the directory's files:
+External declarations are collected under external declaration roots, organized as a single level of directories by domain name, and **must not** be nested; `.pta/` at the repository root is the default external declaration root, and other roots are declared in `pta.toml`. A `TRUTH.md` inside an external declaration root is interpreted only as an external declaration and does not make its containing directory a domain. Each external domain's entry point is `{externalRoot}/{name}/TRUTH.md`, whose frontmatter **must** include `path` pointing to a real directory; `files` is optional and used only when the domain needs to be limited to some of the directory's files:
 
 ```markdown
 ---
@@ -74,14 +74,17 @@ files:
 ……
 ```
 
-A `path`-only external domain is identified by the directory path it claims, consistent with in-directory declarations; an external domain carrying `files` is identified by the directory path where its declaration resides (`.pta/{name}`).
+A `path`-only external domain is identified by the directory path it claims, consistent with in-directory declarations; an external domain carrying `files` is identified by the directory path where its declaration resides (`{externalRoot}/{name}`).
 
-`files` is the expression ceiling of external declarations: the file list should stay small, explicit, and enumerable; a domain so delimited exists as a leaf of the hierarchy, providing no space for children. Companion files are placed under `.pta/{name}/`, the same as for in-directory domains.
+Members of `files` are path fragments relative to `path`, inheriting the segment rules of the identity specification: separated by `/`, with segments that **must not** be empty or be `.` or `..`, spelled byte-for-byte with no case folding. The repository-root path obtained by joining `path` with a member **must** point to a file that actually exists in the repository rather than a directory; the list **must not** contain duplicates.
+
+`files` is the expression ceiling of external declarations: the file list should stay small, explicit, and enumerable; a domain so delimited exists as a leaf of the hierarchy, providing no space for children. Companion files are placed under `{externalRoot}/{name}/`, the same as for in-directory domains.
 
 External declarations are subject to the following constraints:
 
 - A declaration claiming an entire directory, whether an in-directory `TRUTH.md` or a `path`-only external declaration, is limited to at most one per directory; a duplicate claim constitutes a conflict, and the conflict is a check signal.
 - An external declaration carrying `files` claims only some of the files and **may** coexist with a whole-directory claim, forming its child; when several coexist, their file lists **must not** overlap, and an overlap likewise constitutes a conflict.
+- For a declaration carrying `files`, members **must not** fall inside the boundary of a more specific domain under `path`, and crossing constitutes a conflict: a file subset is a leaf of the hierarchy and does not span more specific domains.
 - External declarations **should** exist as transitions or exceptions: when the structure can be rearranged, prefer returning the domain to an in-directory declaration; when the structure cannot be rearranged, the exception **may** persist long-term.
 
 ## Multi-Package Repositories

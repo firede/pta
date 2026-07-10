@@ -7,7 +7,7 @@ dependsOn:
   - argument/project-truth-freshness-governance
   - argument/derivable-content-in-tool-layer
   - argument/history-still-in-effect
-sourceHash: 2124d0d7e051c904d4910c5234541df4ddad07dce30740518da6396cad256e40
+sourceHash: f41c7def6ee1de8257b60ee54db11e6d4e7fb78658bbfe98b566abdcdeefd74d
 ---
 
 Content structure defines how domain declaration files are organized internally. The existence, location, and frontmatter fields of the files are defined by the domain declaration specification; this specification defines the body.
@@ -16,7 +16,7 @@ Content structure defines how domain declaration files are organized internally.
 
 ## Terminology
 
-This specification expresses requirement levels with the following words: **must** — implementations allow no exceptions; **should** — followed by default, and deviation requires an explainable reason; **may** — left to the project's own decision.
+This specification expresses requirement levels with the following words: **must** — implementations allow no exceptions; **should** — followed by default, and deviation requires an explainable reason; **may** — left to the project's own decision. Negative forms correspond to the levels: **must not** is the must-level prohibition, and **should not** is the should-level prohibition.
 
 ## Judgment Entries
 
@@ -48,11 +48,11 @@ Judgment entries **must not** be given titles, identifiers, type labels, or stat
 
 An entry opens with `- ` at the start of the line — a hyphen followed by a single space — and ends at the end of the line, with no leading indentation, and **must not** span multiple lines: the source-text boundary of an entry can therefore be recomputed identically by every implementation, and any non-blank line in the body that does not open with the entry marker is content outside the list.
 
-Inside an entry, block-level structure such as nested lists, tables, or code fences **should not** be used, and the body **should not** place paragraphs or headings outside the list. Content outside the list is directly discoverable by syntax checking; when a judgment seems to need block-level structure to express, that is a check signal — it usually should be split into several judgments, condensed into a term entry, or sunk into the execution part's verification.
+The body **must not** place content outside the list, and the single-line boundary rule makes violations directly discoverable by syntax checking. A single-line entry also has no room for block-level structure such as nested lists, tables, or code fences; when a judgment seems to need block-level structure to express, the body cannot legally carry it — it usually should be split into several judgments, condensed into a term entry, or sunk into the execution part's verification.
 
 ## Entries and the Tool Layer
 
-The entry is the body's minimal content unit. Human adjudications and cross-domain references anchor to entries, while the anchoring and disposition of check signals are defined by the governance specification; tools identify an entry by the hash of its content, so a change in content is a change in identity, invalidating the derived results and adjudications attached to it. The storage form and invalidation rules of the cache are defined by the governance specification.
+The entry is the body's minimal content unit. Human adjudications and cross-domain references anchor to entries, while the anchoring and disposition of check signals are defined by the governance specification; an entry is identified within its container — the domain it belongs to and the file it sits in — by its content hash, and the full anchor consists of the container identity together with the content hash, so a change in content is a change in identity, invalidating the derived results and adjudications attached to it. Within one file, duplicate entries with identical content **must not** appear; duplication is directly decidable by normalized comparison. The storage form and invalidation rules of the cache are defined by the governance specification.
 
 ## Term Entries
 
@@ -63,7 +63,7 @@ The `GLOSSARY.md` body is likewise a flat list consisting of term entries. An en
 - **Primary Teeth**: the first set of teeth in childhood, replaced as permanent teeth erupt.
 ```
 
-A term entry likewise opens with `- ` at the start of the line and ends at the end of the line, and **must not** span multiple lines; the constraints on block-level structure inside the entry and outside the list are the same as for judgment entries.
+A term entry likewise opens with `- ` at the start of the line and ends at the end of the line, and **must not** span multiple lines; the constraints on block-level structure inside the entry and outside the list are the same as for judgment entries. Within one `GLOSSARY.md`, term names **must** be unique: comparison follows entry normalization with no case folding, and a duplicated name constitutes a machine-decidable conflict.
 
 The glossary records affirmatively only. Consistency checks against confusable words are derived by tooling from the term names and definitions and cached, and belong to the governance specification; when the rejection of a particular word itself carries decision weight, it enters `TRUTH.md` as a judgment entry with its reason.
 
