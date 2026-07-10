@@ -5,7 +5,7 @@ dependsOn:
   - argument/what-is-project-truth
   - argument/grounding-part-versioned-with-execution-part
   - argument/project-truth-by-domain
-sourceHash: d5485861ec6c8ebced2cdfea571e39751dde76343825a7e2079605a9fa1e2aa5
+sourceHash: 1bd0eca4602427de4886e33635f05f1e069ed89178d29dc418902da0537367f7
 ---
 
 Project truth needs freshness governance. Freshness is the degree of consistency between the project truth recorded in the repository and what the project actually follows. Records do not track reality on their own; governance assigns them fixed checkpoints: change points handle internal drift triggered by changes inside the repository, and inspection points handle external drift that produces no version events.
@@ -54,15 +54,25 @@ The job of the governance interface is to make adjudication cheap. Machines subm
 
 ## Boundaries
 
-This article discusses the arrangement of checkpoints and the division of labor, and does not prescribe concrete mechanisms. The form of check hooks, inspection frequency, enforcement levels, and tool implementations belong to later specification design.
+**This article discusses the arrangement of checkpoints and the division of labor, and does not prescribe concrete mechanisms.**
 
-The object of governance is the record of project truth. Process materials are not project truth and do not enter freshness governance.
+The form of check hooks, inspection frequency, enforcement levels, and tool implementations belong to later specification design.
 
-Freshness governance does not require instant consistency. Lag is allowed between detecting drift and completing the revision, and revisions enter the repository through the normal change flow. What governance requires is that drift can be discovered at the checkpoints, not that it never occurs.
+**The object of governance is the record of project truth.**
 
-Enforcement levels need to match their cost. Blocking checks must be cheap enough; expensive enforcement gets bypassed, and a bypassed checkpoint exists in name only. This article establishes only this constraint; concrete levels are agreed per project according to risk.
+Process materials are not project truth and do not enter freshness governance.
 
-Responsibility for adjudication is agreed per project. Who has the authority to judge that a piece of basis content still holds, and who answers for the consequences of a stale record, belong to project governance agreements and are not prescribed here.
+**Freshness governance does not require instant consistency.**
+
+Lag is allowed between detecting drift and completing the revision, and revisions enter the repository through the normal change flow. What governance requires is that drift can be discovered at the checkpoints, not that it never occurs.
+
+**Enforcement levels need to match their cost.**
+
+Blocking checks must be cheap enough; expensive enforcement gets bypassed, and a bypassed checkpoint exists in name only. This article establishes only this constraint; concrete levels are agreed per project according to risk.
+
+**Responsibility for adjudication is agreed per project.**
+
+Who has the authority to judge that a piece of basis content still holds, and who answers for the consequences of a stale record, belong to project governance agreements and are not prescribed here.
 
 ## Objections
 

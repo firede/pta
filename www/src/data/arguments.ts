@@ -5,6 +5,7 @@ export const argumentIds = [
   'argument/grounding-part-work-language',
   'argument/projection-view-compiled-on-demand',
   'argument/project-truth-freshness-governance',
+  'argument/derivable-content-in-tool-layer',
   'argument/domain-knowledge-package',
 ] as const;
 

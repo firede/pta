@@ -2,7 +2,7 @@
 title: Glossary
 description: Core terms used in the Arguments section.
 tableOfContents: false
-sourceHash: 18b03f9779e5f66337abf4d3164c148c4f9a862a199a14497f83e13dd2f401f0
+sourceHash: 4b1652b07edc642c2965491abd87a361ccd62bec0ff907fa07a7568180662399
 ---
 
 **Project Truth**
@@ -52,6 +52,14 @@ A change point is a checkpoint attached to change actions such as commits, revie
 **Inspection Point**
 
 An inspection point is a time-triggered checkpoint independent of changes. It handles external drift and takes over domain relatedness that no structure expresses.
+
+**Derivable Content**
+
+Derivable content is content that machines can re-derive from project truth and the execution part, such as summaries, display names, type judgments, and reverse dependency relationships. It does not enter project truth records; it stays in the tool layer, managed with cache semantics.
+
+**Tool-Layer Cache**
+
+The tool-layer cache is storage outside the repository, managed by tooling, that holds derivable content and the process state of checks and adjudications. It is keyed by the content hash of the source and invalidated when the source changes; it can be discarded at any time, at the cost of one round of re-derivation or re-adjudication.
 
 **Domain Knowledge Package**
 

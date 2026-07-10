@@ -4,7 +4,7 @@ description: After the grounding part enters the repository, it should be organi
 dependsOn:
   - argument/what-is-project-truth
   - argument/grounding-part-versioned-with-execution-part
-sourceHash: b371cb6b1c4dbf9c9c563f43af2b123cda5c7a312b9bdb83a02faaaf2bb3144d
+sourceHash: ec23e6cbce000cb6ee112c66ba038d42616cf37b46f4b27581838ff59dcf1727
 ---
 
 Project truth should be organized by domain. A domain is a stable scope for understanding and maintaining a project. The execution part and the grounding part within a domain need to be understood, changed, verified, and reviewed together in later iterations.
@@ -49,15 +49,25 @@ When the grounding part cannot be placed in the corresponding domain directory, 
 
 ## Boundaries
 
-When project truth is organized by domain, directories are the most common way to express domain boundaries. Whether a directory forms a domain unit needs to be made clear by project convention. This convention lets people and AI judge whether the directory stores grounding-part content, and what scope that content applies to.
+**Whether a directory forms a domain unit needs to be made clear by project convention.**
 
-Some domains need an external domain declaration to connect the grounding part and the execution part. An external declaration should point to a directory path first, and declare a limited file list under that directory only when necessary: when it points only to a directory, the directory expresses the domain scope; when it declares a file list, the domain scope is jointly defined by the directory path and the file list.
+When project truth is organized by domain, directories are the most common way to express domain boundaries; this convention lets people and AI judge whether the directory stores grounding-part content, and what scope that content applies to.
 
-A limited file list is the expressive limit of an external declaration. A domain defined by a file list should remain small, explicit, and enumerable, and exists as a final domain unit — hierarchy semantics are carried by directories, and a discrete file set provides no lower-level space and produces no lower-level domain relationships. If a domain needs complex rules to describe it, it has exceeded the complexity that a discrete file set is suited to carry; when this persists, it usually indicates insufficient domain abstraction in the execution part, and the fix belongs in the execution part itself.
+**Some domains need an external domain declaration to connect the grounding part and the execution part.**
 
-Organizing project truth by domain does not require a project to immediately rearrange its existing structure just to record project truth. When the existing structure cannot yet sufficiently express domain boundaries, an external domain declaration can fill the gap first.
+An external declaration should point to a directory path first, and declare a limited file list under that directory only when necessary: when it points only to a directory, the directory expresses the domain scope; when it declares a file list, the domain scope is jointly defined by the directory path and the file list.
 
-This article discusses organization principles. It does not define specific file names, directory names, declaration formats, or scanning rules. Those belong to later specification work.
+**A limited file list is the expressive limit of an external declaration.**
+
+A domain defined by a file list should remain small, explicit, and enumerable, and exists as a final domain unit — hierarchy semantics are carried by directories, and a discrete file set provides no lower-level space and produces no lower-level domain relationships. If a domain needs complex rules to describe it, it has exceeded the complexity that a discrete file set is suited to carry; when this persists, it usually indicates insufficient domain abstraction in the execution part, and the fix belongs in the execution part itself.
+
+**Organizing project truth by domain does not require a project to immediately rearrange its existing structure just to record project truth.**
+
+When the existing structure cannot yet sufficiently express domain boundaries, an external domain declaration can fill the gap first.
+
+**This article discusses organization principles and does not define specific file names, directory names, declaration formats, or scanning rules.**
+
+Those belong to later specification work.
 
 ## Objections
 

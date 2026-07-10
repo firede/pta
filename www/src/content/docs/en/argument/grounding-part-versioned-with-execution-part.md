@@ -3,7 +3,7 @@ title: The Grounding Part Must Be Versioned with the Execution Part
 description: In long-lived iterative projects, whenever the execution part is managed in a repository and AI will participate in later maintenance, the grounding part of project truth must be versioned with the execution part.
 dependsOn:
   - argument/what-is-project-truth
-sourceHash: 7d0dd8775216024d7c87d8de64e234ac34c9d2ee4bb253af2982f2f22e5bc00a
+sourceHash: d8ac5148e4eb0a01f9dc4e3ff0a56919e67a3b32979c7374c3e7110ce4a26a75
 ---
 
 In long-lived iterative projects, whenever the execution part is managed in a repository and AI will participate in later maintenance, the grounding part of project truth must be versioned with the execution part.
@@ -48,15 +48,25 @@ Once the grounding part lives in the same repository, AI can discover the curren
 
 ## Boundaries
 
-This article discusses the underlying version relationship. Versioning the grounding part with the execution part means they share a version boundary.
+**This article discusses the underlying version relationship.**
 
-How the grounding part is organized and governed is outside the scope of this article. File formats, directory structures, review workflows, update mechanisms, and deprecation rules belong to later design work.
+Versioning the grounding part with the execution part means they share a version boundary.
 
-Access entry points are also not defined here. The repository provides the underlying version boundary; external systems can provide access, review, and update entry points according to project needs.
+**How the grounding part is organized and governed is outside the scope of this article.**
 
-Process materials are not project truth and should not be maintained as project truth. Process materials record discussion, judgment, and decision-making processes; common forms include meeting notes, research materials, issues, PRs, ADRs, and AI conversations.
+File formats, directory structures, review workflows, update mechanisms, and deprecation rules belong to later design work.
 
-This principle applies to projects whose execution part is already reliably managed in a repository and that require long-term iteration. A one-off prototype exploration may initially rely on conversation context, temporary materials, and immediate judgment. When the project enters continuous maintenance, the grounding part needs to be versioned with the execution part.
+**Access entry points are also not defined here.**
+
+The repository provides the underlying version boundary; external systems can provide access, review, and update entry points according to project needs.
+
+**Process materials are not project truth and should not be maintained as project truth.**
+
+Process materials record discussion, judgment, and decision-making processes; common forms include meeting notes, research materials, issues, PRs, ADRs, and AI conversations.
+
+**This principle applies to projects whose execution part is already reliably managed in a repository and that require long-term iteration.**
+
+A one-off prototype exploration may initially rely on conversation context, temporary materials, and immediate judgment. When the project enters continuous maintenance, the grounding part needs to be versioned with the execution part.
 
 ## Objections
 

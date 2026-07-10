@@ -5,7 +5,7 @@ dependsOn:
   - argument/what-is-project-truth
   - argument/grounding-part-versioned-with-execution-part
   - argument/project-truth-by-domain
-sourceHash: 6337c3b1cb1b55c455f42b53f7d242c31b6d5d798ae2d64bfa9f487492f54f40
+sourceHash: bb6b5386cfe2e1d54314dd21455ec18eac9228ef1cef71229ed57c22616a4b53
 ---
 
 Projection views should be compiled on demand. A projection view targets a specific usage context and extracts, reorganizes, and presents content from project truth. Its relationship to project truth resembles the relationship between build artifacts and source code: it is generated from the current project truth when needed, can be cached and distributed, and can be discarded and rebuilt at any time.
@@ -52,15 +52,25 @@ If the correction lands on project truth, every subsequent projection receives i
 
 ## Boundaries
 
-This article discusses how projection views are produced and maintained, and does not prescribe the compiler's implementation form. Generation can be performed by people, scripts, or LLMs, and can happen in local tools, CI, or a standalone service. Interfaces, caching strategies, and incremental granularity belong to later specification design.
+**This article discusses how projection views are produced and maintained, and does not prescribe the compiler's implementation form.**
 
-On-demand compilation does not rule out pre-generation. Generating commonly used projections ahead of time, at change points or on a schedule, is a performance optimization. As long as the projection can still be regenerated from project truth and its staleness can still be decided by version, pre-generation does not change its identity as a derived result.
+Generation can be performed by people, scripts, or LLMs, and can happen in local tools, CI, or a standalone service. Interfaces, caching strategies, and incremental granularity belong to later specification design.
 
-The read-only rule constrains the correction path; it does not require modifying project truth on the spot where the projection is consumed. Problems can first be recorded as process materials, and corrections can enter project truth through the normal change flow. What this article requires is that corrections eventually land on project truth.
+**On-demand compilation does not rule out pre-generation.**
 
-Whether a material is treated as a projection view is judged by whether it can be regenerated from project truth and its usage context. Final outputs that require independent authorship and carry independent delivery responsibility are outside the scope of this article.
+Generating commonly used projections ahead of time, at change points or on a schedule, is a performance optimization. As long as the projection can still be regenerated from project truth and its staleness can still be decided by version, pre-generation does not change its identity as a derived result.
 
-Cross-project background requests are usage contexts as well. When a related project requests background knowledge about one of this project's domains, what it receives is also a projection compiled from this project's truth. Cross-project mechanisms are not covered in this article.
+**The read-only rule constrains the correction path; it does not require modifying project truth on the spot where the projection is consumed.**
+
+Problems can first be recorded as process materials, and corrections can enter project truth through the normal change flow. What this article requires is that corrections eventually land on project truth.
+
+**Whether a material is treated as a projection view is judged by whether it can be regenerated from project truth and its usage context.**
+
+Final outputs that require independent authorship and carry independent delivery responsibility are outside the scope of this article.
+
+**Cross-project background requests are usage contexts as well.**
+
+When a related project requests background knowledge about one of this project's domains, what it receives is also a projection compiled from this project's truth. Cross-project mechanisms are not covered in this article.
 
 ## Objections
 

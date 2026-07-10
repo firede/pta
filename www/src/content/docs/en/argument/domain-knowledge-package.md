@@ -6,7 +6,7 @@ dependsOn:
   - argument/project-truth-by-domain
   - argument/grounding-part-work-language
   - argument/projection-view-compiled-on-demand
-sourceHash: 7ae5ab036d45b836eb6bdc60abe846b5557b0229692a1f24a2a5a5df16b2f139
+sourceHash: 7a2ed38149f82341803aed0e679d2525d15e663fc5858ec9b2b5d2dd66024df7
 ---
 
 Domain knowledge should be shared across projects with verifiers at the core. A domain knowledge package is a sharing unit of domain knowledge extracted from project truth after stripping project coupling and private information: the domain's term relationships, rules, edge cases, and the reasons behind tradeoffs form the normative content, and verifiers express the machine-verifiable part of it as executable verification; a reference implementation may optionally be attached as informative content.
@@ -53,15 +53,25 @@ Growing model capability keeps lowering the consumption threshold. A re-implemen
 
 ## Boundaries
 
-This article discusses the principles of the sharing unit's form. Package formats, distribution mechanisms, versioning policies, consumption workflows, and escalation after failed verification belong to later specification design.
+**This article discusses the principles of the sharing unit's form.**
 
-A domain knowledge package presupposes machine-verifiable semantics. Where domain semantics can be expressed as executable verification, the package's assurance is strongest; in domains whose acceptance depends on human judgment, verifiers degrade into scoring rubrics and the assurance weakens accordingly. Sharing practice should start from domains with machine-verifiable semantics.
+Package formats, distribution mechanisms, versioning policies, consumption workflows, and escalation after failed verification belong to later specification design.
 
-A package is no project's truth. The source project continues to maintain its own project truth, and the package is a shared extract from it; what the consuming project forms after adoption is its own project truth, which evolves independently of the package. Upstream package updates are external facts to the consuming project, and their effects are covered by the consuming project's freshness governance.
+**A domain knowledge package presupposes machine-verifiable semantics.**
 
-The sharing scope determines the range over which normative content is tested. The "anyone implementing this domain" in the extraction criterion is bounded by the package's sharing scope: for public sharing, organizational preferences are project coupling to be stripped; for sharing within an organization, the organization's interaction rules, aesthetics, and taste hold for every project in scope and may enter the package as normative content. Project truth can be shared selectively and with intent, and the same domain can yield different packages for different sharing scopes.
+Where domain semantics can be expressed as executable verification, the package's assurance is strongest; in domains whose acceptance depends on human judgment, verifiers degrade into scoring rubrics and the assurance weakens accordingly. Sharing practice should start from domains with machine-verifiable semantics.
 
-Stripping during authoring treats privacy and compliance as the baseline. Incomplete stripping of project coupling harms the package's quality; incomplete stripping of private information causes leakage. Review mechanisms for the latter belong to specification design and in principle happen before sharing.
+**A package is no project's truth.**
+
+The source project continues to maintain its own project truth, and the package is a shared extract from it; what the consuming project forms after adoption is its own project truth, which evolves independently of the package. Upstream package updates are external facts to the consuming project, and their effects are covered by the consuming project's freshness governance.
+
+**The sharing scope determines the range over which normative content is tested.**
+
+The "anyone implementing this domain" in the extraction criterion is bounded by the package's sharing scope: for public sharing, organizational preferences are project coupling to be stripped; for sharing within an organization, the organization's interaction rules, aesthetics, and taste hold for every project in scope and may enter the package as normative content. Project truth can be shared selectively and with intent, and the same domain can yield different packages for different sharing scopes.
+
+**Stripping during authoring treats privacy and compliance as the baseline.**
+
+Incomplete stripping of project coupling harms the package's quality; incomplete stripping of private information causes leakage. Review mechanisms for the latter belong to specification design and in principle happen before sharing.
 
 ## Objections
 

@@ -3,7 +3,7 @@ title: Natural Language Expression Should Match the Working Language
 description: Natural language expression in the grounding part of project truth should match the working language, improving understandability and reducing translation loss, term drift, and retrieval gaps.
 dependsOn:
   - argument/what-is-project-truth
-sourceHash: a9fb2610ceb6b14bb387f77c58162692b04638a82b97703e46a2402faadd4bdc
+sourceHash: 08cecfe4fc515049aefed90b7fd35d42a89e8d9cfff651429eaa8811af399871
 ---
 
 Natural language expression in the grounding part of project truth should match the working language.
@@ -34,11 +34,17 @@ The glossary can be built around the words that are actually used; rule explanat
 
 ## Boundaries
 
-This article discusses natural language expression in the grounding part. To judge whether a piece of text falls under this principle, the key question is whether it explains the project, explains the basis, or supports collaborative judgment.
+**This article discusses natural language expression in the grounding part.**
 
-Engineering symbol names follow engineering constraints. Code identifiers, interface fields, and other engineering symbols can follow the relevant ecosystem and team conventions; the key is that they maintain stable correspondence with project concepts in the working language.
+To judge whether a piece of text falls under this principle, the key question is whether it explains the project, explains the basis, or supports collaborative judgment.
 
-Engineering proper names can remain in their original language, such as commands, configuration items, API names, and error messages. Keeping the original language should be limited to the engineering proper names themselves; the surrounding explanation should still be organized in the working language. Engineering operation instructions aim at accurate execution, and their language choice follows the team's engineering practice.
+**Engineering symbol names follow engineering constraints.**
+
+Code identifiers, interface fields, and other engineering symbols can follow the relevant ecosystem and team conventions; the key is that they maintain stable correspondence with project concepts in the working language.
+
+**Engineering proper names can remain in their original language.**
+
+Commands, configuration items, API names, and error messages are all such proper names. Keeping the original language should be limited to the engineering proper names themselves; the surrounding explanation should still be organized in the working language. Engineering operation instructions aim at accurate execution, and their language choice follows the team's engineering practice.
 
 ## Objections
 
