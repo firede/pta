@@ -23,9 +23,13 @@ import {
   type CheckSignal,
   type ContextAssembly,
   type ExtractedEntry,
-  type InspectionReport,
+  type InspectionMember,
   type PendingEntryRef,
 } from '@pta/core';
+
+import { readDerivation, writeDerivation, type ClueDerivation } from './derivations.ts';
+import { audit, runAgent, runDaemon, runDashboard, runDoctor, runLogs } from './management.ts';
+import { resolveGlobalPaths } from './paths.ts';
 
 function shortId(entry: ExtractedEntry): string {
   return entry.contentHash.slice(0, 8);
@@ -399,65 +403,174 @@ function formatPending(groups: readonly PendingGroup[]): string {
   return `${sections.join('\n\n')}\n\n共 ${total} 条待裁决条目，分布于 ${groups.length} 个领域。\n`;
 }
 
-function formatInspection(report: InspectionReport): string {
-  if (report.members.length === 0) {
+type InspectionView = Readonly<{
+  member: InspectionMember;
+  effectiveDue?: string;
+  registered?: 'date' | 'condition';
+}>;
+
+function dueStart(due: string): string {
+  return due.length === 7 ? `${due}-01` : due;
+}
+
+function formatInspection(views: readonly InspectionView[], today: string): string {
+  if (views.length === 0) {
     return '巡检集合为空：没有巡检标记条目与残留条目。\n';
   }
   const lines: string[] = [];
-  const domains = new Set(report.members.map((member) => member.domainIdentifier));
-  lines.push(`巡检集合：${report.members.length} 条（${domains.size} 个领域）`);
-  if (report.expiries.length > 0) {
+  const domains = new Set(views.map((view) => view.member.domainIdentifier));
+  lines.push(`巡检集合：${views.length} 条（${domains.size} 个领域）`);
+  const memberLine = (view: InspectionView, prefix = ''): string =>
+    `  ${prefix}${shortId(view.member.entry)} ${view.member.filePath}:${view.member.entry.line} ${view.member.entry.content}`;
+
+  const dated = views.filter(
+    (view) => view.member.kind === 'marked-truth' && view.effectiveDue !== undefined,
+  );
+  const expired = dated.filter((view) => dueStart(view.effectiveDue as string) <= today);
+  if (expired.length > 0) {
     lines.push('', '到期：');
-    for (const item of report.expiries) {
+    for (const view of expired) {
       lines.push(
-        `  [${item.category} | ${item.status}] ${item.evidence.file}:${item.evidence.line} ${item.evidence.message}`,
+        `  [expiry | machine-decidable] ${view.member.filePath}:${view.member.entry.line} 复查线索 ${view.effectiveDue} 已到期。`,
       );
     }
   }
-  const expiredHashes = new Set(
-    report.expiries.flatMap((item) =>
-      item.anchor.kind === 'entry' ? [item.anchor.contentHash] : [],
-    ),
-  );
-  const upcoming = report.members
-    .filter((member) => member.due !== undefined && !expiredHashes.has(member.entry.contentHash))
-    .toSorted((left, right) => (left.due as string).localeCompare(right.due as string));
+  const upcoming = dated
+    .filter((view) => dueStart(view.effectiveDue as string) > today)
+    .toSorted((left, right) =>
+      (left.effectiveDue as string).localeCompare(right.effectiveDue as string),
+    );
   if (upcoming.length > 0) {
     lines.push('', '日期型（未到期）：');
-    for (const member of upcoming) {
-      lines.push(
-        `  ${member.due} ${shortId(member.entry)} ${member.filePath}:${member.entry.line} ${member.entry.content}`,
-      );
-    }
+    for (const view of upcoming) lines.push(memberLine(view, `${view.effectiveDue} `));
   }
-  const conditions = report.members.filter((member) => member.due === undefined);
-  if (conditions.length > 0) {
-    lines.push('', '条件型（待评估）：');
-    for (const member of conditions) {
-      lines.push(
-        `  ${shortId(member.entry)} ${member.filePath}:${member.entry.line} ${member.entry.content}`,
-      );
-    }
+  const confirmed = views.filter(
+    (view) => view.member.kind === 'marked-truth' && view.registered === 'condition',
+  );
+  if (confirmed.length > 0) {
+    lines.push('', '条件型（已盘存）：');
+    for (const view of confirmed) lines.push(memberLine(view));
+  }
+  const uninventoried = views.filter(
+    (view) =>
+      view.member.kind === 'marked-truth' &&
+      view.effectiveDue === undefined &&
+      view.registered === undefined,
+  );
+  if (uninventoried.length > 0) {
+    lines.push('', '未盘存（待推导或注册）：');
+    for (const view of uninventoried) lines.push(memberLine(view));
+  }
+  const residue = views.filter((view) => view.member.kind === 'residue');
+  if (residue.length > 0) {
+    lines.push('', '残留（整类巡检）：');
+    for (const view of residue) lines.push(memberLine(view));
   }
   return `${lines.join('\n')}\n`;
+}
+
+async function collectInspectionViews(repositoryRoot: string): Promise<readonly InspectionView[]> {
+  const repositoryFiles = await gitRepositoryFiles(repositoryRoot);
+  const discovery = await discoverDomains(repositoryRoot, repositoryFiles);
+  const contents = await Promise.all(
+    discovery.domains.map((domain) =>
+      extractDomainContent(repositoryRoot, repositoryFiles, domain),
+    ),
+  );
+  const today = new Date().toISOString().slice(0, 10);
+  const report = inspectContents(contents, today);
+  const paths = resolveGlobalPaths();
+  return Promise.all(
+    report.members.map(async (member): Promise<InspectionView> => {
+      if (member.kind !== 'marked-truth') return { member };
+      const derivation = await readDerivation(paths, member.entry.contentHash);
+      if (derivation === undefined) {
+        return { member, ...(member.due === undefined ? {} : { effectiveDue: member.due }) };
+      }
+      return {
+        member,
+        registered: derivation.type,
+        ...(derivation.type === 'date' && derivation.due !== undefined
+          ? { effectiveDue: derivation.due }
+          : {}),
+      };
+    }),
+  );
 }
 
 async function runInspect(rootArg: string | undefined, io: CliIO, cwd: string): Promise<number> {
   const repositoryRoot = resolve(cwd, rootArg ?? '.');
   try {
-    const repositoryFiles = await gitRepositoryFiles(repositoryRoot);
-    const discovery = await discoverDomains(repositoryRoot, repositoryFiles);
-    const contents = await Promise.all(
-      discovery.domains.map((domain) =>
-        extractDomainContent(repositoryRoot, repositoryFiles, domain),
-      ),
-    );
-    const today = new Date().toISOString().slice(0, 10);
-    io.stdout(formatInspection(inspectContents(contents, today)));
+    const views = await collectInspectionViews(repositoryRoot);
+    io.stdout(formatInspection(views, new Date().toISOString().slice(0, 10)));
     return 0;
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     io.stderr(`pta inspect 失败：${message}\n`);
+    return 2;
+  }
+}
+
+async function runInspectRegister(
+  idArg: string,
+  valueArg: string,
+  io: CliIO,
+  cwd: string,
+): Promise<number> {
+  const isDate = /^\d{4}-\d{2}(-\d{2})?$/u.test(valueArg);
+  if (!isDate && valueArg !== '条件') {
+    io.stderr('用法：pta inspect register <条目id> <到期日期|条件>\n');
+    return 2;
+  }
+  const repositoryRoot = resolve(cwd);
+  try {
+    const views = await collectInspectionViews(repositoryRoot);
+    const refs = views
+      .filter((view) => view.member.kind === 'marked-truth')
+      .map((view) => ({
+        domainIdentifier: view.member.domainIdentifier,
+        filePath: view.member.filePath,
+        entry: view.member.entry,
+      }));
+    const selection = selectPendingEntries(refs, [idArg]);
+    const problem = selection.problems[0];
+    if (problem !== undefined) {
+      if (problem.reason === 'invalid') io.stderr(`无法解析 id：${problem.selector}\n`);
+      else if (problem.reason === 'not-found') {
+        io.stderr(`未匹配任何巡检标记条目：${problem.selector}\n`);
+      } else {
+        io.stderr(`id 有歧义：${problem.selector}，候选：\n`);
+        for (const candidate of problem.candidates) {
+          io.stderr(
+            `  ${label(candidate.domainIdentifier)}:${shortId(candidate.entry)} ${candidate.entry.content}\n`,
+          );
+        }
+      }
+      return 2;
+    }
+    const match = selection.matches[0] as PendingEntryRef;
+    const derivation: ClueDerivation = {
+      contentHash: match.entry.contentHash,
+      kind: 'review-clue',
+      type: isDate ? 'date' : 'condition',
+      ...(isDate ? { due: valueArg } : {}),
+      registeredAt: new Date().toISOString(),
+      registeredBy: 'cli',
+    };
+    await writeDerivation(resolveGlobalPaths(), derivation);
+    await audit(io, 'derivation-register', {
+      id: shortId(match.entry),
+      domain: label(match.domainIdentifier),
+      type: derivation.type,
+      ...(derivation.due === undefined ? {} : { due: derivation.due }),
+    });
+    io.stdout(
+      `已注册推导：${label(match.domainIdentifier)} ${shortId(match.entry)} → ${isDate ? `日期型（${valueArg}）` : '条件型'}\n`,
+    );
+    return 0;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    io.stderr(`pta inspect register 失败：${message}\n`);
     return 2;
   }
 }
@@ -497,6 +610,11 @@ async function runPendingAdd(
       io.stderr('提示：待裁决条目应当以问句表述。\n');
     }
     await writeFile(absolute, plan.source);
+    await audit(io, 'pending-add', {
+      domain: label(identifier),
+      id: plan.contentHash.slice(0, 8),
+      file: filePath,
+    });
     io.stdout(
       `已登记待裁决条目：${label(identifier)} ${plan.contentHash.slice(0, 8)} ${filePath}:${plan.line}\n`,
     );
@@ -576,6 +694,11 @@ async function runPendingRemove(
       }
     }
 
+    await audit(io, 'pending-remove', {
+      ids: selection.matches.map(
+        (match) => `${label(match.domainIdentifier)}:${shortId(match.entry)}`,
+      ),
+    });
     io.stdout(`已处置 ${selection.matches.length} 条待裁决条目：\n`);
     for (const match of selection.matches) {
       io.stdout(
@@ -687,12 +810,45 @@ export async function runCli(
   }
 
   if (args[0] === 'inspect') {
+    if (args[1] === 'register') {
+      const idArg = args[2];
+      const valueArg = args[3];
+      if (idArg === undefined || valueArg === undefined || args.length > 4) {
+        io.stderr('用法：pta inspect register <条目id> <到期日期|条件>\n');
+        return 2;
+      }
+      return runInspectRegister(idArg, valueArg, io, cwd);
+    }
     if (args.length > 2 || args[1]?.startsWith('-') === true) {
-      io.stderr('用法：pta inspect [仓库根]\n');
+      io.stderr(
+        '用法：pta inspect [仓库根]\n       pta inspect register <条目id> <到期日期|条件>\n',
+      );
       return 2;
     }
     return runInspect(args[1], io, cwd);
   }
+
+  if (args[0] === 'daemon') return runDaemon(args.slice(1), io);
+
+  if (args[0] === 'dashboard') {
+    if (args.length > 1) {
+      io.stderr('用法：pta dashboard\n');
+      return 2;
+    }
+    return runDashboard(io);
+  }
+
+  if (args[0] === 'doctor') {
+    if (args.length > 1) {
+      io.stderr('用法：pta doctor\n');
+      return 2;
+    }
+    return runDoctor(io, cwd);
+  }
+
+  if (args[0] === 'logs') return runLogs(args.slice(1), io);
+
+  if (args[0] === 'agent') return runAgent(args.slice(1), io, cwd);
 
   if (args[0] === 'context') {
     const paths = args.slice(1);
@@ -705,7 +861,7 @@ export async function runCli(
 
   if (args[0] !== 'check' || args.length > 2) {
     io.stderr(
-      '用法：pta check [仓库根]\n       pta changes [base]\n       pta pending [仓库根]\n       pta context <路径>...\n       pta inspect [仓库根]\n',
+      '用法：pta check [仓库根]\n       pta changes [base]\n       pta pending [仓库根]\n       pta context <路径>...\n       pta inspect [仓库根]\n       pta agent <list|run>\n       pta daemon <install|uninstall|status|start|stop|restart>\n       pta dashboard\n       pta doctor\n       pta logs [数量]\n',
     );
     return 2;
   }

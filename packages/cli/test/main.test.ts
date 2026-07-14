@@ -10,6 +10,11 @@ import { hashEntryContent } from '@pta/core';
 
 import { runCli } from '../src/main.ts';
 
+const globalDirs = await mkdtemp(join(tmpdir(), 'pta-global-'));
+process.env['XDG_STATE_HOME'] = join(globalDirs, 'state');
+process.env['XDG_CACHE_HOME'] = join(globalDirs, 'cache');
+process.env['XDG_CONFIG_HOME'] = join(globalDirs, 'config');
+
 function git(root: string, args: readonly string[]): Promise<void> {
   return new Promise((resolve, reject) => {
     execFile('git', args, { cwd: root }, (error) => {
@@ -275,8 +280,9 @@ test('inspect 圈定巡检集合并报告到期', async (context) => {
     output.stdout(),
     /到期：\n {2}\[expiry \| machine-decidable\] TRUTH\.md:2 复查线索 2020-01 已到期/u,
   );
-  assert.match(output.stdout(), /条件型（待评估）：/u);
+  assert.match(output.stdout(), /未盘存（待推导或注册）：/u);
   assert.match(output.stdout(), /^ {2}[0-9a-f]{8} TRUTH\.md:3 \[\?\] 服务部署在单台服务器上/mu);
+  assert.match(output.stdout(), /残留（整类巡检）：/u);
   assert.match(output.stdout(), /^ {2}[0-9a-f]{8} RESIDUE\.md:1 2024-03 之前的数据/mu);
   assert.equal(output.stderr(), '');
 
@@ -371,4 +377,38 @@ test('check 从清单扣除工作树中已删除的跟踪文件', async (context
 
   assert.equal(await runCli(['check', root], output.io), 0);
   assert.equal(output.stdout(), '通过：未发现核查信号。\n');
+});
+
+test('inspect register 注册推导叠加进报告，logs 记录关键行为', async (context) => {
+  const entry = '[?] 服务仅五名员工使用，权限按人对人授权。人数变化时复查。';
+  const root = await repository({ 'TRUTH.md': `- ${entry}\n` });
+  context.after(() => rm(root, { recursive: true, force: true }));
+  await git(root, ['init', '-q']);
+  const id = hashEntryContent(entry).slice(0, 8);
+
+  const before = capture();
+  assert.equal(await runCli(['inspect', root], before.io), 0);
+  assert.match(before.stdout(), /未盘存（待推导或注册）：/u);
+
+  const condition = capture();
+  assert.equal(await runCli(['inspect', 'register', id, '条件'], condition.io, root), 0);
+  assert.match(condition.stdout(), /已注册推导：\. [0-9a-f]{8} → 条件型/u);
+
+  const confirmed = capture();
+  assert.equal(await runCli(['inspect', root], confirmed.io), 0);
+  assert.match(confirmed.stdout(), /条件型（已盘存）：/u);
+
+  const dated = capture();
+  assert.equal(await runCli(['inspect', 'register', id, '2030-06'], dated.io, root), 0);
+  const upcoming = capture();
+  assert.equal(await runCli(['inspect', root], upcoming.io), 0);
+  assert.match(upcoming.stdout(), /日期型（未到期）：\n {2}2030-06 /u);
+
+  const badValue = capture();
+  assert.equal(await runCli(['inspect', 'register', id, '随便'], badValue.io, root), 2);
+  assert.match(badValue.stderr(), /用法：pta inspect register/u);
+
+  const logs = capture();
+  assert.equal(await runCli(['logs', '10'], logs.io, root), 0);
+  assert.match(logs.stdout(), /\[cli\] derivation-register/u);
 });
