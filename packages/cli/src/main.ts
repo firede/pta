@@ -13,6 +13,7 @@ import {
   hashFileBytes,
   lintDiscoveryProblems,
   lintDomainContents,
+  planPendingAddition,
   removeEntryLines,
   selectPendingEntries,
   type ChangedPath,
@@ -238,7 +239,11 @@ type SourceIdentification = Readonly<{
   hashedFiles: readonly Readonly<{ path: string; hash: string }>[];
 }>;
 
-function formatContext(assembly: ContextAssembly, source: SourceIdentification): string {
+function formatContext(
+  assembly: ContextAssembly,
+  source: SourceIdentification,
+  signals: readonly CheckSignal[],
+): string {
   const lines: string[] = ['# 项目真相背景', ''];
   if (source.baseVersion === undefined) {
     lines.push('来源：无提交基线，所涉内容以哈希标识');
@@ -267,6 +272,18 @@ function formatContext(assembly: ContextAssembly, source: SourceIdentification):
           : `领域 ${label(resolution.domainIdentifier)}`
       }`,
     );
+  }
+  if (signals.length > 0) {
+    lines.push('核查提示（读取时叠加，不入产物）：');
+    for (const signal of signals.toSorted(
+      (left, right) =>
+        left.evidence.file.localeCompare(right.evidence.file) ||
+        left.evidence.line - right.evidence.line,
+    )) {
+      lines.push(
+        `  [${signal.category} | ${signal.status}] ${signal.evidence.file}:${signal.evidence.line} ${signal.evidence.message}`,
+      );
+    }
   }
   for (const domain of assembly.domains) {
     lines.push('', `## 领域 ${label(domain.domainIdentifier)}`);
@@ -336,11 +353,22 @@ async function runContext(paths: readonly string[], io: CliIO, cwd: string): Pro
         hash: hashFileBytes(await readFile(join(repositoryRoot, ...path.split('/')))),
       })),
     );
+    const involved = new Set(assembly.domains.map((domain) => domain.domainIdentifier));
+    const signals = lintDomainContents(
+      contents.filter(
+        (content) =>
+          content.domain.identifier !== undefined && involved.has(content.domain.identifier),
+      ),
+    );
     io.stdout(
-      formatContext(assembly, {
-        hashedFiles,
-        ...(baseVersion === undefined ? {} : { baseVersion }),
-      }),
+      formatContext(
+        assembly,
+        {
+          hashedFiles,
+          ...(baseVersion === undefined ? {} : { baseVersion }),
+        },
+        signals,
+      ),
     );
     return 0;
   } catch (error) {
@@ -367,6 +395,52 @@ function formatPending(groups: readonly PendingGroup[]): string {
   });
   const total = groups.reduce((sum, group) => sum + group.entries.length, 0);
   return `${sections.join('\n\n')}\n\n共 ${total} 条待裁决条目，分布于 ${groups.length} 个领域。\n`;
+}
+
+async function runPendingAdd(
+  domainArg: string,
+  text: string,
+  io: CliIO,
+  cwd: string,
+): Promise<number> {
+  const repositoryRoot = resolve(cwd);
+  try {
+    const repositoryFiles = await gitRepositoryFiles(repositoryRoot);
+    const discovery = await discoverDomains(repositoryRoot, repositoryFiles);
+    const identifier = domainArg === '.' ? '' : domainArg;
+    const domain = discovery.domains.find((item) => item.identifier === identifier);
+    if (domain === undefined) {
+      io.stderr(`未找到领域：${domainArg}\n`);
+      return 2;
+    }
+    const prefix = domain.containerPath === '' ? '' : `${domain.containerPath}/`;
+    const filePath = `${prefix}PENDING.md`;
+    const absolute = join(repositoryRoot, ...filePath.split('/'));
+    const existing: string | undefined = await readFile(absolute, 'utf8').catch(() => undefined);
+    const plan = planPendingAddition(existing, text);
+    if (plan.kind === 'invalid') {
+      io.stderr(plan.reason === 'empty' ? '条目内容为空。\n' : '条目必须是单行。\n');
+      return 2;
+    }
+    if (plan.kind === 'duplicate') {
+      io.stdout(
+        `已存在同内容条目：${label(identifier)} ${plan.contentHash.slice(0, 8)} ${filePath}:${plan.line}\n`,
+      );
+      return 0;
+    }
+    if (!/[？?]/u.test(text)) {
+      io.stderr('提示：待裁决条目应当以问句表述。\n');
+    }
+    await writeFile(absolute, plan.source);
+    io.stdout(
+      `已登记待裁决条目：${label(identifier)} ${plan.contentHash.slice(0, 8)} ${filePath}:${plan.line}\n`,
+    );
+    return 0;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    io.stderr(`pta pending add 失败：${message}\n`);
+    return 2;
+  }
 }
 
 async function runPendingRemove(
@@ -529,8 +603,19 @@ export async function runCli(
       }
       return runPendingRemove(selectors, io, cwd);
     }
+    if (args[1] === 'add') {
+      const domainArg = args[2];
+      const text = args[3];
+      if (domainArg === undefined || text === undefined || args.length > 4) {
+        io.stderr('用法：pta pending add <领域> <问题>\n');
+        return 2;
+      }
+      return runPendingAdd(domainArg, text, io, cwd);
+    }
     if (args.length > 2 || args[1]?.startsWith('-') === true) {
-      io.stderr('用法：pta pending [仓库根]\n       pta pending remove <id>...\n');
+      io.stderr(
+        '用法：pta pending [仓库根]\n       pta pending add <领域> <问题>\n       pta pending remove <id>...\n',
+      );
       return 2;
     }
     return runPending(args[1], io, cwd);

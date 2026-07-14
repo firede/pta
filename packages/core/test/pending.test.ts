@@ -6,6 +6,7 @@ import {
   collectPendingEntries,
   extractEntries,
   hashEntryContent,
+  planPendingAddition,
   removeEntryLines,
   selectPendingEntries,
   splitFrontmatter,
@@ -91,6 +92,33 @@ test('selectPendingEntries 支持前缀匹配、领域限定与歧义报告', ()
     ],
   );
   assert.equal(failed.matches.length, 1);
+});
+
+test('planPendingAddition 追加单行条目，同内容判重，多行与空拒绝', () => {
+  const created = planPendingAddition(undefined, ' 新问题？（暂缓） ');
+  assert.equal(created.kind, 'added');
+  if (created.kind === 'added') {
+    assert.equal(created.source, '- 新问题？（暂缓）\n');
+    assert.equal(created.line, 1);
+    assert.equal(created.contentHash, hashEntryContent('新问题？（暂缓）'));
+  }
+
+  const appended = planPendingAddition('- 旧问题？（暂缓）', '新问题？（暂缓）');
+  assert.equal(appended.kind, 'added');
+  if (appended.kind === 'added') {
+    assert.equal(appended.source, '- 旧问题？（暂缓）\n- 新问题？（暂缓）\n');
+    assert.equal(appended.line, 2);
+  }
+
+  const duplicate = planPendingAddition('- 旧问题？（暂缓）\n', '旧问题？（暂缓）');
+  assert.equal(duplicate.kind, 'duplicate');
+  if (duplicate.kind === 'duplicate') assert.equal(duplicate.line, 1);
+
+  assert.deepEqual(planPendingAddition(undefined, '甲\n乙'), {
+    kind: 'invalid',
+    reason: 'multiline',
+  });
+  assert.deepEqual(planPendingAddition(undefined, '   '), { kind: 'invalid', reason: 'empty' });
 });
 
 test('removeEntryLines 按行号移除，移除全部后剩空串', () => {

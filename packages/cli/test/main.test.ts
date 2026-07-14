@@ -188,6 +188,62 @@ test('pending remove 按 id 处置条目，歧义需领域限定，清空即删'
   assert.match(missing.stderr(), /未匹配任何待裁决条目/u);
 });
 
+test('pending add 登记条目、幂等判重并惰性创建文件', async (context) => {
+  const root = await repository({
+    'TRUTH.md': '- 根判断\n',
+    'src/TRUTH.md': '- 源判断\n',
+  });
+  context.after(() => rm(root, { recursive: true, force: true }));
+  await git(root, ['init', '-q']);
+
+  const added = capture();
+  assert.equal(
+    await runCli(['pending', 'add', 'src', '新问题如何处理？（暂缓）'], added.io, root),
+    0,
+  );
+  assert.match(added.stdout(), /已登记待裁决条目：src [0-9a-f]{8} src\/PENDING\.md:1/u);
+  assert.equal(added.stderr(), '');
+  assert.equal(
+    await readFile(join(root, 'src/PENDING.md'), 'utf8'),
+    '- 新问题如何处理？（暂缓）\n',
+  );
+
+  const duplicate = capture();
+  assert.equal(
+    await runCli(['pending', 'add', 'src', '新问题如何处理？（暂缓）'], duplicate.io, root),
+    0,
+  );
+  assert.match(duplicate.stdout(), /已存在同内容条目：src [0-9a-f]{8}/u);
+
+  const statement = capture();
+  assert.equal(await runCli(['pending', 'add', '.', '这是陈述句'], statement.io, root), 0);
+  assert.match(statement.stderr(), /应当以问句表述/u);
+  assert.equal(await readFile(join(root, 'PENDING.md'), 'utf8'), '- 这是陈述句\n');
+
+  const unknown = capture();
+  assert.equal(await runCli(['pending', 'add', 'nowhere', '问题？'], unknown.io, root), 2);
+  assert.match(unknown.stderr(), /未找到领域：nowhere/u);
+
+  const usage = capture();
+  assert.equal(await runCli(['pending', 'add', 'src'], usage.io, root), 2);
+  assert.match(usage.stderr(), /用法：pta pending add/u);
+});
+
+test('context 透出涉及领域的核查提示且不阻断', async (context) => {
+  const root = await repository({
+    'TRUTH.md': '- 根判断\n',
+    'src/TRUTH.md': '- **加粗领起** 判断\n',
+    'src/index.ts': 'export const value = 1;\n',
+  });
+  context.after(() => rm(root, { recursive: true, force: true }));
+  await git(root, ['init', '-q']);
+  const output = capture();
+
+  assert.equal(await runCli(['context', 'src/index.ts'], output.io, root), 0);
+  assert.match(output.stdout(), /核查提示（读取时叠加，不入产物）：/u);
+  assert.match(output.stdout(), /\[violation \| machine-decidable\] src\/TRUTH\.md:1/u);
+});
+
 test('pending 收件箱为空时输出空提示，用法错误返回 2', async (context) => {
   const root = await repository({ 'TRUTH.md': '- 根判断\n' });
   context.after(() => rm(root, { recursive: true, force: true }));
