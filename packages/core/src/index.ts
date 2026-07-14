@@ -1,6 +1,7 @@
 export * from './domains.ts';
 export * from './changes.ts';
 export * from './context.ts';
+export * from './inspect.ts';
 export * from './pending.ts';
 export * from './entries.ts';
 export * from './frontmatter.ts';

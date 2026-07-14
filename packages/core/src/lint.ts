@@ -8,7 +8,8 @@ export type CheckSignalCategory =
   | 'conflict'
   | 'violation'
   | 'term inconsistency'
-  | 'missing dependency';
+  | 'missing dependency'
+  | 'expiry';
 export type CheckSignalStatus = 'machine-decidable' | 'suspicion';
 export type CheckSignalSource = 'structural-check';
 
@@ -369,6 +370,30 @@ function termInconsistencies(contents: readonly DomainContent[]): CheckSignal[] 
   return signals;
 }
 
+const definedStatusCharacters = new Set(['?']);
+
+function undefinedStatusCharacters(contents: readonly DomainContent[]): CheckSignal[] {
+  const signals: CheckSignal[] = [];
+  for (const content of contents) {
+    const { domain } = content;
+    const truth = content.files['TRUTH.md'];
+    if (truth === undefined) continue;
+    for (const entry of truth.entries) {
+      if (entry.marker === undefined || definedStatusCharacters.has(entry.marker)) continue;
+      signals.push(
+        signal({
+          category: 'violation',
+          anchor: entryAnchor(domain, truth, entry),
+          message: `状态字符「${entry.marker}」未被内容结构规范定义。`,
+          file: domain.containerPath === '' ? 'TRUTH.md' : `${domain.containerPath}/TRUTH.md`,
+          line: entry.line,
+        }),
+      );
+    }
+  }
+  return signals;
+}
+
 function missingDependencyTargets(contents: readonly DomainContent[]): CheckSignal[] {
   const identifiers = new Set(
     contents.flatMap(({ domain }) => (domain.identifier === undefined ? [] : [domain.identifier])),
@@ -402,6 +427,7 @@ export function lintDomainContents(contents: readonly DomainContent[]): readonly
     ...entryConflicts(contents),
     ...termInconsistencies(contents),
     ...missingDependencyTargets(contents),
+    ...undefinedStatusCharacters(contents),
   ];
 }
 

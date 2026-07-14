@@ -27,6 +27,7 @@ export type ExtractedEntry = Readonly<{
   identifier?: EntryIdentifier;
   term?: string;
   normalizedTerm?: string;
+  marker?: string;
 }>;
 
 export type OutsideListLine = Readonly<{
@@ -47,6 +48,11 @@ function glossaryTerm(content: string): string | undefined {
   return match?.[1];
 }
 
+function statusMarker(content: string): string | undefined {
+  const match = /^\[(.)\] /u.exec(content);
+  return match?.[1];
+}
+
 export function extractEntries(
   source: string,
   fileName: ContentFileName,
@@ -63,6 +69,7 @@ export function extractEntries(
       const normalizedContent = normalizeEntryContent(content);
       const contentHash = hashEntryContent(content);
       const term = kind === 'glossary' ? glossaryTerm(content) : undefined;
+      const marker = kind === 'truth' ? statusMarker(content) : undefined;
       entries.push({
         line: line.number,
         source: line.text,
@@ -80,6 +87,7 @@ export function extractEntries(
               term,
               normalizedTerm: normalizeEntryContent(term),
             }),
+        ...(marker === undefined ? {} : { marker }),
       });
     } else if (line.text.trim() !== '') {
       outsideList.push({ line: line.number, source: line.text });

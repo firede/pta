@@ -11,6 +11,7 @@ import {
   discoverDomains,
   extractDomainContent,
   hashFileBytes,
+  inspectContents,
   lintDiscoveryProblems,
   lintDomainContents,
   planPendingAddition,
@@ -22,6 +23,7 @@ import {
   type CheckSignal,
   type ContextAssembly,
   type ExtractedEntry,
+  type InspectionReport,
   type PendingEntryRef,
 } from '@pta/core';
 
@@ -397,6 +399,69 @@ function formatPending(groups: readonly PendingGroup[]): string {
   return `${sections.join('\n\n')}\n\n共 ${total} 条待裁决条目，分布于 ${groups.length} 个领域。\n`;
 }
 
+function formatInspection(report: InspectionReport): string {
+  if (report.members.length === 0) {
+    return '巡检集合为空：没有巡检标记条目与残留条目。\n';
+  }
+  const lines: string[] = [];
+  const domains = new Set(report.members.map((member) => member.domainIdentifier));
+  lines.push(`巡检集合：${report.members.length} 条（${domains.size} 个领域）`);
+  if (report.expiries.length > 0) {
+    lines.push('', '到期：');
+    for (const item of report.expiries) {
+      lines.push(
+        `  [${item.category} | ${item.status}] ${item.evidence.file}:${item.evidence.line} ${item.evidence.message}`,
+      );
+    }
+  }
+  const expiredHashes = new Set(
+    report.expiries.flatMap((item) =>
+      item.anchor.kind === 'entry' ? [item.anchor.contentHash] : [],
+    ),
+  );
+  const upcoming = report.members
+    .filter((member) => member.due !== undefined && !expiredHashes.has(member.entry.contentHash))
+    .toSorted((left, right) => (left.due as string).localeCompare(right.due as string));
+  if (upcoming.length > 0) {
+    lines.push('', '日期型（未到期）：');
+    for (const member of upcoming) {
+      lines.push(
+        `  ${member.due} ${shortId(member.entry)} ${member.filePath}:${member.entry.line} ${member.entry.content}`,
+      );
+    }
+  }
+  const conditions = report.members.filter((member) => member.due === undefined);
+  if (conditions.length > 0) {
+    lines.push('', '条件型（待评估）：');
+    for (const member of conditions) {
+      lines.push(
+        `  ${shortId(member.entry)} ${member.filePath}:${member.entry.line} ${member.entry.content}`,
+      );
+    }
+  }
+  return `${lines.join('\n')}\n`;
+}
+
+async function runInspect(rootArg: string | undefined, io: CliIO, cwd: string): Promise<number> {
+  const repositoryRoot = resolve(cwd, rootArg ?? '.');
+  try {
+    const repositoryFiles = await gitRepositoryFiles(repositoryRoot);
+    const discovery = await discoverDomains(repositoryRoot, repositoryFiles);
+    const contents = await Promise.all(
+      discovery.domains.map((domain) =>
+        extractDomainContent(repositoryRoot, repositoryFiles, domain),
+      ),
+    );
+    const today = new Date().toISOString().slice(0, 10);
+    io.stdout(formatInspection(inspectContents(contents, today)));
+    return 0;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    io.stderr(`pta inspect 失败：${message}\n`);
+    return 2;
+  }
+}
+
 async function runPendingAdd(
   domainArg: string,
   text: string,
@@ -621,6 +686,14 @@ export async function runCli(
     return runPending(args[1], io, cwd);
   }
 
+  if (args[0] === 'inspect') {
+    if (args.length > 2 || args[1]?.startsWith('-') === true) {
+      io.stderr('用法：pta inspect [仓库根]\n');
+      return 2;
+    }
+    return runInspect(args[1], io, cwd);
+  }
+
   if (args[0] === 'context') {
     const paths = args.slice(1);
     if (paths.length === 0 || paths.some((path) => path.startsWith('-'))) {
@@ -632,7 +705,7 @@ export async function runCli(
 
   if (args[0] !== 'check' || args.length > 2) {
     io.stderr(
-      '用法：pta check [仓库根]\n       pta changes [base]\n       pta pending [仓库根]\n       pta context <路径>...\n',
+      '用法：pta check [仓库根]\n       pta changes [base]\n       pta pending [仓库根]\n       pta context <路径>...\n       pta inspect [仓库根]\n',
     );
     return 2;
   }

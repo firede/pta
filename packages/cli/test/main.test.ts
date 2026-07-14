@@ -259,6 +259,32 @@ test('pending 收件箱为空时输出空提示，用法错误返回 2', async (
   assert.match(usage.stderr(), /用法：pta pending/u);
 });
 
+test('inspect 圈定巡检集合并报告到期', async (context) => {
+  const root = await repository({
+    'TRUTH.md':
+      '- 普通判断，不入巡检集合。\n- [?] 风险分级与学会指南一致。2020-01 核对指南是否更新。\n- [?] 服务部署在单台服务器上。部署拓扑变化时复查。\n',
+    'RESIDUE.md': '- 2024-03 之前的数据无法区分邻面龋。\n',
+  });
+  context.after(() => rm(root, { recursive: true, force: true }));
+  await git(root, ['init', '-q']);
+  const output = capture();
+
+  assert.equal(await runCli(['inspect', root], output.io), 0);
+  assert.match(output.stdout(), /巡检集合：3 条（1 个领域）/u);
+  assert.match(
+    output.stdout(),
+    /到期：\n {2}\[expiry \| machine-decidable\] TRUTH\.md:2 复查线索 2020-01 已到期/u,
+  );
+  assert.match(output.stdout(), /条件型（待评估）：/u);
+  assert.match(output.stdout(), /^ {2}[0-9a-f]{8} TRUTH\.md:3 \[\?\] 服务部署在单台服务器上/mu);
+  assert.match(output.stdout(), /^ {2}[0-9a-f]{8} RESIDUE\.md:1 2024-03 之前的数据/mu);
+  assert.equal(output.stderr(), '');
+
+  const usage = capture();
+  assert.equal(await runCli(['inspect', root, 'extra'], usage.io), 2);
+  assert.match(usage.stderr(), /用法：pta inspect/u);
+});
+
 test('context 输出领域链与来源标识并返回 0', async (context) => {
   const root = await repository({
     'TRUTH.md': '- 根判断\n',

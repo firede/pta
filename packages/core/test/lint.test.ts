@@ -227,3 +227,17 @@ test('dependsOn 指向存在领域不产生信号，悬空目标产生嫌疑', (
   assert.equal(found.evidence.file, 'consumer/TRUTH.md');
   assert.equal(found.evidence.line, 2);
 });
+
+test('未定义的状态字符构成违例，巡检标记不构成', () => {
+  const undefinedMarker = directoryDomain('src', '- [x] 判断');
+  const bad = lintDomainContents([undefinedMarker]).filter((item) => item.category === 'violation');
+  assert.equal(bad.length, 1);
+  assert.match(bad[0]?.evidence.message ?? '', /「x」未被内容结构规范定义/u);
+  assert.equal(bad[0]?.evidence.file, 'src/TRUTH.md');
+
+  const marked = directoryDomain('src', '- [?] 判断。2027-01 复查。');
+  assert.deepEqual(
+    lintDomainContents([marked]).filter((item) => item.category === 'violation'),
+    [],
+  );
+});
