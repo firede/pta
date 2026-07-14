@@ -130,6 +130,41 @@ test('changes 从工作树收集变更，输出漂移候选与待裁决背景并
   assert.equal(based.stderr(), '');
 });
 
+test('pending 按领域汇总待裁决条目并返回 0', async (context) => {
+  const root = await repository({
+    'TRUTH.md': '- 根判断\n',
+    'PENDING.md': '- 根问题如何处理？（暂按最保守方式处理）\n',
+    'packages/core/TRUTH.md': '- 核心判断\n',
+    'packages/core/PENDING.md': '- 核心问题一如何裁决？（暂缓）\n- 核心问题二如何裁决？（暂缓）\n',
+  });
+  context.after(() => rm(root, { recursive: true, force: true }));
+  await git(root, ['init', '-q']);
+  const output = capture();
+
+  assert.equal(await runCli(['pending', root], output.io), 0);
+  assert.match(output.stdout(), /领域 \./u);
+  assert.match(output.stdout(), /^ {2}PENDING\.md:1 根问题如何处理/mu);
+  assert.match(output.stdout(), /领域 packages\/core/u);
+  assert.match(output.stdout(), /^ {2}packages\/core\/PENDING\.md:2 核心问题二如何裁决/mu);
+  assert.match(output.stdout(), /共 3 条待裁决条目，分布于 2 个领域。/u);
+  assert.equal(output.stderr(), '');
+});
+
+test('pending 收件箱为空时输出空提示，用法错误返回 2', async (context) => {
+  const root = await repository({ 'TRUTH.md': '- 根判断\n' });
+  context.after(() => rm(root, { recursive: true, force: true }));
+  await git(root, ['init', '-q']);
+
+  const empty = capture();
+  assert.equal(await runCli(['pending', root], empty.io), 0);
+  assert.equal(empty.stdout(), '收件箱为空：没有待裁决条目。\n');
+  assert.equal(empty.stderr(), '');
+
+  const usage = capture();
+  assert.equal(await runCli(['pending', root, 'extra'], usage.io), 2);
+  assert.match(usage.stderr(), /用法：pta pending/u);
+});
+
 test('命令用法与 git 错误返回 2', async (context) => {
   const root = await repository({ 'TRUTH.md': '- 根判断\n' });
   context.after(() => rm(root, { recursive: true, force: true }));

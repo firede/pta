@@ -13,6 +13,7 @@ import {
   type ChangeType,
   type ChangeClassification,
   type CheckSignal,
+  type ExtractedEntry,
 } from '@pta/core';
 
 export type CliIO = Readonly<{
@@ -220,6 +221,49 @@ function formatChanges(result: ChangeClassification): string {
   return `${sections.join('\n\n')}\n`;
 }
 
+type PendingGroup = Readonly<{
+  identifier: string;
+  containerPath: string;
+  entries: readonly ExtractedEntry[];
+}>;
+
+function formatPending(groups: readonly PendingGroup[]): string {
+  if (groups.length === 0) return '收件箱为空：没有待裁决条目。\n';
+  const sections = groups.map((group) => {
+    const file = group.containerPath === '' ? 'PENDING.md' : `${group.containerPath}/PENDING.md`;
+    const lines = group.entries.map((entry) => `  ${file}:${entry.line} ${entry.content}`);
+    return `领域 ${label(group.identifier)}\n${lines.join('\n')}`;
+  });
+  const total = groups.reduce((sum, group) => sum + group.entries.length, 0);
+  return `${sections.join('\n\n')}\n\n共 ${total} 条待裁决条目，分布于 ${groups.length} 个领域。\n`;
+}
+
+async function runPending(rootArg: string | undefined, io: CliIO, cwd: string): Promise<number> {
+  const repositoryRoot = resolve(cwd, rootArg ?? '.');
+  try {
+    const repositoryFiles = await gitRepositoryFiles(repositoryRoot);
+    const discovery = await discoverDomains(repositoryRoot, repositoryFiles);
+    const contents = await Promise.all(
+      discovery.domains.map((domain) =>
+        extractDomainContent(repositoryRoot, repositoryFiles, domain),
+      ),
+    );
+    const groups = contents
+      .flatMap(({ domain, files }) => {
+        const entries = files['PENDING.md']?.entries ?? [];
+        if (domain.identifier === undefined || entries.length === 0) return [];
+        return [{ identifier: domain.identifier, containerPath: domain.containerPath, entries }];
+      })
+      .sort((left, right) => left.identifier.localeCompare(right.identifier));
+    io.stdout(formatPending(groups));
+    return 0;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    io.stderr(`pta pending 失败：${message}\n`);
+    return 2;
+  }
+}
+
 async function runChanges(base: string | undefined, io: CliIO, cwd: string): Promise<number> {
   const repositoryRoot = resolve(cwd);
   try {
@@ -262,8 +306,16 @@ export async function runCli(
     return runChanges(args[1], io, cwd);
   }
 
+  if (args[0] === 'pending') {
+    if (args.length > 2 || args[1]?.startsWith('-') === true) {
+      io.stderr('用法：pta pending [仓库根]\n');
+      return 2;
+    }
+    return runPending(args[1], io, cwd);
+  }
+
   if (args[0] !== 'check' || args.length > 2) {
-    io.stderr('用法：pta check [仓库根]\n       pta changes [base]\n');
+    io.stderr('用法：pta check [仓库根]\n       pta changes [base]\n       pta pending [仓库根]\n');
     return 2;
   }
 
