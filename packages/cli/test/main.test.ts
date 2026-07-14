@@ -1,9 +1,12 @@
 import assert from 'node:assert/strict';
 import { execFile } from 'node:child_process';
-import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { existsSync } from 'node:fs';
+import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
+
+import { hashEntryContent } from '@pta/core';
 
 import { runCli } from '../src/main.ts';
 
@@ -143,11 +146,46 @@ test('pending 按领域汇总待裁决条目并返回 0', async (context) => {
 
   assert.equal(await runCli(['pending', root], output.io), 0);
   assert.match(output.stdout(), /领域 \./u);
-  assert.match(output.stdout(), /^ {2}PENDING\.md:1 根问题如何处理/mu);
+  assert.match(output.stdout(), /^ {2}[0-9a-f]{8} PENDING\.md:1 根问题如何处理/mu);
   assert.match(output.stdout(), /领域 packages\/core/u);
-  assert.match(output.stdout(), /^ {2}packages\/core\/PENDING\.md:2 核心问题二如何裁决/mu);
+  assert.match(
+    output.stdout(),
+    /^ {2}[0-9a-f]{8} packages\/core\/PENDING\.md:2 核心问题二如何裁决/mu,
+  );
   assert.match(output.stdout(), /共 3 条待裁决条目，分布于 2 个领域。/u);
   assert.equal(output.stderr(), '');
+});
+
+test('pending remove 按 id 处置条目，歧义需领域限定，清空即删', async (context) => {
+  const shared = '共同问题如何处理？（暂缓）';
+  const root = await repository({
+    'TRUTH.md': '- 根判断\n',
+    'PENDING.md': `- 根问题如何处理？（暂缓）\n- ${shared}\n`,
+    'src/TRUTH.md': '- 源判断\n',
+    'src/PENDING.md': `- ${shared}\n`,
+  });
+  context.after(() => rm(root, { recursive: true, force: true }));
+  await git(root, ['init', '-q']);
+  const rootId = hashEntryContent('根问题如何处理？（暂缓）').slice(0, 8);
+  const sharedId = hashEntryContent(shared).slice(0, 8);
+
+  const ambiguous = capture();
+  assert.equal(await runCli(['pending', 'remove', sharedId], ambiguous.io, root), 2);
+  assert.match(ambiguous.stderr(), /id 有歧义/u);
+  assert.match(ambiguous.stderr(), /src:[0-9a-f]{8}/u);
+  assert.match(ambiguous.stderr(), /未做任何改动/u);
+
+  const removed = capture();
+  assert.equal(await runCli(['pending', 'remove', rootId, `src:${sharedId}`], removed.io, root), 0);
+  assert.match(removed.stdout(), /已处置 2 条待裁决条目：/u);
+  assert.match(removed.stdout(), /^ {2}\. [0-9a-f]{8} 根问题如何处理/mu);
+  assert.match(removed.stdout(), /src\/PENDING\.md 清空即删。/u);
+  assert.equal(await readFile(join(root, 'PENDING.md'), 'utf8'), `- ${shared}\n`);
+  assert.equal(existsSync(join(root, 'src/PENDING.md')), false);
+
+  const missing = capture();
+  assert.equal(await runCli(['pending', 'remove', 'ffffffff'], missing.io, root), 2);
+  assert.match(missing.stderr(), /未匹配任何待裁决条目/u);
 });
 
 test('pending 收件箱为空时输出空提示，用法错误返回 2', async (context) => {
@@ -183,7 +221,7 @@ test('context 输出领域链与来源标识并返回 0', async (context) => {
   assert.match(uncommitted.stdout(), /^ {2}src\/TRUTH\.md [0-9a-f]{64}$/mu);
   assert.match(uncommitted.stdout(), /路径归属：\n {2}src\/index\.ts → 领域 src/u);
   assert.match(uncommitted.stdout(), /## 领域 \.\n\n### 真相记录\n\n- 根判断/u);
-  assert.match(uncommitted.stdout(), /### 待裁决背景\n\n- 根问题如何处理/u);
+  assert.match(uncommitted.stdout(), /### 待裁决背景\n\n- [0-9a-f]{8} 根问题如何处理/u);
   assert.match(uncommitted.stdout(), /## 领域 src[\s\S]*### 术语表\n\n- \*\*术语\*\*：定义/u);
   assert.equal(uncommitted.stderr(), '');
 

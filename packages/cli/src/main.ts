@@ -1,24 +1,32 @@
 #!/usr/bin/env node
 import { execFile } from 'node:child_process';
-import { readFile } from 'node:fs/promises';
+import { readFile, rm, writeFile } from 'node:fs/promises';
 import { join, posix, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 import {
   assembleContext,
   classifyChanges,
+  collectPendingEntries,
   discoverDomains,
   extractDomainContent,
   hashFileBytes,
   lintDiscoveryProblems,
   lintDomainContents,
+  removeEntryLines,
+  selectPendingEntries,
   type ChangedPath,
   type ChangeType,
   type ChangeClassification,
   type CheckSignal,
   type ContextAssembly,
   type ExtractedEntry,
+  type PendingEntryRef,
 } from '@pta/core';
+
+function shortId(entry: ExtractedEntry): string {
+  return entry.contentHash.slice(0, 8);
+}
 
 export type CliIO = Readonly<{
   stdout: (text: string) => void;
@@ -206,7 +214,7 @@ function formatChanges(result: ChangeClassification): string {
       for (const context of domain.pendingContext) {
         for (const entry of context.entries) {
           lines.push(
-            `    ${label(context.domainIdentifier)} PENDING.md:${entry.line} ${entry.content}`,
+            `    ${shortId(entry)} ${label(context.domainIdentifier)} PENDING.md:${entry.line} ${entry.content}`,
           );
         }
       }
@@ -266,12 +274,17 @@ function formatContext(assembly: ContextAssembly, source: SourceIdentification):
       ['真相记录', domain.truthEntries],
       ['术语表', domain.glossaryEntries],
       ['残留', domain.residueEntries],
-      ['待裁决背景', domain.pendingEntries],
     ];
     for (const [title, entries] of sections) {
       if (entries.length === 0) continue;
       lines.push('', `### ${title}`, '');
       for (const entry of entries) lines.push(`- ${entry.content}`);
+    }
+    if (domain.pendingEntries.length > 0) {
+      lines.push('', '### 待裁决背景', '');
+      for (const entry of domain.pendingEntries) {
+        lines.push(`- ${shortId(entry)} ${entry.content}`);
+      }
     }
     if (domain.dependsOn.length > 0) {
       lines.push('', '### 依赖领域（未展开，可按标识另行查询）', '');
@@ -347,11 +360,96 @@ function formatPending(groups: readonly PendingGroup[]): string {
   if (groups.length === 0) return '收件箱为空：没有待裁决条目。\n';
   const sections = groups.map((group) => {
     const file = group.containerPath === '' ? 'PENDING.md' : `${group.containerPath}/PENDING.md`;
-    const lines = group.entries.map((entry) => `  ${file}:${entry.line} ${entry.content}`);
+    const lines = group.entries.map(
+      (entry) => `  ${shortId(entry)} ${file}:${entry.line} ${entry.content}`,
+    );
     return `领域 ${label(group.identifier)}\n${lines.join('\n')}`;
   });
   const total = groups.reduce((sum, group) => sum + group.entries.length, 0);
   return `${sections.join('\n\n')}\n\n共 ${total} 条待裁决条目，分布于 ${groups.length} 个领域。\n`;
+}
+
+async function runPendingRemove(
+  selectors: readonly string[],
+  io: CliIO,
+  cwd: string,
+): Promise<number> {
+  const repositoryRoot = resolve(cwd);
+  try {
+    const repositoryFiles = await gitRepositoryFiles(repositoryRoot);
+    const discovery = await discoverDomains(repositoryRoot, repositoryFiles);
+    const contents = await Promise.all(
+      discovery.domains.map((domain) =>
+        extractDomainContent(repositoryRoot, repositoryFiles, domain),
+      ),
+    );
+    const selection = selectPendingEntries(collectPendingEntries(contents), selectors);
+    if (selection.problems.length > 0) {
+      for (const problem of selection.problems) {
+        if (problem.reason === 'invalid') {
+          io.stderr(`无法解析 id：${problem.selector}\n`);
+        } else if (problem.reason === 'not-found') {
+          io.stderr(`未匹配任何待裁决条目：${problem.selector}\n`);
+        } else {
+          io.stderr(`id 有歧义：${problem.selector}，候选：\n`);
+          for (const candidate of problem.candidates) {
+            io.stderr(
+              `  ${label(candidate.domainIdentifier)}:${shortId(candidate.entry)} ${candidate.entry.content}\n`,
+            );
+          }
+        }
+      }
+      io.stderr('未做任何改动。\n');
+      return 2;
+    }
+
+    const byFile = new Map<string, PendingEntryRef[]>();
+    for (const match of selection.matches) {
+      const group = byFile.get(match.filePath);
+      if (group === undefined) byFile.set(match.filePath, [match]);
+      else group.push(match);
+    }
+    const plans: { absolute: string; filePath: string; remaining: string }[] = [];
+    for (const [filePath, group] of byFile) {
+      const absolute = join(repositoryRoot, ...filePath.split('/'));
+      const source = await readFile(absolute, 'utf8');
+      const lines = source.split('\n');
+      for (const match of group) {
+        if (lines[match.entry.line - 1] !== match.entry.source) {
+          io.stderr(`${filePath} 的内容已与解析结果不一致，未做任何改动。\n`);
+          return 2;
+        }
+      }
+      plans.push({
+        absolute,
+        filePath,
+        remaining: removeEntryLines(source, new Set(group.map((match) => match.entry.line))),
+      });
+    }
+
+    const emptied: string[] = [];
+    for (const plan of plans) {
+      if (plan.remaining.trim() === '') {
+        await rm(plan.absolute);
+        emptied.push(plan.filePath);
+      } else {
+        await writeFile(plan.absolute, plan.remaining);
+      }
+    }
+
+    io.stdout(`已处置 ${selection.matches.length} 条待裁决条目：\n`);
+    for (const match of selection.matches) {
+      io.stdout(
+        `  ${label(match.domainIdentifier)} ${shortId(match.entry)} ${match.entry.content}\n`,
+      );
+    }
+    for (const filePath of emptied) io.stdout(`${filePath} 清空即删。\n`);
+    return 0;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    io.stderr(`pta pending remove 失败：${message}\n`);
+    return 2;
+  }
 }
 
 async function runPending(rootArg: string | undefined, io: CliIO, cwd: string): Promise<number> {
@@ -423,8 +521,16 @@ export async function runCli(
   }
 
   if (args[0] === 'pending') {
+    if (args[1] === 'remove') {
+      const selectors = args.slice(2);
+      if (selectors.length === 0 || selectors.some((selector) => selector.startsWith('-'))) {
+        io.stderr('用法：pta pending remove <id>...\n');
+        return 2;
+      }
+      return runPendingRemove(selectors, io, cwd);
+    }
     if (args.length > 2 || args[1]?.startsWith('-') === true) {
-      io.stderr('用法：pta pending [仓库根]\n');
+      io.stderr('用法：pta pending [仓库根]\n       pta pending remove <id>...\n');
       return 2;
     }
     return runPending(args[1], io, cwd);
