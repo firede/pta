@@ -51,4 +51,20 @@ DELETE /auth/session
 Authorization: Bearer <token>
 ```
 
+查看当前账号所有已登录设备（每次登录对应一个设备会话）：
+
+```http
+GET /auth/sessions
+Authorization: Bearer <token>
+```
+
+响应中的 `sessions` 按登录时间从新到旧排列，`current` 标记发起请求的当前会话。按 ID 远程退出任意一个设备：
+
+```http
+DELETE /auth/sessions/<sessionId>
+Authorization: Bearer <token>
+```
+
+成功返回 `204`。目标会话不存在、不属于当前账号或已失效时统一返回 `404`。
+
 健康检查为 `GET /health`。运行测试：`pnpm test`。

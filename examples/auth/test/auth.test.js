@@ -167,6 +167,130 @@ test('同一账号可多设备登录，退出一个会话不影响另一个', as
   assert.equal(secondCheck.statusCode, 200);
 });
 
+test('可查看当前账号的已登录设备并远程退出指定设备', async (t) => {
+  const { app, messages, advance } = fixture();
+  t.after(() => app.close());
+
+  const firstChallenge = await requestCode(app);
+  const firstLogin = await login(app, firstChallenge.json().challengeId, codeFrom(messages, 0));
+  advance(baseConfig.otpCooldownMs + 1);
+  const secondChallenge = await requestCode(app);
+  const secondLogin = await login(app, secondChallenge.json().challengeId, codeFrom(messages, 1));
+  const first = firstLogin.json();
+  const second = secondLogin.json();
+
+  const listed = await app.inject({
+    method: 'GET',
+    url: '/auth/sessions',
+    headers: { authorization: `Bearer ${second.token}` }
+  });
+  assert.equal(listed.statusCode, 200);
+  assert.deepEqual(listed.json().sessions, [
+    {
+      id: second.session.id,
+      createdAt: '2026-07-14T00:01:00.001Z',
+      expiresAt: '2026-08-13T00:01:00.001Z',
+      current: true
+    },
+    {
+      id: first.session.id,
+      createdAt: '2026-07-14T00:00:00.000Z',
+      expiresAt: '2026-08-13T00:00:00.000Z',
+      current: false
+    }
+  ]);
+
+  const revoked = await app.inject({
+    method: 'DELETE',
+    url: `/auth/sessions/${first.session.id}`,
+    headers: { authorization: `Bearer ${second.token}` }
+  });
+  assert.equal(revoked.statusCode, 204);
+
+  const firstAfterRevoke = await app.inject({
+    method: 'GET', url: '/auth/session', headers: { authorization: `Bearer ${first.token}` }
+  });
+  assert.equal(firstAfterRevoke.statusCode, 401);
+
+  const listedAfterRevoke = await app.inject({
+    method: 'GET', url: '/auth/sessions', headers: { authorization: `Bearer ${second.token}` }
+  });
+  assert.deepEqual(listedAfterRevoke.json().sessions.map(({ id }) => id), [second.session.id]);
+});
+
+test('设备接口要求登录且不能查看或退出其他账号的会话', async (t) => {
+  const { app, messages, advance } = fixture();
+  t.after(() => app.close());
+
+  const firstChallenge = await requestCode(app, 'first@example.com');
+  const firstLogin = await login(app, firstChallenge.json().challengeId, codeFrom(messages, 0));
+  advance(baseConfig.otpCooldownMs + 1);
+  const secondChallenge = await requestCode(app, 'second@example.com');
+  const secondLogin = await login(app, secondChallenge.json().challengeId, codeFrom(messages, 1));
+
+  const anonymousList = await app.inject({ method: 'GET', url: '/auth/sessions' });
+  assert.equal(anonymousList.statusCode, 401);
+  const anonymousDelete = await app.inject({
+    method: 'DELETE', url: `/auth/sessions/${firstLogin.json().session.id}`
+  });
+  assert.equal(anonymousDelete.statusCode, 401);
+
+  const crossAccountDelete = await app.inject({
+    method: 'DELETE',
+    url: `/auth/sessions/${secondLogin.json().session.id}`,
+    headers: { authorization: `Bearer ${firstLogin.json().token}` }
+  });
+  assert.equal(crossAccountDelete.statusCode, 404);
+
+  const duplicateDelete = await app.inject({
+    method: 'DELETE',
+    url: '/auth/sessions/missing-session',
+    headers: { authorization: `Bearer ${firstLogin.json().token}` }
+  });
+  assert.equal(duplicateDelete.statusCode, 404);
+  assert.deepEqual(duplicateDelete.json(), crossAccountDelete.json());
+
+  const secondStillActive = await app.inject({
+    method: 'GET',
+    url: '/auth/session',
+    headers: { authorization: `Bearer ${secondLogin.json().token}` }
+  });
+  assert.equal(secondStillActive.statusCode, 200);
+});
+
+test('可通过设备接口退出当前设备，且已失效会话不会列出', async (t) => {
+  const { app, messages, advance } = fixture();
+  t.after(() => app.close());
+
+  const oldChallenge = await requestCode(app);
+  const oldLogin = await login(app, oldChallenge.json().challengeId, codeFrom(messages, 0));
+  advance(baseConfig.sessionTtlMs - 1);
+  const currentChallenge = await requestCode(app);
+  const currentLogin = await login(app, currentChallenge.json().challengeId, codeFrom(messages, 1));
+  advance(1);
+
+  const listed = await app.inject({
+    method: 'GET',
+    url: '/auth/sessions',
+    headers: { authorization: `Bearer ${currentLogin.json().token}` }
+  });
+  assert.deepEqual(listed.json().sessions.map(({ id }) => id), [currentLogin.json().session.id]);
+
+  const revokeCurrent = await app.inject({
+    method: 'DELETE',
+    url: `/auth/sessions/${currentLogin.json().session.id}`,
+    headers: { authorization: `Bearer ${currentLogin.json().token}` }
+  });
+  assert.equal(revokeCurrent.statusCode, 204);
+  const afterRevoke = await app.inject({
+    method: 'GET',
+    url: '/auth/sessions',
+    headers: { authorization: `Bearer ${currentLogin.json().token}` }
+  });
+  assert.equal(afterRevoke.statusCode, 401);
+  assert.ok(oldLogin.json().session.id);
+});
+
 test('会话到期后失效，非法输入被拒绝', async (t) => {
   const { app, messages, advance } = fixture();
   t.after(() => app.close());

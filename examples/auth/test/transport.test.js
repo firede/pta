@@ -35,7 +35,7 @@ async function httpRequest(app, { method, url, body, headers = {} }) {
   });
 }
 
-test('HTTP 适配层可完成登录态校验', async (t) => {
+test('HTTP 适配层可完成登录态校验、设备查看和远程退出', async (t) => {
   const messages = [];
   const app = buildApp({
     config,
@@ -70,6 +70,30 @@ test('HTTP 适配层可完成登录态校验', async (t) => {
   });
   assert.equal(checked.status, 200);
   assert.equal(JSON.parse(checked.body).account.email, 'http@example.com');
+
+  const listed = await httpRequest(app, {
+    method: 'GET',
+    url: '/auth/sessions',
+    headers: { authorization: `Bearer ${token}` }
+  });
+  assert.equal(listed.status, 200);
+  const [currentSession] = JSON.parse(listed.body).sessions;
+  assert.equal(currentSession.current, true);
+
+  const revoked = await httpRequest(app, {
+    method: 'DELETE',
+    url: `/auth/sessions/${currentSession.id}`,
+    headers: { authorization: `Bearer ${token}` }
+  });
+  assert.equal(revoked.status, 204);
+  assert.equal(revoked.body, '');
+
+  const afterRevoke = await httpRequest(app, {
+    method: 'GET',
+    url: '/auth/session',
+    headers: { authorization: `Bearer ${token}` }
+  });
+  assert.equal(afterRevoke.status, 401);
 });
 
 test('SMTP 投递使用 Mailpit 支持的基础协议', async (t) => {

@@ -20,6 +20,7 @@ export function buildApp(options = {}) {
 
   async function dispatch({ method, url, headers = {}, body }) {
     const request = { headers, body };
+    const remoteSessionMatch = /^\/auth\/sessions\/([^/]+)$/.exec(url);
 
     if (method === 'GET' && url === '/health') {
       return response(200, { status: 'ok' });
@@ -57,6 +58,33 @@ export function buildApp(options = {}) {
           expiresAt: new Date(authenticated.session.expiresAt).toISOString()
         }
       });
+    }
+    if (method === 'GET' && url === '/auth/sessions') {
+      const sessions = service.listSessions(bearerToken(request));
+      if (!sessions) {
+        return response(401, { error: 'unauthorized', message: 'A valid session is required.' });
+      }
+      return response(200, {
+        sessions: sessions.map((session) => ({
+          id: session.id,
+          createdAt: new Date(session.createdAt).toISOString(),
+          expiresAt: new Date(session.expiresAt).toISOString(),
+          current: session.current
+        }))
+      });
+    }
+    if (method === 'DELETE' && remoteSessionMatch) {
+      const result = service.revokeSessionById(
+        bearerToken(request),
+        remoteSessionMatch[1]
+      );
+      if (result.kind === 'unauthorized') {
+        return response(401, { error: 'unauthorized', message: 'A valid session is required.' });
+      }
+      if (result.kind === 'not-found') {
+        return response(404, { error: 'session_not_found', message: 'Active session not found.' });
+      }
+      return response(204);
     }
     if (method === 'DELETE' && url === '/auth/session') {
       const token = bearerToken(request);

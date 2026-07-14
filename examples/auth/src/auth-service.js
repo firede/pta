@@ -64,6 +64,26 @@ export function createAuthService({ db, mailer, config, now = () => Date.now() }
     UPDATE sessions SET revoked_at = ?
     WHERE token_hash = ? AND revoked_at IS NULL AND expires_at > ?
   `);
+  const listActiveSessions = db.prepare(`
+    SELECT id, created_at, expires_at
+    FROM sessions
+    WHERE account_id = ? AND revoked_at IS NULL AND expires_at > ?
+    ORDER BY created_at DESC, id DESC
+  `);
+  const revokeAccountSession = db.prepare(`
+    UPDATE sessions SET revoked_at = ?
+    WHERE id = ? AND account_id = ? AND revoked_at IS NULL AND expires_at > ?
+  `);
+
+  function authenticate(token) {
+    if (typeof token !== 'string' || token.length < 20) return null;
+    const row = findSession.get(hashToken(token), now());
+    if (!row) return null;
+    return {
+      account: { id: row.account_id, email: row.email },
+      session: { id: row.session_id, createdAt: row.created_at, expiresAt: row.expires_at }
+    };
+  }
 
   return {
     async requestCode(rawEmail) {
@@ -141,14 +161,33 @@ export function createAuthService({ db, mailer, config, now = () => Date.now() }
       });
     },
 
-    authenticate(token) {
-      if (typeof token !== 'string' || token.length < 20) return null;
-      const row = findSession.get(hashToken(token), now());
-      if (!row) return null;
-      return {
-        account: { id: row.account_id, email: row.email },
-        session: { id: row.session_id, createdAt: row.created_at, expiresAt: row.expires_at }
-      };
+    authenticate,
+
+    listSessions(token) {
+      const authenticated = authenticate(token);
+      if (!authenticated) return null;
+      return listActiveSessions.all(authenticated.account.id, now()).map((row) => ({
+        id: row.id,
+        createdAt: row.created_at,
+        expiresAt: row.expires_at,
+        current: row.id === authenticated.session.id
+      }));
+    },
+
+    revokeSessionById(token, sessionId) {
+      const authenticated = authenticate(token);
+      if (!authenticated) return { kind: 'unauthorized' };
+      if (typeof sessionId !== 'string' || sessionId.length === 0) {
+        return { kind: 'not-found' };
+      }
+      const timestamp = now();
+      const revoked = revokeAccountSession.run(
+        timestamp,
+        sessionId,
+        authenticated.account.id,
+        timestamp
+      ).changes === 1;
+      return { kind: revoked ? 'revoked' : 'not-found' };
     },
 
     logout(token) {
