@@ -11,6 +11,9 @@ const config = {
   otpTtlMs: 600_000,
   otpCooldownMs: 60_000,
   otpMaxAttempts: 5,
+  otpGlobalWindowMs: 60_000,
+  otpGlobalMaxRequests: 100,
+  smtpTimeoutMs: 1_000,
   sessionTtlMs: 2_592_000_000
 };
 
@@ -152,4 +155,30 @@ test('SMTP 投递使用 Mailpit 支持的基础协议', async (t) => {
 
   assert.match(message, /To: mailpit@example\.com/);
   assert.match(message, /Your login code is 042731\./);
+});
+
+test('SMTP 会话超时会结束 HTTP 请求并回滚验证码', async (t) => {
+  class SilentSmtpSocket extends Duplex {
+    _read() {}
+    _write(chunk, encoding, callback) { callback(); }
+  }
+
+  const db = openDatabase(':memory:');
+  const mailer = createMailer({
+    smtpHost: '127.0.0.1',
+    smtpPort: 1025,
+    smtpTimeoutMs: 20,
+    mailFrom: 'login@example.test'
+  }, () => new SilentSmtpSocket());
+  const app = buildApp({ config, db, mailer });
+  t.after(() => app.close());
+
+  const result = await httpRequest(app, {
+    method: 'POST',
+    url: '/auth/code',
+    body: { email: 'timeout@example.com' }
+  });
+  assert.equal(result.status, 500);
+  assert.equal(JSON.parse(result.body).error, 'internal_error');
+  assert.equal(db.prepare('SELECT COUNT(*) AS count FROM login_challenges').get().count, 0);
 });

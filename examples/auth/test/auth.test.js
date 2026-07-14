@@ -4,6 +4,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { test } from 'node:test';
 import { buildApp } from '../src/app.js';
+import { loadConfig } from '../src/config.js';
 import { openDatabase } from '../src/database.js';
 
 const baseConfig = {
@@ -12,12 +13,15 @@ const baseConfig = {
   otpTtlMs: 10 * 60 * 1000,
   otpCooldownMs: 60 * 1000,
   otpMaxAttempts: 5,
+  otpGlobalWindowMs: 60 * 1000,
+  otpGlobalMaxRequests: 100,
   sessionTtlMs: 30 * 24 * 60 * 60 * 1000
 };
 
 function fixture() {
   let clock = Date.parse('2026-07-14T00:00:00.000Z');
   const messages = [];
+  const db = openDatabase(':memory:');
   const mailer = {
     async sendLoginCode(message) {
       messages.push(message);
@@ -25,12 +29,13 @@ function fixture() {
   };
   const app = buildApp({
     config: baseConfig,
-    db: openDatabase(':memory:'),
+    db,
     mailer,
     now: () => clock
   });
   return {
     app,
+    db,
     messages,
     advance(ms) { clock += ms; }
   };
@@ -52,6 +57,25 @@ async function login(app, challengeId, code) {
   });
 }
 
+test('安全相关运行参数可配置且拒绝非正整数', () => {
+  const config = loadConfig({
+    AUTH_SECRET: 'test-secret-that-is-at-least-32-characters',
+    OTP_GLOBAL_WINDOW_MS: '30000',
+    OTP_GLOBAL_MAX_REQUESTS: '7',
+    SMTP_TIMEOUT_MS: '2500'
+  });
+  assert.equal(config.otpGlobalWindowMs, 30_000);
+  assert.equal(config.otpGlobalMaxRequests, 7);
+  assert.equal(config.smtpTimeoutMs, 2_500);
+  assert.throws(
+    () => loadConfig({
+      AUTH_SECRET: 'test-secret-that-is-at-least-32-characters',
+      OTP_GLOBAL_MAX_REQUESTS: '0'
+    }),
+    /OTP_GLOBAL_MAX_REQUESTS must be a positive integer/
+  );
+});
+
 test('完整流程：请求验证码、登录、校验登录态和退出', async (t) => {
   const { app, messages } = fixture();
   t.after(() => app.close());
@@ -60,9 +84,9 @@ test('完整流程：请求验证码、登录、校验登录态和退出', async
   assert.equal(requested.statusCode, 202);
   assert.equal(messages.length, 1);
   assert.equal(messages[0].email, 'user@example.com');
-  assert.match(codeFrom(messages), /^\d{6}$/);
+  assert.match(codeFrom(messages), /^(?=.*\d)(?=.*[A-Z])[A-Z0-9]{6}$/);
 
-  const authenticated = await login(app, requested.json().challengeId, codeFrom(messages));
+  const authenticated = await login(app, requested.json().challengeId, codeFrom(messages).toLowerCase());
   assert.equal(authenticated.statusCode, 201);
   const { token, account, session } = authenticated.json();
   assert.match(token, /^auth_[a-f0-9]+$/);
@@ -94,8 +118,9 @@ test('验证码单次有效，错误码统一且错误尝试受限', async (t) =
 
   const requested = await requestCode(app);
   const challengeId = requested.json().challengeId;
+  const wrongCode = codeFrom(messages) === 'A0A0A0' ? 'B1B1B1' : 'A0A0A0';
   for (let attempt = 0; attempt < 5; attempt += 1) {
-    const response = await login(app, challengeId, '999999');
+    const response = await login(app, challengeId, wrongCode);
     assert.equal(response.statusCode, 401);
     assert.equal(response.json().error, 'invalid_code');
   }
@@ -137,6 +162,79 @@ test('冷却期内不重复投递，冷却后签发新验证码', async (t) => {
   assert.equal(superseded.statusCode, 401);
   const current = await login(app, third.json().challengeId, codeFrom(messages, 1));
   assert.equal(current.statusCode, 201);
+});
+
+test('发码总量受全局窗口限制，窗口结束后恢复', async (t) => {
+  let clock = Date.parse('2026-07-14T00:00:00.000Z');
+  const messages = [];
+  const db = openDatabase(':memory:');
+  const app = buildApp({
+    config: { ...baseConfig, otpGlobalMaxRequests: 2 },
+    db,
+    mailer: { async sendLoginCode(message) { messages.push(message); } },
+    now: () => clock
+  });
+  t.after(() => app.close());
+
+  assert.equal((await requestCode(app, 'first@example.com')).statusCode, 202);
+  assert.equal((await requestCode(app, 'second@example.com')).statusCode, 202);
+  const limited = await requestCode(app, 'third@example.com');
+  assert.equal(limited.statusCode, 429);
+  assert.equal(limited.headers['retry-after'], '60');
+  assert.equal(limited.json().error, 'rate_limited');
+  assert.equal(messages.length, 2);
+  assert.equal(db.prepare('SELECT COUNT(*) AS count FROM login_challenges').get().count, 2);
+
+  clock += baseConfig.otpGlobalWindowMs + 1;
+  assert.equal((await requestCode(app, 'third@example.com')).statusCode, 202);
+  assert.equal(messages.length, 3);
+});
+
+test('并发发码也不能越过全局上限', async (t) => {
+  const deliveries = [];
+  const app = buildApp({
+    config: { ...baseConfig, otpGlobalMaxRequests: 2 },
+    db: openDatabase(':memory:'),
+    mailer: {
+      sendLoginCode() {
+        return new Promise((resolve) => deliveries.push(resolve));
+      }
+    }
+  });
+  t.after(() => app.close());
+
+  const pending = Array.from(
+    { length: 5 },
+    (_, index) => requestCode(app, `parallel-${index}@example.com`)
+  );
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.equal(deliveries.length, 2);
+  deliveries.forEach((resolve) => resolve());
+  const responses = await Promise.all(pending);
+  assert.deepEqual(
+    responses.map(({ statusCode }) => statusCode).sort(),
+    [202, 202, 429, 429, 429]
+  );
+});
+
+test('已消费和已过期的验证码记录会在限流窗口后清理', async (t) => {
+  const { app, db, messages, advance } = fixture();
+  t.after(() => app.close());
+
+  const consumed = await requestCode(app, 'consumed@example.com');
+  assert.equal(
+    (await login(app, consumed.json().challengeId, messages[0].code)).statusCode,
+    201
+  );
+  await requestCode(app, 'expired@example.com');
+  assert.equal(db.prepare('SELECT COUNT(*) AS count FROM login_challenges').get().count, 2);
+
+  advance(baseConfig.otpTtlMs + 1);
+  await requestCode(app, 'current@example.com');
+  assert.deepEqual(
+    db.prepare('SELECT email FROM login_challenges ORDER BY email').all().map(({ email }) => ({ email })),
+    [{ email: 'current@example.com' }]
+  );
 });
 
 test('同一账号可多设备登录，退出一个会话不影响另一个', async (t) => {

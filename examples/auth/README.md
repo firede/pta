@@ -17,7 +17,9 @@ pnpm start
 - `AUTH_SECRET`：验证码哈希密钥；生产环境必须显式设置为至少 32 个字符
 - `SMTP_HOST` / `SMTP_PORT`：默认 `127.0.0.1` / `1025`
 - `MAIL_FROM`：默认 `login@example.test`
+- `SMTP_TIMEOUT_MS`：单次 SMTP 会话的最长时间，默认 `10000`
 - `NODE_ENV`：设为 `production` 时强制检查 `AUTH_SECRET`
+- `OTP_GLOBAL_WINDOW_MS` / `OTP_GLOBAL_MAX_REQUESTS`：单实例全局发码窗口及上限，默认 60 秒最多 10 次
 
 ## API
 
@@ -31,6 +33,7 @@ Content-Type: application/json
 ```
 
 成功接受后返回 `202` 和 `challengeId`。验证码由邮件投递。
+超过全局发码上限时返回 `429`，并携带 `Retry-After`。
 
 用验证码登录：
 

@@ -33,6 +33,17 @@ export function loadConfig(env = process.env) {
     otpTtlMs: positiveInteger(env.OTP_TTL_MS, 10 * 60 * 1000, 'OTP_TTL_MS'),
     otpCooldownMs: positiveInteger(env.OTP_COOLDOWN_MS, 60 * 1000, 'OTP_COOLDOWN_MS'),
     otpMaxAttempts: positiveInteger(env.OTP_MAX_ATTEMPTS, 5, 'OTP_MAX_ATTEMPTS'),
+    otpGlobalWindowMs: positiveInteger(
+      env.OTP_GLOBAL_WINDOW_MS,
+      60 * 1000,
+      'OTP_GLOBAL_WINDOW_MS'
+    ),
+    otpGlobalMaxRequests: positiveInteger(
+      env.OTP_GLOBAL_MAX_REQUESTS,
+      10,
+      'OTP_GLOBAL_MAX_REQUESTS'
+    ),
+    smtpTimeoutMs: positiveInteger(env.SMTP_TIMEOUT_MS, 10 * 1000, 'SMTP_TIMEOUT_MS'),
     sessionTtlMs: positiveInteger(env.SESSION_TTL_MS, 30 * 24 * 60 * 60 * 1000, 'SESSION_TTL_MS')
   };
 }

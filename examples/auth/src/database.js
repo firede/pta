@@ -30,6 +30,9 @@ export function openDatabase(filename) {
     CREATE INDEX IF NOT EXISTS login_challenges_email_created
       ON login_challenges(email, created_at DESC);
 
+    CREATE INDEX IF NOT EXISTS login_challenges_created
+      ON login_challenges(created_at);
+
     CREATE TABLE IF NOT EXISTS sessions (
       id TEXT PRIMARY KEY,
       account_id TEXT NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,

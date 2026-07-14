@@ -30,6 +30,13 @@ export function buildApp(options = {}) {
       if (result.kind === 'invalid-email') {
         return response(400, { error: 'invalid_request', message: 'A valid email is required.' });
       }
+      if (result.kind === 'rate-limited') {
+        return response(
+          429,
+          { error: 'rate_limited', message: 'Too many login codes have been requested.' },
+          { 'retry-after': String(Math.ceil(result.retryAfterMs / 1000)) }
+        );
+      }
       return response(202, { challengeId: result.challengeId });
     }
     if (method === 'POST' && url === '/auth/session') {
@@ -97,12 +104,14 @@ export function buildApp(options = {}) {
     return response(404, { error: 'not_found', message: 'Route not found.' });
   }
 
-  function response(statusCode, payload) {
+  function response(statusCode, payload, extraHeaders = {}) {
     const body = payload === undefined ? '' : JSON.stringify(payload);
     return {
       statusCode,
       body,
-      headers: payload === undefined ? {} : { 'content-type': 'application/json; charset=utf-8' },
+      headers: payload === undefined
+        ? extraHeaders
+        : { 'content-type': 'application/json; charset=utf-8', ...extraHeaders },
       json() { return JSON.parse(body); }
     };
   }

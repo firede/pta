@@ -2,6 +2,8 @@ import { createHash, createHmac, randomInt, randomUUID, timingSafeEqual } from '
 import { transaction } from './database.js';
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const OTP_ALPHABET = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+const OTP_PATTERN = /^(?=.*[0-9])(?=.*[A-Z])[0-9A-Z]{6}$/;
 
 export function normalizeEmail(value) {
   if (typeof value !== 'string') return null;
@@ -12,6 +14,23 @@ export function normalizeEmail(value) {
 
 function hashOtp(secret, challengeId, code) {
   return createHmac('sha256', secret).update(`${challengeId}:${code}`).digest('hex');
+}
+
+function generateOtp() {
+  let code;
+  do {
+    code = Array.from(
+      { length: 6 },
+      () => OTP_ALPHABET[randomInt(0, OTP_ALPHABET.length)]
+    ).join('');
+  } while (!OTP_PATTERN.test(code));
+  return code;
+}
+
+function normalizeOtp(value) {
+  if (typeof value !== 'string') return null;
+  const code = value.toUpperCase();
+  return OTP_PATTERN.test(code) ? code : null;
 }
 
 function hashToken(token) {
@@ -25,6 +44,8 @@ function hashesMatch(left, right) {
 }
 
 export function createAuthService({ db, mailer, config, now = () => Date.now() }) {
+  const otpGlobalWindowMs = config.otpGlobalWindowMs ?? 60 * 1000;
+  const otpGlobalMaxRequests = config.otpGlobalMaxRequests ?? 10;
   const findRecentChallenge = db.prepare(`
     SELECT id FROM login_challenges
     WHERE email = ? AND created_at > ?
@@ -37,6 +58,13 @@ export function createAuthService({ db, mailer, config, now = () => Date.now() }
   const consumePreviousChallenges = db.prepare(`
     UPDATE login_challenges SET consumed_at = ?
     WHERE email = ? AND id != ? AND consumed_at IS NULL
+  `);
+  const pruneChallenges = db.prepare(`
+    DELETE FROM login_challenges
+    WHERE created_at <= ? AND (expires_at <= ? OR consumed_at IS NOT NULL)
+  `);
+  const countRecentChallenges = db.prepare(`
+    SELECT COUNT(*) AS count FROM login_challenges WHERE created_at > ?
   `);
   const findChallenge = db.prepare('SELECT * FROM login_challenges WHERE id = ?');
   const recordFailure = db.prepare(`
@@ -91,11 +119,17 @@ export function createAuthService({ db, mailer, config, now = () => Date.now() }
       if (!email) return { kind: 'invalid-email' };
 
       const timestamp = now();
+      const windowStart = timestamp - otpGlobalWindowMs;
+      pruneChallenges.run(windowStart, timestamp);
       const recent = findRecentChallenge.get(email, timestamp - config.otpCooldownMs);
       if (recent) return { kind: 'accepted', challengeId: recent.id, sent: false };
 
+      if (countRecentChallenges.get(windowStart).count >= otpGlobalMaxRequests) {
+        return { kind: 'rate-limited', retryAfterMs: otpGlobalWindowMs };
+      }
+
       const challengeId = randomUUID();
-      const code = String(randomInt(0, 1_000_000)).padStart(6, '0');
+      const code = generateOtp();
       insertChallenge.run(
         challengeId,
         email,
@@ -120,7 +154,8 @@ export function createAuthService({ db, mailer, config, now = () => Date.now() }
     },
 
     verifyCode(challengeId, rawCode) {
-      if (typeof challengeId !== 'string' || !/^[0-9]{6}$/.test(rawCode ?? '')) {
+      const code = normalizeOtp(rawCode);
+      if (typeof challengeId !== 'string' || !code) {
         return { kind: 'invalid-code' };
       }
 
@@ -132,7 +167,7 @@ export function createAuthService({ db, mailer, config, now = () => Date.now() }
           return { kind: 'invalid-code' };
         }
 
-        const candidate = hashOtp(config.authSecret, challengeId, rawCode);
+        const candidate = hashOtp(config.authSecret, challengeId, code);
         if (!hashesMatch(candidate, challenge.code_hash)) {
           recordFailure.run(config.otpMaxAttempts, timestamp, challengeId);
           return { kind: 'invalid-code' };
