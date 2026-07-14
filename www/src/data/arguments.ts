@@ -8,6 +8,7 @@ export const argumentIds = [
   'argument/derivable-content-in-tool-layer',
   'argument/history-still-in-effect',
   'argument/domain-knowledge-package',
+  'argument/material-temporal-claim',
 ] as const;
 
 export type ArgumentId = (typeof argumentIds)[number];

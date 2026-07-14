@@ -2,7 +2,7 @@
 title: Glossary
 description: Core terms used in the Arguments section.
 tableOfContents: false
-sourceHash: 659d77128b85ee1e97316697f23d51fc4b80065373c402976841727b69e08eaa
+sourceHash: 04814533faac9d85ab02708112ddbae808b7127e759e61d40bfe99060eef2cf6
 ---
 
 **Project Truth**
@@ -72,6 +72,14 @@ The tool-layer cache is storage outside the repository, managed by tooling, that
 **Residue**
 
 Residue is the still-effective consequence left by past project states acting on the real world. It has no anchor in the current implementation and cannot be derived from the current version's snapshot; it is recorded explicitly as a non-derivable judgment, with each entry carrying a time or version clue. Its expiry is driven by changes in the world, as external drift, and entries are deleted once they no longer influence later judgments.
+
+**Temporal Claim**
+
+A temporal claim is a material's claim about its own window of validity: claiming current validity, claiming truth as of a moment, or claiming regenerability from sources. The three claims correspond to three ways of maintaining and form the material's stance; the claim cannot be read from the content and needs to be expressed explicitly as a property of the material itself.
+
+**Point-in-Time Snapshot**
+
+A point-in-time snapshot is a material that claims truth only as of the moment it was recorded. Its anchor comes built in with the record, and being maintenance-free follows from its definition: it says nothing about the present, so it never falls out of truth. For its content to speak about the present again, it must pass adjudication and enter a carrier of current claims.
 
 **Domain Knowledge Package**
 
