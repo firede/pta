@@ -52,6 +52,46 @@ export function buildApp(options = {}) {
         session: { id: result.session.id }
       });
     }
+    if (method === 'POST' && url === '/auth/email/code') {
+      const result = await service.requestEmailChangeCode(bearerToken(request), body?.email);
+      if (result.kind === 'unauthorized') {
+        return response(401, { error: 'unauthorized', message: 'A valid session is required.' });
+      }
+      if (result.kind === 'invalid-email') {
+        return response(400, { error: 'invalid_request', message: 'A valid email is required.' });
+      }
+      if (result.kind === 'email-unavailable') {
+        return response(409, { error: 'email_unavailable', message: 'The email cannot be used.' });
+      }
+      if (result.kind === 'rate-limited') {
+        return response(
+          429,
+          { error: 'rate_limited', message: 'Too many verification codes have been requested.' },
+          { 'retry-after': String(Math.ceil(result.retryAfterMs / 1000)) }
+        );
+      }
+      return response(202, { challengeId: result.challengeId });
+    }
+    if (method === 'PUT' && url === '/auth/email') {
+      const result = service.verifyEmailChange(
+        bearerToken(request),
+        body?.challengeId,
+        body?.code
+      );
+      if (result.kind === 'unauthorized') {
+        return response(401, { error: 'unauthorized', message: 'A valid session is required.' });
+      }
+      if (result.kind === 'email-unavailable') {
+        return response(409, { error: 'email_unavailable', message: 'The email cannot be used.' });
+      }
+      if (result.kind !== 'email-changed') {
+        return response(401, {
+          error: 'invalid_code',
+          message: 'The email verification code is invalid or expired.'
+        });
+      }
+      return response(200, { account: result.account });
+    }
     if (method === 'GET' && url === '/auth/session') {
       const authenticated = service.authenticate(bearerToken(request));
       if (!authenticated) {

@@ -73,39 +73,54 @@ function smtpSession({ host, port, timeoutMs }, connect) {
 export function createMailer(config, connect = net.createConnection) {
   const sockets = new Set();
 
-  return {
-    async sendLoginCode({ email, code, expiresInMinutes }) {
-      const session = smtpSession({
-        host: config.smtpHost,
-        port: config.smtpPort,
-        timeoutMs: config.smtpTimeoutMs ?? 10 * 1000
-      }, connect);
-      sockets.add(session.socket);
-      session.socket.once('close', () => sockets.delete(session.socket));
-      const text = `Your login code is ${code}. It expires in ${expiresInMinutes} minutes.`;
-      const message = [
-        `From: ${config.mailFrom}`,
-        `To: ${email}`,
-        'Subject: Your login code',
-        `Date: ${new Date().toUTCString()}`,
-        `Message-ID: <${randomUUID()}@auth.local>`,
-        'MIME-Version: 1.0',
-        'Content-Type: text/plain; charset=utf-8',
-        '',
-        text
-      ].join('\r\n').replace(/^\./gm, '..');
+  async function sendCode({ email, code, expiresInMinutes, subject, purpose }) {
+    const session = smtpSession({
+      host: config.smtpHost,
+      port: config.smtpPort,
+      timeoutMs: config.smtpTimeoutMs ?? 10 * 1000
+    }, connect);
+    sockets.add(session.socket);
+    session.socket.once('close', () => sockets.delete(session.socket));
+    const text = `Your ${purpose} code is ${code}. It expires in ${expiresInMinutes} minutes.`;
+    const message = [
+      `From: ${config.mailFrom}`,
+      `To: ${email}`,
+      `Subject: ${subject}`,
+      `Date: ${new Date().toUTCString()}`,
+      `Message-ID: <${randomUUID()}@auth.local>`,
+      'MIME-Version: 1.0',
+      'Content-Type: text/plain; charset=utf-8',
+      '',
+      text
+    ].join('\r\n').replace(/^\./gm, '..');
 
-      try {
-        await session.expect(220);
-        await session.command('EHLO localhost', 250);
-        await session.command(`MAIL FROM:<${smtpAddress(config.mailFrom)}>`, 250);
-        await session.command(`RCPT TO:<${smtpAddress(email)}>`, 250);
-        await session.command('DATA', 354);
-        await session.command(`${message}\r\n.`, 250);
-        await session.command('QUIT', 221);
-      } finally {
-        session.socket.destroy();
-      }
+    try {
+      await session.expect(220);
+      await session.command('EHLO localhost', 250);
+      await session.command(`MAIL FROM:<${smtpAddress(config.mailFrom)}>`, 250);
+      await session.command(`RCPT TO:<${smtpAddress(email)}>`, 250);
+      await session.command('DATA', 354);
+      await session.command(`${message}\r\n.`, 250);
+      await session.command('QUIT', 221);
+    } finally {
+      session.socket.destroy();
+    }
+  }
+
+  return {
+    sendLoginCode(message) {
+      return sendCode({
+        ...message,
+        subject: 'Your login code',
+        purpose: 'login'
+      });
+    },
+    sendEmailChangeCode(message) {
+      return sendCode({
+        ...message,
+        subject: 'Confirm your new email address',
+        purpose: 'email change'
+      });
     },
     close() {
       for (const socket of sockets) socket.destroy();

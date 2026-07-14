@@ -70,4 +70,26 @@ Authorization: Bearer <token>
 
 成功返回 `204`。目标会话不存在、不属于当前账号或已失效时统一返回 `404`。
 
+更换当前账号邮箱需要先向新邮箱发送验证码：
+
+```http
+POST /auth/email/code
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{"email":"new@example.com"}
+```
+
+成功返回 `202` 和 `challengeId`。收到新邮箱中的验证码后确认变更：
+
+```http
+PUT /auth/email
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{"challengeId":"...","code":"A1B2C3"}
+```
+
+成功返回 `200` 和更新后的 `account`。账号 ID 与现有会话保持不变；无效或过期验证码返回 `401`，邮箱已被账号使用则返回 `409`。
+
 健康检查为 `GET /health`。运行测试：`pnpm test`。

@@ -64,7 +64,9 @@ export function createAuthService({ db, mailer, config, now = () => Date.now() }
     WHERE created_at <= ? AND (expires_at <= ? OR consumed_at IS NOT NULL)
   `);
   const countRecentChallenges = db.prepare(`
-    SELECT COUNT(*) AS count FROM login_challenges WHERE created_at > ?
+    SELECT
+      (SELECT COUNT(*) FROM login_challenges WHERE created_at > ?) +
+      (SELECT COUNT(*) FROM email_change_challenges WHERE created_at > ?) AS count
   `);
   const findChallenge = db.prepare('SELECT * FROM login_challenges WHERE id = ?');
   const recordFailure = db.prepare(`
@@ -77,7 +79,40 @@ export function createAuthService({ db, mailer, config, now = () => Date.now() }
     UPDATE login_challenges SET consumed_at = ? WHERE id = ? AND consumed_at IS NULL
   `);
   const findAccountByEmail = db.prepare('SELECT * FROM accounts WHERE email = ?');
+  const findAccountById = db.prepare('SELECT * FROM accounts WHERE id = ?');
   const insertAccount = db.prepare('INSERT INTO accounts (id, email, created_at) VALUES (?, ?, ?)');
+  const findRecentEmailChange = db.prepare(`
+    SELECT id FROM email_change_challenges
+    WHERE account_id = ? AND email = ? AND created_at > ?
+    ORDER BY created_at DESC LIMIT 1
+  `);
+  const insertEmailChange = db.prepare(`
+    INSERT INTO email_change_challenges (id, account_id, email, code_hash, created_at, expires_at)
+    VALUES (?, ?, ?, ?, ?, ?)
+  `);
+  const findEmailChange = db.prepare('SELECT * FROM email_change_challenges WHERE id = ?');
+  const consumePreviousEmailChanges = db.prepare(`
+    UPDATE email_change_challenges SET consumed_at = ?
+    WHERE account_id = ? AND id != ? AND consumed_at IS NULL
+  `);
+  const recordEmailChangeFailure = db.prepare(`
+    UPDATE email_change_challenges
+    SET failed_attempts = failed_attempts + 1,
+        consumed_at = CASE WHEN failed_attempts + 1 >= ? THEN ? ELSE consumed_at END
+    WHERE id = ? AND consumed_at IS NULL
+  `);
+  const consumeEmailChange = db.prepare(`
+    UPDATE email_change_challenges SET consumed_at = ? WHERE id = ? AND consumed_at IS NULL
+  `);
+  const updateAccountEmail = db.prepare('UPDATE accounts SET email = ? WHERE id = ?');
+  const consumeLoginChallengesForEmails = db.prepare(`
+    UPDATE login_challenges SET consumed_at = ?
+    WHERE email IN (?, ?) AND consumed_at IS NULL
+  `);
+  const pruneEmailChanges = db.prepare(`
+    DELETE FROM email_change_challenges
+    WHERE created_at <= ? AND (expires_at <= ? OR consumed_at IS NOT NULL)
+  `);
   const insertSession = db.prepare(`
     INSERT INTO sessions (id, account_id, token_hash, created_at, expires_at)
     VALUES (?, ?, ?, ?, ?)
@@ -121,10 +156,11 @@ export function createAuthService({ db, mailer, config, now = () => Date.now() }
       const timestamp = now();
       const windowStart = timestamp - otpGlobalWindowMs;
       pruneChallenges.run(windowStart, timestamp);
+      pruneEmailChanges.run(windowStart, timestamp);
       const recent = findRecentChallenge.get(email, timestamp - config.otpCooldownMs);
       if (recent) return { kind: 'accepted', challengeId: recent.id, sent: false };
 
-      if (countRecentChallenges.get(windowStart).count >= otpGlobalMaxRequests) {
+      if (countRecentChallenges.get(windowStart, windowStart).count >= otpGlobalMaxRequests) {
         return { kind: 'rate-limited', retryAfterMs: otpGlobalWindowMs };
       }
 
@@ -197,6 +233,94 @@ export function createAuthService({ db, mailer, config, now = () => Date.now() }
     },
 
     authenticate,
+
+    async requestEmailChangeCode(token, rawEmail) {
+      const authenticated = authenticate(token);
+      if (!authenticated) return { kind: 'unauthorized' };
+      const email = normalizeEmail(rawEmail);
+      if (!email) return { kind: 'invalid-email' };
+
+      const owner = findAccountByEmail.get(email);
+      if (owner) return { kind: 'email-unavailable' };
+
+      const timestamp = now();
+      const windowStart = timestamp - otpGlobalWindowMs;
+      pruneChallenges.run(windowStart, timestamp);
+      pruneEmailChanges.run(windowStart, timestamp);
+      const recent = findRecentEmailChange.get(
+        authenticated.account.id,
+        email,
+        timestamp - config.otpCooldownMs
+      );
+      if (recent) return { kind: 'accepted', challengeId: recent.id, sent: false };
+
+      if (countRecentChallenges.get(windowStart, windowStart).count >= otpGlobalMaxRequests) {
+        return { kind: 'rate-limited', retryAfterMs: otpGlobalWindowMs };
+      }
+
+      const challengeId = randomUUID();
+      const code = generateOtp();
+      insertEmailChange.run(
+        challengeId,
+        authenticated.account.id,
+        email,
+        hashOtp(config.authSecret, challengeId, code),
+        timestamp,
+        timestamp + config.otpTtlMs
+      );
+
+      try {
+        await mailer.sendEmailChangeCode({
+          email,
+          code,
+          expiresInMinutes: Math.ceil(config.otpTtlMs / 60_000)
+        });
+        consumePreviousEmailChanges.run(now(), authenticated.account.id, challengeId);
+      } catch (error) {
+        db.prepare('DELETE FROM email_change_challenges WHERE id = ?').run(challengeId);
+        throw error;
+      }
+
+      return { kind: 'accepted', challengeId, sent: true };
+    },
+
+    verifyEmailChange(token, challengeId, rawCode) {
+      const authenticated = authenticate(token);
+      if (!authenticated) return { kind: 'unauthorized' };
+      const code = normalizeOtp(rawCode);
+      if (typeof challengeId !== 'string' || !code) return { kind: 'invalid-code' };
+
+      return transaction(db, () => {
+        const timestamp = now();
+        const challenge = findEmailChange.get(challengeId);
+        if (!challenge || challenge.account_id !== authenticated.account.id ||
+            challenge.consumed_at !== null || challenge.expires_at <= timestamp ||
+            challenge.failed_attempts >= config.otpMaxAttempts) {
+          return { kind: 'invalid-code' };
+        }
+
+        const candidate = hashOtp(config.authSecret, challengeId, code);
+        if (!hashesMatch(candidate, challenge.code_hash)) {
+          recordEmailChangeFailure.run(config.otpMaxAttempts, timestamp, challengeId);
+          return { kind: 'invalid-code' };
+        }
+
+        const owner = findAccountByEmail.get(challenge.email);
+        if (owner && owner.id !== authenticated.account.id) {
+          return { kind: 'email-unavailable' };
+        }
+
+        const account = findAccountById.get(authenticated.account.id);
+        updateAccountEmail.run(challenge.email, account.id);
+        consumeEmailChange.run(timestamp, challengeId);
+        consumePreviousEmailChanges.run(timestamp, account.id, challengeId);
+        consumeLoginChallengesForEmails.run(timestamp, account.email, challenge.email);
+        return {
+          kind: 'email-changed',
+          account: { id: account.id, email: challenge.email }
+        };
+      });
+    },
 
     listSessions(token) {
       const authenticated = authenticate(token);

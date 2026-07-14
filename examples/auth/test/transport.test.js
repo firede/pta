@@ -43,7 +43,10 @@ test('HTTP 适配层可完成登录态校验、设备查看和远程退出', asy
   const app = buildApp({
     config,
     db: openDatabase(':memory:'),
-    mailer: { async sendLoginCode(message) { messages.push(message); } }
+    mailer: {
+      async sendLoginCode(message) { messages.push(message); },
+      async sendEmailChangeCode(message) { messages.push(message); }
+    }
   });
   t.after(() => app.close());
   const requested = await httpRequest(app, {
@@ -73,6 +76,31 @@ test('HTTP 适配层可完成登录态校验、设备查看和远程退出', asy
   });
   assert.equal(checked.status, 200);
   assert.equal(JSON.parse(checked.body).account.email, 'http@example.com');
+
+  const emailChangeRequested = await httpRequest(app, {
+    method: 'POST',
+    url: '/auth/email/code',
+    headers: {
+      authorization: `Bearer ${token}`,
+      'content-type': 'application/json'
+    },
+    body: { email: 'changed@example.com' }
+  });
+  assert.equal(emailChangeRequested.status, 202);
+  const emailChanged = await httpRequest(app, {
+    method: 'PUT',
+    url: '/auth/email',
+    headers: {
+      authorization: `Bearer ${token}`,
+      'content-type': 'application/json'
+    },
+    body: {
+      challengeId: JSON.parse(emailChangeRequested.body).challengeId,
+      code: messages[1].code
+    }
+  });
+  assert.equal(emailChanged.status, 200);
+  assert.equal(JSON.parse(emailChanged.body).account.email, 'changed@example.com');
 
   const listed = await httpRequest(app, {
     method: 'GET',
@@ -155,6 +183,15 @@ test('SMTP 投递使用 Mailpit 支持的基础协议', async (t) => {
 
   assert.match(message, /To: mailpit@example\.com/);
   assert.match(message, /Your login code is 042731\./);
+
+  message = '';
+  await mailer.sendEmailChangeCode({
+    email: 'new@example.com',
+    code: 'A1B2C3',
+    expiresInMinutes: 10
+  });
+  assert.match(message, /Subject: Confirm your new email address/);
+  assert.match(message, /Your email change code is A1B2C3\./);
 });
 
 test('SMTP 会话超时会结束 HTTP 请求并回滚验证码', async (t) => {
@@ -181,4 +218,44 @@ test('SMTP 会话超时会结束 HTTP 请求并回滚验证码', async (t) => {
   assert.equal(result.status, 500);
   assert.equal(JSON.parse(result.body).error, 'internal_error');
   assert.equal(db.prepare('SELECT COUNT(*) AS count FROM login_challenges').get().count, 0);
+});
+
+test('邮箱更换邮件投递失败会结束 HTTP 请求并回滚验证码', async (t) => {
+  const messages = [];
+  const db = openDatabase(':memory:');
+  const app = buildApp({
+    config,
+    db,
+    mailer: {
+      async sendLoginCode(message) { messages.push(message); },
+      async sendEmailChangeCode() { throw new Error('delivery failed'); }
+    }
+  });
+  t.after(() => app.close());
+
+  const requested = await httpRequest(app, {
+    method: 'POST',
+    url: '/auth/code',
+    body: { email: 'before@example.com' }
+  });
+  const authenticated = await httpRequest(app, {
+    method: 'POST',
+    url: '/auth/session',
+    body: {
+      challengeId: JSON.parse(requested.body).challengeId,
+      code: messages[0].code
+    }
+  });
+  const result = await httpRequest(app, {
+    method: 'POST',
+    url: '/auth/email/code',
+    headers: { authorization: `Bearer ${JSON.parse(authenticated.body).token}` },
+    body: { email: 'after@example.com' }
+  });
+  assert.equal(result.status, 500);
+  assert.equal(JSON.parse(result.body).error, 'internal_error');
+  assert.equal(
+    db.prepare('SELECT COUNT(*) AS count FROM email_change_challenges').get().count,
+    0
+  );
 });

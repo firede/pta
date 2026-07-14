@@ -25,6 +25,9 @@ function fixture() {
   const mailer = {
     async sendLoginCode(message) {
       messages.push(message);
+    },
+    async sendEmailChangeCode(message) {
+      messages.push(message);
     }
   };
   const app = buildApp({
@@ -53,6 +56,24 @@ async function login(app, challengeId, code) {
   return app.inject({
     method: 'POST',
     url: '/auth/session',
+    payload: { challengeId, code }
+  });
+}
+
+async function requestEmailChange(app, token, email) {
+  return app.inject({
+    method: 'POST',
+    url: '/auth/email/code',
+    headers: { authorization: `Bearer ${token}` },
+    payload: { email }
+  });
+}
+
+async function confirmEmailChange(app, token, challengeId, code) {
+  return app.inject({
+    method: 'PUT',
+    url: '/auth/email',
+    headers: { authorization: `Bearer ${token}` },
     payload: { challengeId, code }
   });
 }
@@ -408,6 +429,195 @@ test('会话到期后失效，非法输入被拒绝', async (t) => {
     headers: { authorization: `Bearer ${authenticated.json().token}` }
   });
   assert.equal(response.statusCode, 401);
+});
+
+test('校验新邮箱后更新原账号，现有会话和账号 ID 保持不变', async (t) => {
+  const { app, messages, advance } = fixture();
+  t.after(() => app.close());
+
+  const firstChallenge = await requestCode(app, 'old@example.com');
+  const firstLogin = await login(app, firstChallenge.json().challengeId, messages[0].code);
+  advance(baseConfig.otpCooldownMs + 1);
+  const secondChallenge = await requestCode(app, 'old@example.com');
+  const secondLogin = await login(app, secondChallenge.json().challengeId, messages[1].code);
+  const originalAccountId = firstLogin.json().account.id;
+
+  const requested = await requestEmailChange(
+    app,
+    firstLogin.json().token,
+    ' New@Example.com '
+  );
+  assert.equal(requested.statusCode, 202);
+  assert.equal(messages[2].email, 'new@example.com');
+
+  const changed = await confirmEmailChange(
+    app,
+    firstLogin.json().token,
+    requested.json().challengeId,
+    messages[2].code.toLowerCase()
+  );
+  assert.equal(changed.statusCode, 200);
+  assert.deepEqual(changed.json().account, {
+    id: originalAccountId,
+    email: 'new@example.com'
+  });
+
+  for (const token of [firstLogin.json().token, secondLogin.json().token]) {
+    const checked = await app.inject({
+      method: 'GET',
+      url: '/auth/session',
+      headers: { authorization: `Bearer ${token}` }
+    });
+    assert.equal(checked.statusCode, 200);
+    assert.deepEqual(checked.json().account, changed.json().account);
+  }
+
+  const newEmailChallenge = await requestCode(app, 'new@example.com');
+  const loggedInAgain = await login(
+    app,
+    newEmailChallenge.json().challengeId,
+    messages[3].code
+  );
+  assert.equal(loggedInAgain.json().account.id, originalAccountId);
+});
+
+test('邮箱更换要求有效会话、有效邮箱，且验证码绑定发起账号', async (t) => {
+  const { app, messages } = fixture();
+  t.after(() => app.close());
+
+  assert.equal(
+    (await app.inject({
+      method: 'POST',
+      url: '/auth/email/code',
+      payload: { email: 'new@example.com' }
+    })).statusCode,
+    401
+  );
+
+  const firstChallenge = await requestCode(app, 'first@example.com');
+  const first = await login(app, firstChallenge.json().challengeId, messages[0].code);
+  const secondChallenge = await requestCode(app, 'second@example.com');
+  const second = await login(app, secondChallenge.json().challengeId, messages[1].code);
+
+  assert.equal(
+    (await requestEmailChange(app, first.json().token, 'not-an-email')).statusCode,
+    400
+  );
+  assert.equal(
+    (await requestEmailChange(app, first.json().token, 'second@example.com')).statusCode,
+    409
+  );
+  assert.equal(
+    (await requestEmailChange(app, first.json().token, 'first@example.com')).statusCode,
+    409
+  );
+
+  const requested = await requestEmailChange(app, first.json().token, 'new@example.com');
+  const crossAccount = await confirmEmailChange(
+    app,
+    second.json().token,
+    requested.json().challengeId,
+    messages[2].code
+  );
+  assert.equal(crossAccount.statusCode, 401);
+  assert.equal(crossAccount.json().error, 'invalid_code');
+
+  const changed = await confirmEmailChange(
+    app,
+    first.json().token,
+    requested.json().challengeId,
+    messages[2].code
+  );
+  assert.equal(changed.statusCode, 200);
+  const reused = await confirmEmailChange(
+    app,
+    first.json().token,
+    requested.json().challengeId,
+    messages[2].code
+  );
+  assert.equal(reused.statusCode, 401);
+});
+
+test('邮箱更换验证码会过期，错误尝试次数受限', async (t) => {
+  const { app, messages, advance } = fixture();
+  t.after(() => app.close());
+
+  const loginChallenge = await requestCode(app);
+  const authenticated = await login(app, loginChallenge.json().challengeId, messages[0].code);
+  const token = authenticated.json().token;
+  const requested = await requestEmailChange(app, token, 'limited@example.com');
+  const correctCode = messages[1].code;
+  const wrongCode = correctCode === 'A0A0A0' ? 'B1B1B1' : 'A0A0A0';
+  for (let attempt = 0; attempt < baseConfig.otpMaxAttempts; attempt += 1) {
+    assert.equal(
+      (await confirmEmailChange(app, token, requested.json().challengeId, wrongCode)).statusCode,
+      401
+    );
+  }
+  assert.equal(
+    (await confirmEmailChange(app, token, requested.json().challengeId, correctCode)).statusCode,
+    401
+  );
+
+  advance(baseConfig.otpCooldownMs + 1);
+  const expiring = await requestEmailChange(app, token, 'expired-change@example.com');
+  advance(baseConfig.otpTtlMs);
+  assert.equal(
+    (await confirmEmailChange(app, token, expiring.json().challengeId, messages[2].code)).statusCode,
+    401
+  );
+});
+
+test('邮箱变更会作废涉及新旧邮箱的未消费登录验证码', async (t) => {
+  const { app, messages, advance } = fixture();
+  t.after(() => app.close());
+
+  const initialChallenge = await requestCode(app, 'old@example.com');
+  const authenticated = await login(app, initialChallenge.json().challengeId, messages[0].code);
+  advance(baseConfig.otpCooldownMs + 1);
+  const staleOld = await requestCode(app, 'old@example.com');
+  const staleNew = await requestCode(app, 'new@example.com');
+  const requested = await requestEmailChange(app, authenticated.json().token, 'new@example.com');
+
+  assert.equal(
+    (await confirmEmailChange(
+      app,
+      authenticated.json().token,
+      requested.json().challengeId,
+      messages[3].code
+    )).statusCode,
+    200
+  );
+  assert.equal((await login(app, staleOld.json().challengeId, messages[1].code)).statusCode, 401);
+  assert.equal((await login(app, staleNew.json().challengeId, messages[2].code)).statusCode, 401);
+});
+
+test('登录与邮箱更换共享全局发码上限', async (t) => {
+  const messages = [];
+  const app = buildApp({
+    config: { ...baseConfig, otpGlobalMaxRequests: 2 },
+    db: openDatabase(':memory:'),
+    mailer: {
+      async sendLoginCode(message) { messages.push(message); },
+      async sendEmailChangeCode(message) { messages.push(message); }
+    }
+  });
+  t.after(() => app.close());
+
+  const challenge = await requestCode(app);
+  const authenticated = await login(app, challenge.json().challengeId, messages[0].code);
+  assert.equal(
+    (await requestEmailChange(app, authenticated.json().token, 'first-new@example.com')).statusCode,
+    202
+  );
+  const limited = await requestEmailChange(
+    app,
+    authenticated.json().token,
+    'second-new@example.com'
+  );
+  assert.equal(limited.statusCode, 429);
+  assert.equal(limited.headers['retry-after'], '60');
+  assert.equal(messages.length, 2);
 });
 
 test('服务重启后仍可从 SQLite 校验登录态', async (t) => {
