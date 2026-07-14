@@ -165,6 +165,48 @@ test('pending 收件箱为空时输出空提示，用法错误返回 2', async (
   assert.match(usage.stderr(), /用法：pta pending/u);
 });
 
+test('context 输出领域链与来源标识并返回 0', async (context) => {
+  const root = await repository({
+    'TRUTH.md': '- 根判断\n',
+    'PENDING.md': '- 根问题如何处理？（暂缓）\n',
+    'src/TRUTH.md': '- 源判断\n',
+    'src/GLOSSARY.md': '- **术语**：定义\n',
+    'src/index.ts': 'export const value = 1;\n',
+  });
+  context.after(() => rm(root, { recursive: true, force: true }));
+  await git(root, ['init', '-q']);
+
+  const uncommitted = capture();
+  assert.equal(await runCli(['context', 'src/index.ts'], uncommitted.io, root), 0);
+  assert.match(uncommitted.stdout(), /# 项目真相背景/u);
+  assert.match(uncommitted.stdout(), /来源：无提交基线/u);
+  assert.match(uncommitted.stdout(), /^ {2}src\/TRUTH\.md [0-9a-f]{64}$/mu);
+  assert.match(uncommitted.stdout(), /路径归属：\n {2}src\/index\.ts → 领域 src/u);
+  assert.match(uncommitted.stdout(), /## 领域 \.\n\n### 真相记录\n\n- 根判断/u);
+  assert.match(uncommitted.stdout(), /### 待裁决背景\n\n- 根问题如何处理/u);
+  assert.match(uncommitted.stdout(), /## 领域 src[\s\S]*### 术语表\n\n- \*\*术语\*\*：定义/u);
+  assert.equal(uncommitted.stderr(), '');
+
+  await git(root, ['add', '.']);
+  await git(root, [
+    '-c',
+    'user.name=PTA Test',
+    '-c',
+    'user.email=pta@example.invalid',
+    'commit',
+    '-qm',
+    'fixture',
+  ]);
+  const committed = capture();
+  assert.equal(await runCli(['context', 'src/index.ts'], committed.io, root), 0);
+  assert.match(committed.stdout(), /来源：[0-9a-f]{40}\n/u);
+  assert.doesNotMatch(committed.stdout(), /所涉内容哈希/u);
+
+  const usage = capture();
+  assert.equal(await runCli(['context'], usage.io, root), 2);
+  assert.match(usage.stderr(), /用法：pta context/u);
+});
+
 test('命令用法与 git 错误返回 2', async (context) => {
   const root = await repository({ 'TRUTH.md': '- 根判断\n' });
   context.after(() => rm(root, { recursive: true, force: true }));

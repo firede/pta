@@ -1,18 +1,22 @@
 #!/usr/bin/env node
 import { execFile } from 'node:child_process';
-import { resolve } from 'node:path';
+import { readFile } from 'node:fs/promises';
+import { join, posix, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 import {
+  assembleContext,
   classifyChanges,
   discoverDomains,
   extractDomainContent,
+  hashFileBytes,
   lintDiscoveryProblems,
   lintDomainContents,
   type ChangedPath,
   type ChangeType,
   type ChangeClassification,
   type CheckSignal,
+  type ContextAssembly,
   type ExtractedEntry,
 } from '@pta/core';
 
@@ -221,6 +225,118 @@ function formatChanges(result: ChangeClassification): string {
   return `${sections.join('\n\n')}\n`;
 }
 
+type SourceIdentification = Readonly<{
+  baseVersion?: string;
+  hashedFiles: readonly Readonly<{ path: string; hash: string }>[];
+}>;
+
+function formatContext(assembly: ContextAssembly, source: SourceIdentification): string {
+  const lines: string[] = ['# 项目真相背景', ''];
+  if (source.baseVersion === undefined) {
+    lines.push('来源：无提交基线，所涉内容以哈希标识');
+  } else if (source.hashedFiles.length > 0) {
+    lines.push(`来源：${source.baseVersion}，含未入库变更`);
+  } else {
+    lines.push(`来源：${source.baseVersion}`);
+  }
+  if (source.hashedFiles.length > 0) {
+    lines.push('所涉内容哈希：');
+    for (const file of source.hashedFiles) lines.push(`  ${file.path} ${file.hash}`);
+  }
+  lines.push(
+    `范围：${
+      assembly.domains.length === 0
+        ? '无'
+        : assembly.domains.map((domain) => `领域 ${label(domain.domainIdentifier)}`).join('、')
+    }`,
+  );
+  lines.push('路径归属：');
+  for (const resolution of assembly.resolutions) {
+    lines.push(
+      `  ${resolution.path === '' ? '.' : resolution.path} → ${
+        resolution.domainIdentifier === undefined
+          ? '未覆盖'
+          : `领域 ${label(resolution.domainIdentifier)}`
+      }`,
+    );
+  }
+  for (const domain of assembly.domains) {
+    lines.push('', `## 领域 ${label(domain.domainIdentifier)}`);
+    const sections: readonly [string, readonly ExtractedEntry[]][] = [
+      ['真相记录', domain.truthEntries],
+      ['术语表', domain.glossaryEntries],
+      ['残留', domain.residueEntries],
+      ['待裁决背景', domain.pendingEntries],
+    ];
+    for (const [title, entries] of sections) {
+      if (entries.length === 0) continue;
+      lines.push('', `### ${title}`, '');
+      for (const entry of entries) lines.push(`- ${entry.content}`);
+    }
+    if (domain.dependsOn.length > 0) {
+      lines.push('', '### 依赖领域（未展开，可按标识另行查询）', '');
+      for (const dependency of domain.dependsOn) {
+        lines.push(`- ${dependency.path}：${dependency.reason}`);
+      }
+    }
+  }
+  return `${lines.join('\n')}\n`;
+}
+
+function normalizeContextPath(input: string): string {
+  const normalized = posix.normalize(input.replaceAll('\\', '/'));
+  const trimmed = normalized.replace(/\/+$/u, '');
+  return trimmed === '.' ? '' : trimmed;
+}
+
+async function runContext(paths: readonly string[], io: CliIO, cwd: string): Promise<number> {
+  const repositoryRoot = resolve(cwd);
+  try {
+    const repositoryFiles = await gitRepositoryFiles(repositoryRoot);
+    const discovery = await discoverDomains(repositoryRoot, repositoryFiles);
+    const contents = await Promise.all(
+      discovery.domains.map((domain) =>
+        extractDomainContent(repositoryRoot, repositoryFiles, domain),
+      ),
+    );
+    const assembly = assembleContext(discovery, contents, paths.map(normalizeContextPath));
+    const consumed = assembly.domains.flatMap((domain) => domain.consumedFiles);
+    const baseVersion = await runGit(['rev-parse', 'HEAD'], repositoryRoot)
+      .then((output) => output.trim())
+      .catch(() => undefined);
+    let targets: readonly string[] = [];
+    if (consumed.length > 0) {
+      if (baseVersion === undefined) {
+        targets = consumed;
+      } else {
+        const status = await runGit(
+          ['status', '--porcelain=v1', '-z', '--untracked-files=all', '--', ...consumed],
+          repositoryRoot,
+        );
+        const dirty = new Set(parseStatus(status).map((change) => change.path));
+        targets = consumed.filter((path) => dirty.has(path));
+      }
+    }
+    const hashedFiles = await Promise.all(
+      targets.map(async (path) => ({
+        path,
+        hash: hashFileBytes(await readFile(join(repositoryRoot, ...path.split('/')))),
+      })),
+    );
+    io.stdout(
+      formatContext(assembly, {
+        hashedFiles,
+        ...(baseVersion === undefined ? {} : { baseVersion }),
+      }),
+    );
+    return 0;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    io.stderr(`pta context 失败：${message}\n`);
+    return 2;
+  }
+}
+
 type PendingGroup = Readonly<{
   identifier: string;
   containerPath: string;
@@ -314,8 +430,19 @@ export async function runCli(
     return runPending(args[1], io, cwd);
   }
 
+  if (args[0] === 'context') {
+    const paths = args.slice(1);
+    if (paths.length === 0 || paths.some((path) => path.startsWith('-'))) {
+      io.stderr('用法：pta context <路径>...\n');
+      return 2;
+    }
+    return runContext(paths, io, cwd);
+  }
+
   if (args[0] !== 'check' || args.length > 2) {
-    io.stderr('用法：pta check [仓库根]\n       pta changes [base]\n       pta pending [仓库根]\n');
+    io.stderr(
+      '用法：pta check [仓库根]\n       pta changes [base]\n       pta pending [仓库根]\n       pta context <路径>...\n',
+    );
     return 2;
   }
 
