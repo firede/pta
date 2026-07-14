@@ -51,6 +51,7 @@ test('check 按领域输出机器违例并返回 1', async (context) => {
     'src/TRUTH.md': '- **标题** 内容\n',
   });
   context.after(() => rm(root, { recursive: true, force: true }));
+  await git(root, ['init', '-q']);
   const output = capture();
 
   assert.equal(await runCli(['check', root], output.io), 1);
@@ -73,6 +74,7 @@ test('check 仅有术语不一致嫌疑时返回 0，无信号时输出通过', 
       rm(cleanRoot, { recursive: true, force: true }),
     ]);
   });
+  await Promise.all([git(suspicionRoot, ['init', '-q']), git(cleanRoot, ['init', '-q'])]);
 
   const suspicion = capture();
   assert.equal(await runCli(['check', suspicionRoot], suspicion.io), 0);
@@ -128,7 +130,7 @@ test('changes 从工作树收集变更，输出漂移候选与待裁决背景并
   assert.equal(based.stderr(), '');
 });
 
-test('changes 的用法与 git 错误返回 2', async (context) => {
+test('命令用法与 git 错误返回 2', async (context) => {
   const root = await repository({ 'TRUTH.md': '- 根判断\n' });
   context.after(() => rm(root, { recursive: true, force: true }));
 
@@ -139,4 +141,37 @@ test('changes 的用法与 git 错误返回 2', async (context) => {
   const failure = capture();
   assert.equal(await runCli(['changes'], failure.io, root), 2);
   assert.match(failure.stderr(), /pta changes 失败/u);
+
+  const checkFailure = capture();
+  assert.equal(await runCli(['check', root], checkFailure.io), 2);
+  assert.match(checkFailure.stderr(), /pta check 失败/u);
+});
+
+test('check 使用 Git 清单并排除被忽略路径', async (context) => {
+  const root = await repository({
+    'TRUTH.md': '- 根判断\n',
+    '.gitignore': 'ignored/\n',
+    'ignored/TRUTH.md': '- **不应出现**\n',
+  });
+  context.after(() => rm(root, { recursive: true, force: true }));
+  await git(root, ['init', '-q']);
+  const output = capture();
+
+  assert.equal(await runCli(['check', root], output.io), 0);
+  assert.equal(output.stdout(), '通过：未发现核查信号。\n');
+});
+
+test('check 从清单扣除工作树中已删除的跟踪文件', async (context) => {
+  const root = await repository({
+    'TRUTH.md': '- 根判断\n',
+    'PENDING.md': '- 待裁决问题？当前保留。\n',
+  });
+  context.after(() => rm(root, { recursive: true, force: true }));
+  await git(root, ['init', '-q']);
+  await git(root, ['add', '.']);
+  await rm(join(root, 'PENDING.md'));
+  const output = capture();
+
+  assert.equal(await runCli(['check', root], output.io), 0);
+  assert.equal(output.stdout(), '通过：未发现核查信号。\n');
 });

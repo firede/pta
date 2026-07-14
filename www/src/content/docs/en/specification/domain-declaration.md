@@ -7,7 +7,7 @@ dependsOn:
   - argument/project-truth-freshness-governance
   - argument/history-still-in-effect
   - argument/material-temporal-claim
-sourceHash: 96ebd9078824d5d0fd497fb3567be7001c25e079366f297b57c3de59932e22f9
+sourceHash: 8c35d75e312d5762c8f225d8362d4f348644cfbd76335875c167ccc569e9e1fd
 ---
 
 Domain declaration defines how domains are delimited, marked, and connected in the repository.
@@ -35,6 +35,8 @@ dependsOn:
 
 ……
 ```
+
+Frontmatter syntax follows YAML 1.2; the shape of each field is defined by the corresponding section of this specification, and unrecognized fields **should** be ignored. Frontmatter that cannot be parsed as YAML 1.2 constitutes a check signal.
 
 **`dependsOn` (optional)** declares record dependencies that cannot be derived from existing structure: this domain's truth records depend on the content of the referenced domain, and when that domain changes, this domain becomes a check candidate. Each item contains `path` and `reason`, stating from this domain's perspective what it depends on.
 

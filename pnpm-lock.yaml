@@ -38,6 +38,13 @@ importers:
         version: 7.0.2
 
   packages/core:
+    dependencies:
+      smol-toml:
+        specifier: ^1.7.0
+        version: 1.7.0
+      yaml:
+        specifier: ^2.9.0
+        version: 2.9.0
     devDependencies:
       '@types/node':
         specifier: ^24.10.1

@@ -3,6 +3,7 @@ import { test } from 'node:test';
 
 import {
   extractEntries,
+  lintDiscoveryProblems,
   lintDomainContents,
   splitFrontmatter,
   type CheckSignal,
@@ -127,6 +128,22 @@ test('未闭合 frontmatter 产生违例，闭合 frontmatter 不产生', () => 
   );
   assert.equal(hasMessage(lintDomainContents([bad]), 'frontmatter 未闭合'), true);
   assert.equal(hasMessage(lintDomainContents([good]), 'frontmatter 未闭合'), false);
+});
+
+test('无法解析的 YAML frontmatter 与 TOML 配置问题产生违例', () => {
+  const malformedFrontmatter = directoryDomain('src', '---\npath: [\n---\n- 判断');
+  assert.equal(
+    hasMessage(lintDomainContents([malformedFrontmatter]), '无法按 YAML 1.2 解析'),
+    true,
+  );
+
+  const signals = lintDiscoveryProblems({
+    repositoryRoot: '/repo',
+    externalRoots: [],
+    domains: [],
+    problems: [{ code: 'invalid-pta-toml', path: 'pta.toml' }],
+  });
+  assert.equal(hasMessage(signals, '无法按 TOML 1.0 解析'), true);
 });
 
 test('同一目录的整目录声明重复产生冲突，不同目录不产生', () => {

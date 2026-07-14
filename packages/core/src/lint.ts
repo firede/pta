@@ -1,6 +1,6 @@
 import { posix } from 'node:path';
 
-import type { Domain, DomainContent } from './domains.ts';
+import type { DiscoveryResult, Domain, DomainContent } from './domains.ts';
 import type { ExtractedContent, ExtractedEntry, FileKind } from './entries.ts';
 import { normalizeEntryContent } from './identity.ts';
 
@@ -21,7 +21,12 @@ export type DomainDeclarationAnchor = Readonly<{
   domainIdentifier?: string;
 }>;
 
-export type CheckSignalAnchor = EntryAnchor | DomainDeclarationAnchor;
+export type ProjectConfigurationAnchor = Readonly<{
+  kind: 'project-configuration';
+  path: 'pta.toml';
+}>;
+
+export type CheckSignalAnchor = EntryAnchor | DomainDeclarationAnchor | ProjectConfigurationAnchor;
 
 export type CheckSignalEvidence = Readonly<{
   message: string;
@@ -97,6 +102,25 @@ function contentViolations(contents: readonly DomainContent[]): CheckSignal[] {
             category: 'violation',
             anchor: declarationAnchor(domain),
             message: `${content.fileName} 的 frontmatter 未闭合。`,
+            file,
+            line: 1,
+          }),
+        );
+      }
+
+      for (const problem of content.frontmatter.problems ?? []) {
+        const messages = {
+          'invalid-yaml': `${content.fileName} 的 frontmatter 无法按 YAML 1.2 解析。`,
+          'invalid-document': `${content.fileName} 的 frontmatter 必须是映射。`,
+          'invalid-path-field': `${content.fileName} 的 frontmatter 字段 path 必须是字符串。`,
+          'invalid-files-field': `${content.fileName} 的 frontmatter 字段 files 必须是字符串序列。`,
+          'invalid-depends-on-field': `${content.fileName} 的 frontmatter 字段 dependsOn 必须是含字符串 path 与 reason 的映射序列。`,
+        } as const;
+        signals.push(
+          signal({
+            category: 'violation',
+            anchor: declarationAnchor(domain),
+            message: messages[problem.code],
             file,
             line: 1,
           }),
@@ -350,4 +374,19 @@ export function lintDomainContents(contents: readonly DomainContent[]): readonly
     ...entryConflicts(contents),
     ...termInconsistencies(contents),
   ];
+}
+
+export function lintDiscoveryProblems(discovery: DiscoveryResult): readonly CheckSignal[] {
+  return (discovery.problems ?? []).map((problem) =>
+    signal({
+      category: 'violation',
+      anchor: { kind: 'project-configuration', path: problem.path },
+      message:
+        problem.code === 'invalid-pta-toml'
+          ? 'pta.toml 无法按 TOML 1.0 解析，未产生任何配置。'
+          : 'pta.toml 顶层字段 externalRoots 必须是字符串数组，未采用该字段。',
+      file: problem.path,
+      line: 1,
+    }),
+  );
 }

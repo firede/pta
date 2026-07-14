@@ -4,7 +4,7 @@ description: 'Defines the identity computation shared across the architecture: n
 dependsOn:
   - argument/truth-record-versioned-with-implementation
   - argument/derivable-content-in-tool-layer
-sourceHash: 4beda3db09a191002ae146b569489d5b84271605d2005458b5fb4ddf5e2e5436
+sourceHash: 7adf596a445cd4d2c94703d3bfabfc0793f4d0248d921c2b9906fe9f0ad8340e
 ---
 
 Identity defines how content acquires an identity that any tool can recompute. The cache keys of governance, the source identification of compilation, and entry identity are all built from the parts defined here; two implementations must compute the same identity for the same content, or sharing and flow cannot hold.
@@ -19,7 +19,7 @@ This specification expresses requirement levels with the following words: **must
 
 An entry's identity is the hash of its content. The content structure specification constrains an entry to a single source line; the text to hash is the part after the entry marker up to the end of the line, and it **must** be normalized by the following rules:
 
-- strip leading and trailing whitespace, preserving internal whitespace as is;
+- strip leading and trailing whitespace — whitespace characters are determined by the Unicode White_Space property — preserving internal whitespace as is;
 - apply no unescaping and no syntax parsing — Markdown syntax characters belong to the content as written;
 - normalize Unicode to NFC.
 

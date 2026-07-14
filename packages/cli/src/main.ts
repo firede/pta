@@ -7,6 +7,7 @@ import {
   classifyChanges,
   discoverDomains,
   extractDomainContent,
+  lintDiscoveryProblems,
   lintDomainContents,
   type ChangedPath,
   type ChangeType,
@@ -102,8 +103,22 @@ async function gitChanges(repositoryRoot: string, base?: string): Promise<Change
   );
 }
 
+function parseRepositoryFiles(output: string): string[] {
+  return [...new Set(output.split('\0').filter((path) => path !== ''))].sort();
+}
+
+async function gitRepositoryFiles(repositoryRoot: string): Promise<string[]> {
+  const [listed, deleted] = await Promise.all([
+    runGit(['ls-files', '--cached', '--others', '--exclude-standard', '-z'], repositoryRoot),
+    runGit(['ls-files', '--deleted', '-z'], repositoryRoot),
+  ]);
+  const deletedPaths = new Set(parseRepositoryFiles(deleted));
+  return parseRepositoryFiles(listed).filter((path) => !deletedPaths.has(path));
+}
+
 function domainLabel(signal: CheckSignal): string {
   const { anchor } = signal;
+  if (anchor.kind === 'project-configuration') return '.';
   const identifier = anchor.domainIdentifier;
   if (identifier !== undefined) return identifier === '' ? '.' : identifier;
   return anchor.kind === 'domain-declaration' ? anchor.declarationPath : '.';
@@ -208,10 +223,15 @@ function formatChanges(result: ChangeClassification): string {
 async function runChanges(base: string | undefined, io: CliIO, cwd: string): Promise<number> {
   const repositoryRoot = resolve(cwd);
   try {
-    const changes = await gitChanges(repositoryRoot, base);
-    const discovery = await discoverDomains(repositoryRoot);
+    const [changes, repositoryFiles] = await Promise.all([
+      gitChanges(repositoryRoot, base),
+      gitRepositoryFiles(repositoryRoot),
+    ]);
+    const discovery = await discoverDomains(repositoryRoot, repositoryFiles);
     const contents = await Promise.all(
-      discovery.domains.map((domain) => extractDomainContent(repositoryRoot, domain)),
+      discovery.domains.map((domain) =>
+        extractDomainContent(repositoryRoot, repositoryFiles, domain),
+      ),
     );
     const pendingEntries = Object.fromEntries(
       contents.flatMap(({ domain, files }) =>
@@ -248,11 +268,22 @@ export async function runCli(
   }
 
   const repositoryRoot = resolve(cwd, args[1] ?? '.');
-  const discovery = await discoverDomains(repositoryRoot);
-  const contents = await Promise.all(
-    discovery.domains.map((domain) => extractDomainContent(repositoryRoot, domain)),
-  );
-  const signals = lintDomainContents(contents);
+  let discovery;
+  let contents;
+  try {
+    const repositoryFiles = await gitRepositoryFiles(repositoryRoot);
+    discovery = await discoverDomains(repositoryRoot, repositoryFiles);
+    contents = await Promise.all(
+      discovery.domains.map((domain) =>
+        extractDomainContent(repositoryRoot, repositoryFiles, domain),
+      ),
+    );
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    io.stderr(`pta check 失败：${message}\n`);
+    return 2;
+  }
+  const signals = [...lintDiscoveryProblems(discovery), ...lintDomainContents(contents)];
 
   if (signals.length === 0) {
     io.stdout('通过：未发现核查信号。\n');

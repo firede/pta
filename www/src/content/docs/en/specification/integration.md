@@ -5,7 +5,7 @@ dependsOn:
   - argument/project-truth-freshness-governance
   - argument/projection-view-compiled-on-demand
   - argument/derivable-content-in-tool-layer
-sourceHash: 14a06984b2e894a3b4d04d1fa69a64d276fb1574cbd6439403eb50b0c2ccd995
+sourceHash: ac9e6d9f0b51c90fe03216674391af4a2cae2c0b41d78844957f376b9c481dcb
 ---
 
 Integration defines how the architecture plugs into an existing engineering environment: how the truth entry point coexists with ecosystem files, where project-level configuration lives, which facilities checkpoints attach to, and what sharing must satisfy at minimum.
@@ -28,7 +28,7 @@ A project **may** place a reference to project truth in engineering instruction 
 
 ## Project Configuration
 
-`pta.toml` sits at the repository root and is the single entry point for project-level integration configuration. `externalRoots` is a reserved field declaring the list of external declaration roots; each item is a directory path in the written form of the identity specification, pointing to one external declaration root:
+`pta.toml` sits at the repository root and is the single entry point for project-level integration configuration, with syntax following TOML 1.0; a file that cannot be parsed produces no configuration and constitutes a check signal. The YAML of domain declaration frontmatter is given by the Markdown ecosystem; the configuration entry point independently adopts TOML, because custom configuration has a wider type surface than declaration fields and must rest on a standard with stronger cross-implementation consistency. `externalRoots` is a reserved field declaring the list of external declaration roots; each item is a directory path in the written form of the identity specification, pointing to one external declaration root:
 
 ```toml
 externalRoots = ["packages/web/.pta", "packages/client/.pta"]

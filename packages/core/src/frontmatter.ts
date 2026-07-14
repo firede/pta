@@ -1,3 +1,16 @@
+import { parseDocument } from 'yaml';
+
+export type FrontmatterProblemCode =
+  | 'invalid-yaml'
+  | 'invalid-document'
+  | 'invalid-path-field'
+  | 'invalid-files-field'
+  | 'invalid-depends-on-field';
+
+export type FrontmatterProblem = Readonly<{
+  code: FrontmatterProblemCode;
+}>;
+
 export type Frontmatter = Readonly<{
   present: boolean;
   closed: boolean;
@@ -8,6 +21,7 @@ export type Frontmatter = Readonly<{
   files?: readonly string[];
   dependsOnPresent: boolean;
   dependsOn?: readonly DomainDependency[];
+  problems?: readonly FrontmatterProblem[];
 }>;
 
 export type DomainDependency = Readonly<{
@@ -32,126 +46,67 @@ function sourceLines(source: string): SourceLine[] {
   }));
 }
 
-function unquote(value: string): string {
-  const trimmed = value.trim();
-  if (trimmed.startsWith('"') && trimmed.endsWith('"')) {
-    try {
-      const parsed: unknown = JSON.parse(trimmed);
-      if (typeof parsed === 'string') return parsed;
-    } catch {
-      return trimmed.slice(1, -1);
-    }
-  }
-  if (trimmed.startsWith("'") && trimmed.endsWith("'")) {
-    return trimmed.slice(1, -1).replaceAll("''", "'");
-  }
-
-  return trimmed.replace(/\s+#.*$/u, '');
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
-function parseInlineList(value: string): string[] | undefined {
-  const trimmed = value.trim();
-  if (!trimmed.startsWith('[') || !trimmed.endsWith(']')) return undefined;
-
-  const body = trimmed.slice(1, -1);
-  const values: string[] = [];
-  let quote: '"' | "'" | undefined;
-  let escaped = false;
-  let current = '';
-
-  for (const character of body) {
-    if (escaped) {
-      current += character;
-      escaped = false;
-      continue;
-    }
-    if (quote === '"' && character === '\\') {
-      current += character;
-      escaped = true;
-      continue;
-    }
-    if (quote !== undefined) {
-      current += character;
-      if (character === quote) quote = undefined;
-      continue;
-    }
-    if (character === '"' || character === "'") {
-      quote = character;
-      current += character;
-      continue;
-    }
-    if (character === ',') {
-      values.push(unquote(current));
-      current = '';
-      continue;
-    }
-    current += character;
-  }
-  if (current.trim() !== '' || body.trim() !== '') values.push(unquote(current));
-  return values;
+function hasOwn(value: Record<string, unknown>, key: string): boolean {
+  return Object.prototype.hasOwnProperty.call(value, key);
 }
 
-function parseFrontmatter(
-  rawLines: readonly string[],
-): Omit<Frontmatter, 'present' | 'closed' | 'raw'> {
-  let pathPresent = false;
-  let path: string | undefined;
-  let filesPresent = false;
-  let files: string[] | undefined;
-  let dependsOnPresent = false;
-  let dependsOn: DomainDependency[] | undefined;
-  let activeList: 'files' | 'dependsOn' | undefined;
-  let dependency: { path?: string; reason?: string } | undefined;
-
-  const finishDependency = (): void => {
-    if (dependency?.path !== undefined && dependency.reason !== undefined) {
-      dependsOn?.push({ path: dependency.path, reason: dependency.reason });
-    }
-    dependency = undefined;
-  };
-
-  for (const line of rawLines) {
-    const key = /^([A-Za-z][A-Za-z0-9_-]*):(?:\s*(.*))?$/u.exec(line);
-    if (key !== null) {
-      finishDependency();
-      activeList = undefined;
-      const name = key[1];
-      const value = key[2] ?? '';
-      if (name === 'path') {
-        pathPresent = true;
-        path = unquote(value);
-      } else if (name === 'files') {
-        filesPresent = true;
-        files = parseInlineList(value) ?? [];
-        if (value.trim() === '') activeList = 'files';
-      } else if (name === 'dependsOn') {
-        dependsOnPresent = true;
-        dependsOn = [];
-        if (value.trim() === '') activeList = 'dependsOn';
-      }
-      continue;
-    }
-
-    if (activeList === 'files') {
-      const item = /^\s+-\s+(.*)$/u.exec(line);
-      if (item !== null) files?.push(unquote(item[1] ?? ''));
-    } else if (activeList === 'dependsOn') {
-      const item = /^\s+-\s+path:\s*(.*)$/u.exec(line);
-      if (item !== null) {
-        finishDependency();
-        dependency = { path: unquote(item[1] ?? '') };
-        continue;
-      }
-      const field = /^\s+(path|reason):\s*(.*)$/u.exec(line);
-      if (field !== null) {
-        dependency ??= {};
-        const value = unquote(field[2] ?? '');
-        if (field[1] === 'path') dependency.path = value;
-        else dependency.reason = value;
-      }
-    }
+function parseFrontmatter(raw: string): Omit<Frontmatter, 'present' | 'closed' | 'raw'> {
+  const problems: FrontmatterProblem[] = [];
+  let value: unknown;
+  try {
+    const document = parseDocument(raw);
+    if (document.errors.length > 0) throw new Error('invalid YAML');
+    value = document.toJS();
+  } catch {
+    return {
+      pathPresent: false,
+      filesPresent: false,
+      dependsOnPresent: false,
+      problems: [{ code: 'invalid-yaml' }],
+    };
   }
-  finishDependency();
+
+  if (value !== null && !isRecord(value)) {
+    return {
+      pathPresent: false,
+      filesPresent: false,
+      dependsOnPresent: false,
+      problems: [{ code: 'invalid-document' }],
+    };
+  }
+  const fields = value ?? {};
+  const pathPresent = hasOwn(fields, 'path');
+  const filesPresent = hasOwn(fields, 'files');
+  const dependsOnPresent = hasOwn(fields, 'dependsOn');
+
+  const pathValue = fields.path;
+  const path = typeof pathValue === 'string' ? pathValue : undefined;
+  if (pathPresent && path === undefined) problems.push({ code: 'invalid-path-field' });
+
+  const filesValue = fields.files;
+  const files =
+    Array.isArray(filesValue) && filesValue.every((item) => typeof item === 'string')
+      ? filesValue
+      : undefined;
+  if (filesPresent && files === undefined) problems.push({ code: 'invalid-files-field' });
+
+  const dependsOnValue = fields.dependsOn;
+  const dependsOn =
+    Array.isArray(dependsOnValue) &&
+    dependsOnValue.every(
+      (item) => isRecord(item) && typeof item.path === 'string' && typeof item.reason === 'string',
+    )
+      ? dependsOnValue.map((item) => {
+          const dependency = item as Record<string, unknown>;
+          return { path: dependency.path as string, reason: dependency.reason as string };
+        })
+      : undefined;
+  if (dependsOnPresent && dependsOn === undefined)
+    problems.push({ code: 'invalid-depends-on-field' });
 
   return {
     pathPresent,
@@ -160,6 +115,7 @@ function parseFrontmatter(
     ...(files === undefined ? {} : { files }),
     dependsOnPresent,
     ...(dependsOn === undefined ? {} : { dependsOn }),
+    problems,
   };
 }
 
@@ -174,6 +130,7 @@ export function splitFrontmatter(source: string): MarkdownBody {
         pathPresent: false,
         filesPresent: false,
         dependsOnPresent: false,
+        problems: [],
       },
       lines,
     };
@@ -182,13 +139,14 @@ export function splitFrontmatter(source: string): MarkdownBody {
   const closingIndex = lines.findIndex((line, index) => index > 0 && line.text === '---');
   const end = closingIndex === -1 ? lines.length : closingIndex;
   const rawLines = lines.slice(1, end).map((line) => line.text);
-  const parsed = parseFrontmatter(rawLines);
+  const raw = rawLines.join('\n');
+  const parsed = parseFrontmatter(raw);
 
   return {
     frontmatter: {
       present: true,
       closed: closingIndex !== -1,
-      raw: rawLines.join('\n'),
+      raw,
       ...parsed,
     },
     lines: closingIndex === -1 ? [] : lines.slice(closingIndex + 1),

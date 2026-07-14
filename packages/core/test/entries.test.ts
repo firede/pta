@@ -64,3 +64,36 @@ test('未闭合 frontmatter 被暴露且不误提取为正文', () => {
   assert.equal(result.frontmatter.closed, false);
   assert.deepEqual(result.entries, []);
 });
+
+test('YAML 1.2 解析合法形态、忽略未知字段并暴露非法形态与语法', () => {
+  const valid = extractEntries(
+    [
+      '---',
+      'path: internal/dsl',
+      'files: [lexer.go, parser.go]',
+      'dependsOn:',
+      '  - { path: src/compiler, reason: "共享编译口径" }',
+      'unknown: true',
+      '---',
+      '- 判断',
+    ].join('\n'),
+    'TRUTH.md',
+  ).frontmatter;
+  assert.equal(valid.path, 'internal/dsl');
+  assert.deepEqual(valid.files, ['lexer.go', 'parser.go']);
+  assert.deepEqual(valid.dependsOn, [{ path: 'src/compiler', reason: '共享编译口径' }]);
+  assert.deepEqual(valid.problems, []);
+
+  const invalidShape = extractEntries(
+    '---\npath: 1\nfiles: [ok.ts, 2]\ndependsOn: [wrong]\n---\n- 判断',
+    'TRUTH.md',
+  ).frontmatter;
+  assert.deepEqual(invalidShape.problems, [
+    { code: 'invalid-path-field' },
+    { code: 'invalid-files-field' },
+    { code: 'invalid-depends-on-field' },
+  ]);
+
+  const malformed = extractEntries('---\npath: [\n---\n- 判断', 'TRUTH.md').frontmatter;
+  assert.deepEqual(malformed.problems, [{ code: 'invalid-yaml' }]);
+});

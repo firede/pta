@@ -1,5 +1,7 @@
-import { readdir, readFile } from 'node:fs/promises';
-import { join, posix, relative, sep } from 'node:path';
+import { readFile } from 'node:fs/promises';
+import { join, posix } from 'node:path';
+
+import { parse as parseToml } from 'smol-toml';
 
 import {
   contentFileNames,
@@ -12,6 +14,10 @@ import { isDomainPath } from './identity.ts';
 
 export type DomainProblemCode =
   | 'unclosed-frontmatter'
+  | 'invalid-frontmatter'
+  | 'invalid-path-field'
+  | 'invalid-files-field'
+  | 'invalid-depends-on-field'
   | 'directory-declares-path'
   | 'missing-path'
   | 'invalid-path'
@@ -23,6 +29,13 @@ export type DomainProblemCode =
 export type DomainProblem = Readonly<{
   code: DomainProblemCode;
   value?: string;
+}>;
+
+export type DiscoveryProblemCode = 'invalid-pta-toml' | 'invalid-external-roots';
+
+export type DiscoveryProblem = Readonly<{
+  code: DiscoveryProblemCode;
+  path: 'pta.toml';
 }>;
 
 export type Domain = Readonly<{
@@ -51,6 +64,7 @@ export type DiscoveryResult = Readonly<{
   repositoryRoot: string;
   externalRoots: readonly ExternalRoot[];
   domains: readonly Domain[];
+  problems?: readonly DiscoveryProblem[];
 }>;
 
 export type DomainContent = Readonly<{
@@ -62,92 +76,43 @@ function repositoryPath(root: string, path: string): string {
   return join(root, ...path.split('/'));
 }
 
-function relativePath(root: string, path: string): string {
-  const value = relative(root, path);
-  return sep === '/' ? value : value.split(sep).join('/');
-}
-
-async function repositoryPathKind(
-  repositoryRoot: string,
+function repositoryPathKind(
+  files: ReadonlySet<string>,
   path: string,
-): Promise<'directory' | 'file' | 'other' | 'missing'> {
+): 'directory' | 'file' | 'missing' {
   if (path === '') return 'directory';
-  let directory = repositoryRoot;
-  const segments = path.split('/');
-  for (let index = 0; index < segments.length; index += 1) {
-    let entries;
-    try {
-      entries = await readdir(directory, { withFileTypes: true });
-    } catch (error) {
-      if ((error as NodeJS.ErrnoException).code === 'ENOENT') return 'missing';
-      throw error;
-    }
-    const segment = segments[index];
-    const entry = entries.find((candidate) => candidate.name === segment);
-    if (entry === undefined) return 'missing';
-    const last = index === segments.length - 1;
-    if (last) {
-      if (entry.isDirectory()) return 'directory';
-      if (entry.isFile()) return 'file';
-      return 'other';
-    }
-    if (!entry.isDirectory()) return 'missing';
-    directory = join(directory, entry.name);
-  }
-  return 'missing';
+  if (files.has(path)) return 'file';
+  return [...files].some((file) => file.startsWith(`${path}/`)) ? 'directory' : 'missing';
 }
 
-function parseTomlStringArray(source: string, key: string): string[] {
-  const assignment = new RegExp(`(?:^|\\n)\\s*${key}\\s*=`, 'u').exec(source);
-  if (assignment === null) return [];
-  const start = source.indexOf('[', assignment.index + assignment[0].length);
-  if (start === -1) return [];
-
-  const values: string[] = [];
-  let current = '';
-  let quote: '"' | "'" | undefined;
-  let escaped = false;
-  for (let index = start + 1; index < source.length; index += 1) {
-    const character = source[index];
-    if (character === undefined) break;
-    if (escaped) {
-      current += character;
-      escaped = false;
-    } else if (quote === '"' && character === '\\') {
-      escaped = true;
-    } else if (quote !== undefined && character === quote) {
-      values.push(current);
-      current = '';
-      quote = undefined;
-    } else if (quote !== undefined) {
-      current += character;
-    } else if (character === '"' || character === "'") {
-      quote = character;
-    } else if (character === ']') {
-      break;
-    }
-  }
-  return values;
-}
-
-async function externalRoots(repositoryRoot: string): Promise<ExternalRoot[]> {
+async function externalRoots(
+  repositoryRoot: string,
+  files: ReadonlySet<string>,
+): Promise<{ roots: ExternalRoot[]; problems: DiscoveryProblem[] }> {
   const configured: string[] = [];
-  try {
-    configured.push(
-      ...parseTomlStringArray(
-        await readFile(join(repositoryRoot, 'pta.toml'), 'utf8'),
-        'externalRoots',
-      ),
-    );
-  } catch (error) {
-    if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
+  const problems: DiscoveryProblem[] = [];
+  if (files.has('pta.toml')) {
+    const source = await readFile(join(repositoryRoot, 'pta.toml'), 'utf8');
+    try {
+      const parsed = parseToml(source);
+      if (Object.prototype.hasOwnProperty.call(parsed, 'externalRoots')) {
+        const value: unknown = parsed.externalRoots;
+        if (Array.isArray(value) && value.every((item) => typeof item === 'string')) {
+          configured.push(...value);
+        } else {
+          problems.push({ code: 'invalid-external-roots', path: 'pta.toml' });
+        }
+      }
+    } catch {
+      problems.push({ code: 'invalid-pta-toml', path: 'pta.toml' });
+    }
   }
 
   const roots: ExternalRoot[] = [{ path: '.pta', source: 'default', usable: true }];
   for (const path of configured) {
     roots.push({ path, source: 'pta.toml', usable: isDomainPath(path, false) });
   }
-  return roots;
+  return { roots, problems };
 }
 
 function insideExternalRoot(path: string, roots: readonly ExternalRoot[]): boolean {
@@ -156,32 +121,45 @@ function insideExternalRoot(path: string, roots: readonly ExternalRoot[]): boole
   );
 }
 
+function frontmatterProblems(frontmatter: Frontmatter): DomainProblem[] {
+  const problems: DomainProblem[] = [];
+  if (frontmatter.present && !frontmatter.closed) problems.push({ code: 'unclosed-frontmatter' });
+  for (const problem of frontmatter.problems ?? []) {
+    if (problem.code === 'invalid-yaml' || problem.code === 'invalid-document') {
+      problems.push({ code: 'invalid-frontmatter' });
+    } else {
+      problems.push({ code: problem.code });
+    }
+  }
+  return problems;
+}
+
 async function directoryDeclarations(
   repositoryRoot: string,
+  files: ReadonlySet<string>,
   roots: readonly ExternalRoot[],
 ): Promise<Domain[]> {
-  const domains: Domain[] = [];
+  const declarationPaths = [...files]
+    .filter(
+      (path) =>
+        (path === 'TRUTH.md' || path.endsWith('/TRUTH.md')) && !insideExternalRoot(path, roots),
+    )
+    .sort();
 
-  async function visit(absoluteDirectory: string): Promise<void> {
-    const directory = relativePath(repositoryRoot, absoluteDirectory);
-    if (directory !== '' && insideExternalRoot(directory, roots)) return;
-
-    const entries = await readdir(absoluteDirectory, { withFileTypes: true });
-    const truth = entries.find((entry) => entry.isFile() && entry.name === 'TRUTH.md');
-    if (truth !== undefined) {
-      const declarationPath = directory === '' ? 'TRUTH.md' : `${directory}/TRUTH.md`;
+  return Promise.all(
+    declarationPaths.map(async (declarationPath): Promise<Domain> => {
+      const slash = declarationPath.lastIndexOf('/');
+      const directory = slash === -1 ? '' : declarationPath.slice(0, slash);
       const frontmatter = splitFrontmatter(
-        await readFile(join(absoluteDirectory, truth.name), 'utf8'),
+        await readFile(repositoryPath(repositoryRoot, declarationPath), 'utf8'),
       ).frontmatter;
-      const problems: DomainProblem[] = [];
-      if (frontmatter.present && !frontmatter.closed)
-        problems.push({ code: 'unclosed-frontmatter' });
+      const problems = frontmatterProblems(frontmatter);
       if (frontmatter.pathPresent)
         problems.push({
           code: 'directory-declares-path',
           ...(frontmatter.path === undefined ? {} : { value: frontmatter.path }),
         });
-      domains.push({
+      return {
         kind: 'directory',
         declarationPath,
         containerPath: directory,
@@ -191,24 +169,14 @@ async function directoryDeclarations(
         dependsOn: frontmatter.dependsOn ?? [],
         frontmatter,
         problems,
-      });
-    }
-
-    await Promise.all(
-      entries
-        .filter(
-          (entry) => entry.isDirectory() && entry.name !== '.git' && entry.name !== 'node_modules',
-        )
-        .map((entry) => visit(join(absoluteDirectory, entry.name))),
-    );
-  }
-
-  await visit(repositoryRoot);
-  return domains;
+      };
+    }),
+  );
 }
 
 async function externalDeclarations(
   repositoryRoot: string,
+  files: ReadonlySet<string>,
   roots: readonly ExternalRoot[],
 ): Promise<Domain[]> {
   const domains: Domain[] = [];
@@ -216,34 +184,28 @@ async function externalDeclarations(
   for (const root of roots) {
     if (!root.usable || scannedRoots.has(root.path)) continue;
     scannedRoots.add(root.path);
-    if ((await repositoryPathKind(repositoryRoot, root.path)) !== 'directory') continue;
-    const absoluteRoot = repositoryPath(repositoryRoot, root.path);
-    let entries;
-    try {
-      entries = await readdir(absoluteRoot, { withFileTypes: true });
-    } catch (error) {
-      if ((error as NodeJS.ErrnoException).code === 'ENOENT') continue;
-      throw error;
-    }
+    const prefix = `${root.path}/`;
+    const declarationPaths = [...files]
+      .filter((path) => {
+        if (!path.startsWith(prefix) || !path.endsWith('/TRUTH.md')) return false;
+        const rest = path.slice(prefix.length);
+        return rest.split('/').length === 2;
+      })
+      .sort();
 
-    for (const entry of entries) {
-      if (!entry.isDirectory()) continue;
-      const containerPath = `${root.path}/${entry.name}`;
-      const declarationPath = `${containerPath}/TRUTH.md`;
-      if ((await repositoryPathKind(repositoryRoot, declarationPath)) !== 'file') continue;
-
+    for (const declarationPath of declarationPaths) {
+      const containerPath = declarationPath.slice(0, -'/TRUTH.md'.length);
+      const name = containerPath.slice(prefix.length);
       const frontmatter = splitFrontmatter(
         await readFile(repositoryPath(repositoryRoot, declarationPath), 'utf8'),
       ).frontmatter;
-      const problems: DomainProblem[] = [];
-      if (frontmatter.present && !frontmatter.closed)
-        problems.push({ code: 'unclosed-frontmatter' });
+      const problems = frontmatterProblems(frontmatter);
       if (!frontmatter.pathPresent) problems.push({ code: 'missing-path' });
       const claimedPath = frontmatter.path;
       const validPath = claimedPath !== undefined && isDomainPath(claimedPath);
       if (claimedPath !== undefined && !validPath)
         problems.push({ code: 'invalid-path', value: claimedPath });
-      if (validPath && (await repositoryPathKind(repositoryRoot, claimedPath)) !== 'directory') {
+      if (validPath && repositoryPathKind(files, claimedPath) !== 'directory') {
         problems.push({ code: 'path-not-directory', value: claimedPath });
       }
 
@@ -255,7 +217,7 @@ async function externalDeclarations(
           problems.push({ code: 'duplicate-file', value: file });
         } else if (
           validPath &&
-          (await repositoryPathKind(repositoryRoot, posix.join(claimedPath, file))) !== 'file'
+          repositoryPathKind(files, posix.join(claimedPath, file)) !== 'file'
         ) {
           problems.push({ code: 'file-not-file', value: file });
         }
@@ -267,7 +229,7 @@ async function externalDeclarations(
         declarationPath,
         containerPath,
         externalRoot: root.path,
-        name: entry.name,
+        name,
         ...(frontmatter.filesPresent
           ? { identifier: containerPath }
           : validPath
@@ -311,38 +273,53 @@ export function assignDomainParents(domains: readonly Domain[]): Domain[] {
   });
 }
 
-export async function discoverDomains(repositoryRoot: string): Promise<DiscoveryResult> {
-  const roots = await externalRoots(repositoryRoot);
+export async function discoverDomains(
+  repositoryRoot: string,
+  repositoryFiles: readonly string[],
+): Promise<DiscoveryResult> {
+  const normalizedFiles = [...new Set(repositoryFiles)].sort();
+  const files = new Set(normalizedFiles);
+  const { roots, problems } = await externalRoots(repositoryRoot, files);
   const domains = [
-    ...(await directoryDeclarations(repositoryRoot, roots)),
-    ...(await externalDeclarations(repositoryRoot, roots)),
+    ...(await directoryDeclarations(repositoryRoot, files, roots)),
+    ...(await externalDeclarations(repositoryRoot, files, roots)),
   ].sort((left, right) => left.declarationPath.localeCompare(right.declarationPath));
 
-  return { repositoryRoot, externalRoots: roots, domains: assignDomainParents(domains) };
+  return {
+    repositoryRoot,
+    externalRoots: roots,
+    domains: assignDomainParents(domains),
+    problems,
+  };
 }
 
 export async function extractDomainContent(
   repositoryRoot: string,
+  repositoryFiles: readonly string[],
   domain: Domain,
 ): Promise<DomainContent> {
+  const repositoryFileSet = new Set(repositoryFiles);
   const files: Partial<Record<ContentFileName, ExtractedContent>> = {};
   for (const fileName of contentFileNames) {
-    const path = repositoryPath(
-      repositoryRoot,
-      `${domain.containerPath === '' ? '' : `${domain.containerPath}/`}${fileName}`,
+    const relativePath = `${domain.containerPath === '' ? '' : `${domain.containerPath}/`}${fileName}`;
+    if (!repositoryFileSet.has(relativePath)) continue;
+    files[fileName] = extractEntries(
+      await readFile(repositoryPath(repositoryRoot, relativePath), 'utf8'),
+      fileName,
+      domain.identifier,
     );
-    try {
-      files[fileName] = extractEntries(await readFile(path, 'utf8'), fileName, domain.identifier);
-    } catch (error) {
-      if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
-    }
   }
   return { domain, files };
 }
 
-export async function extractRepository(repositoryRoot: string): Promise<readonly DomainContent[]> {
-  const discovery = await discoverDomains(repositoryRoot);
+export async function extractRepository(
+  repositoryRoot: string,
+  repositoryFiles: readonly string[],
+): Promise<readonly DomainContent[]> {
+  const discovery = await discoverDomains(repositoryRoot, repositoryFiles);
   return Promise.all(
-    discovery.domains.map((domain) => extractDomainContent(repositoryRoot, domain)),
+    discovery.domains.map((domain) =>
+      extractDomainContent(repositoryRoot, repositoryFiles, domain),
+    ),
   );
 }

@@ -7,7 +7,7 @@ dependsOn:
   - argument/project-truth-freshness-governance
   - argument/history-still-in-effect
   - argument/material-temporal-claim
-sourceHash: 96ebd9078824d5d0fd497fb3567be7001c25e079366f297b57c3de59932e22f9
+sourceHash: 8c35d75e312d5762c8f225d8362d4f348644cfbd76335875c167ccc569e9e1fd
 ---
 
 領域聲明定義領域如何在版本庫中被界定、標記和連接。
@@ -35,6 +35,8 @@ dependsOn:
 
 ……
 ```
+
+frontmatter 的語法遵循 YAML 1.2；各欄位的形態以本規範相應小節的定義為準，未識別的欄位 **應當** 忽略。無法按 YAML 1.2 解析的 frontmatter 構成核查信號。
 
 **`dependsOn`（可選）** 聲明無法從已有結構推導的記錄依賴：本領域的真相記錄依賴所指領域的內容，對方變更時，本領域進入核查候選。每項包含 `path` 與 `reason`，以本領域視角說明依賴對方什麼。
 
