@@ -1,12 +1,13 @@
 ---
 title: 領域聲明
-description: 定義領域如何在版本庫中被界定與聲明：TRUTH.md 領域標記、可選的 GLOSSARY.md 與 RESIDUE.md 伴隨檔案、領域層級與關係的表達，以及 .pta/ 外置領域聲明。
+description: 定義領域如何在版本庫中被界定與聲明：TRUTH.md 領域標記、可選的 GLOSSARY.md、RESIDUE.md 與 PENDING.md 伴隨檔案、領域層級與關係的表達，以及 .pta/ 外置領域聲明。
 dependsOn:
   - argument/what-is-project-truth
   - argument/project-truth-by-domain
   - argument/project-truth-freshness-governance
   - argument/history-still-in-effect
-sourceHash: aed6177a73f873c8201445669cb6cf6517d831a0a88e98fd57f329b225025d9c
+  - argument/material-temporal-claim
+sourceHash: 96ebd9078824d5d0fd497fb3567be7001c25e079366f297b57c3de59932e22f9
 ---
 
 領域聲明定義領域如何在版本庫中被界定、標記和連接。
@@ -54,6 +55,8 @@ dependsOn:
 **`GLOSSARY.md`（可選）** 維護該領域的術語。術語沿層級共享背景：下級領域 **不得** 與上級術語表發生衝突性重定義，衝突構成核查信號。`GLOSSARY.md` 可以由 LLM 起草和維護，採用與否由維護者裁決；它是專案真相的一部分，不是投影視圖。
 
 **`RESIDUE.md`（可選）** 記錄該領域仍在生效的殘留：過去版本作用於真實世界留下的後果，在當前實作沒有錨點，但仍影響後續判斷。每條 **應當** 簡短，並附時間或版本線索，為查看變更記錄提供入口。入選判據是仍然影響後續判斷；不再影響的條目 **應當** 刪除。`RESIDUE.md` 不是版本發佈記錄，也不是過程性材料的存放處；解釋現行判斷的歷史原因隨判斷記錄在 `TRUTH.md`，**不得** 寫入殘留。
+
+**`PENDING.md`（可選）** 收納該領域的待裁決條目。為專案工作的參與者撞到真相記錄未釘、合理實踐給不出唯一解、而專案可能在乎的選擇，且自己無權裁決時，把它連同當前採取的處置記錄於此，移交維護者裁決；有權裁決的發現不經過此檔案，直接走正常變更流程。條目主張的是仍在等待裁決，裁決落地後條目隨之失實，**必須** 隨處置刪除：判斷入選的，新條目隨同一變更進入 `TRUTH.md`；確認放權的，確認由裁決快取吸收。`PENDING.md` 不承載專案真相，條目對後續迭代沒有約束力，其中記錄的處置只是現狀。
 
 ## 外置領域聲明
 
@@ -103,4 +106,4 @@ externalRoots = ["packages/web/.pta", "packages/client/.pta"]
 
 ## 範圍之外
 
-`TRUTH.md` 正文的內容結構（章節組織、寫法約定）屬於內容結構規範；核查節點如何消費領域聲明與 `dependsOn` 關係，屬於治理規範；領域聲明與 AGENTS.md 等既有工程檔案的關係，屬於整合規範。
+`TRUTH.md` 與伴隨檔案正文的內容結構（條目形態、寫法約定）屬於內容結構規範；核查節點如何消費領域聲明與 `dependsOn` 關係、待裁決條目如何作為信號進入迴路，屬於治理規範；領域聲明與 AGENTS.md 等既有工程檔案的關係，屬於整合規範。

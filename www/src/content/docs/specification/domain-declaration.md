@@ -1,11 +1,12 @@
 ---
 title: 领域声明
-description: 定义领域如何在版本库中被界定与声明：TRUTH.md 领域标记、可选的 GLOSSARY.md 与 RESIDUE.md 伴随文件、领域层级与关系的表达，以及 .pta/ 外置领域声明。
+description: 定义领域如何在版本库中被界定与声明：TRUTH.md 领域标记、可选的 GLOSSARY.md、RESIDUE.md 与 PENDING.md 伴随文件、领域层级与关系的表达，以及 .pta/ 外置领域声明。
 dependsOn:
   - argument/what-is-project-truth
   - argument/project-truth-by-domain
   - argument/project-truth-freshness-governance
   - argument/history-still-in-effect
+  - argument/material-temporal-claim
 ---
 
 领域声明定义领域如何在版本库中被界定、标记和连接。
@@ -53,6 +54,8 @@ dependsOn:
 **`GLOSSARY.md`（可选）** 维护该领域的术语。术语沿层级共享背景：下级领域 **不得** 与上级术语表发生冲突性重定义，冲突构成核查信号。`GLOSSARY.md` 可以由 LLM 起草和维护，采用与否由维护者裁决；它是项目真相的一部分，不是投影视图。
 
 **`RESIDUE.md`（可选）** 记录该领域仍在生效的残留：过去版本作用于真实世界留下的后果，在当前实现没有锚点，但仍影响后续判断。每条 **应当** 简短，并附时间或版本线索，为查看变更记录提供入口。入选判据是仍然影响后续判断；不再影响的条目 **应当** 删除。`RESIDUE.md` 不是版本发布记录，也不是过程性材料的存放处；解释现行判断的历史原因随判断记录在 `TRUTH.md`，**不得** 写入残留。
+
+**`PENDING.md`（可选）** 收纳该领域的待裁决条目。为项目工作的参与者撞到真相记录未钉、合理实践给不出唯一解、而项目可能在乎的选择，且自己无权裁决时，把它连同当前采取的处置记录于此，移交维护者裁决；有权裁决的发现不经过此文件，直接走正常变更流程。条目主张的是仍在等待裁决，裁决落地后条目随之失实，**必须** 随处置删除：判断入选的，新条目随同一变更进入 `TRUTH.md`；确认放权的，确认由裁决缓存吸收。`PENDING.md` 不承载项目真相，条目对后续迭代没有约束力，其中记录的处置只是现状。
 
 ## 外置领域声明
 
@@ -102,4 +105,4 @@ externalRoots = ["packages/web/.pta", "packages/client/.pta"]
 
 ## 范围之外
 
-`TRUTH.md` 正文的内容结构（章节组织、写法约定）属于内容结构规范；核查节点如何消费领域声明与 `dependsOn` 关系，属于治理规范；领域声明与 AGENTS.md 等既有工程文件的关系，属于集成规范。
+`TRUTH.md` 与伴随文件正文的内容结构（条目形态、写法约定）属于内容结构规范；核查节点如何消费领域声明与 `dependsOn` 关系、待裁决条目如何作为信号进入回路，属于治理规范；领域声明与 AGENTS.md 等既有工程文件的关系，属于集成规范。

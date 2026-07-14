@@ -1,12 +1,13 @@
 ---
 title: Domain Declaration
-description: Defines how domains are delimited and declared in the repository — the TRUTH.md domain marker, the optional GLOSSARY.md and RESIDUE.md companion files, the expression of domain hierarchy and relationships, and external domain declarations under .pta/.
+description: Defines how domains are delimited and declared in the repository — the TRUTH.md domain marker, the optional GLOSSARY.md, RESIDUE.md, and PENDING.md companion files, the expression of domain hierarchy and relationships, and external domain declarations under .pta/.
 dependsOn:
   - argument/what-is-project-truth
   - argument/project-truth-by-domain
   - argument/project-truth-freshness-governance
   - argument/history-still-in-effect
-sourceHash: aed6177a73f873c8201445669cb6cf6517d831a0a88e98fd57f329b225025d9c
+  - argument/material-temporal-claim
+sourceHash: 96ebd9078824d5d0fd497fb3567be7001c25e079366f297b57c3de59932e22f9
 ---
 
 Domain declaration defines how domains are delimited, marked, and connected in the repository.
@@ -54,6 +55,8 @@ When the repository root carries `TRUTH.md`, it forms the root domain, holding p
 **`GLOSSARY.md` (optional)** maintains the domain's terms. Terms share background along the hierarchy: a child domain **must not** redefine a parent glossary's terms in conflicting ways, and a conflict constitutes a check signal. `GLOSSARY.md` may be drafted and maintained by an LLM, with adoption adjudicated by maintainers; it is part of project truth, not a projection view.
 
 **`RESIDUE.md` (optional)** records the domain's residue still in effect: consequences left by past versions acting on the real world, with no anchor in the current implementation, but still influencing later judgments. Each entry **should** be brief and carry a time or version clue, providing an entry point into the change record. The criterion for inclusion is that it still affects later judgment; entries that no longer do **should** be deleted. `RESIDUE.md` is not a release log, nor a place to store process materials; historical reasons that explain current judgments are recorded with those judgments in `TRUTH.md` and **must not** be written into residue.
+
+**`PENDING.md` (optional)** collects the domain's pending entries. When someone working for the project hits a choice that the truth records have not pinned, that reasonable practice cannot settle uniquely, and that the project may care about, and they lack the authority to adjudicate it themselves, they record it here together with the disposition they have taken, handing it over to the maintainers for adjudication; discoveries by those with the authority to adjudicate do not pass through this file and go directly through the normal change flow. An entry claims that it is still awaiting adjudication; once adjudication lands, the entry is no longer true and **must** be deleted with the disposition: for a judgment admitted, the new entry enters `TRUTH.md` in the same change; for a confirmed delegation, the confirmation is absorbed by the adjudication cache. `PENDING.md` does not carry project truth; its entries have no binding force on later iteration, and the dispositions recorded in them are merely the current state.
 
 ## External Domain Declarations
 
@@ -103,4 +106,4 @@ Domain declarations and their companion files are records of project truth and *
 
 ## Out of Scope
 
-The content structure of the `TRUTH.md` body (section organization, writing conventions) belongs to the content structure specification; how checkpoints consume domain declarations and `dependsOn` relationships belongs to the governance specification; the relationship between domain declarations and existing engineering files such as AGENTS.md belongs to the integration specification.
+The content structure of the `TRUTH.md` and companion file bodies (entry form, writing conventions) belongs to the content structure specification; how checkpoints consume domain declarations and `dependsOn` relationships, and how pending entries enter the loop as signals, belong to the governance specification; the relationship between domain declarations and existing engineering files such as AGENTS.md belongs to the integration specification.

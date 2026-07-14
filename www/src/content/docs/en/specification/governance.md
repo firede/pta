@@ -5,7 +5,7 @@ dependsOn:
   - argument/project-truth-freshness-governance
   - argument/project-truth-by-domain
   - argument/derivable-content-in-tool-layer
-sourceHash: 62d5d96d804a855b2de888bd92d9fa83b9a71c625d42e15d801e4971b2ab6f59
+sourceHash: 7a4eda1d37fe6dfb8aaf776e540c211b24e7c7b0598a6eaba7a03ca2853f23b8
 ---
 
 Governance defines the operating loop of freshness checks: how deviation becomes a signal, at which points signals are consumed, and how adjudication lands back on the records.
@@ -22,7 +22,7 @@ A check signal is one deviation suspicion awaiting disposition. A signal **must*
 
 Signal sources have no fixed list: tooling's structural checks, models during inspection, agents consuming projection views, and people can all submit signals. A signal **must** be labeled with its source: human submissions are not absorbed by the cache, which depends on telling sources apart; the source only affects how a signal is presented and consumed, and does not constitute a signal type.
 
-The carrier in which signals are submitted and flow is defined by the integration specification; the two examples below only illustrate the three qualifications and prescribe no format. A machine-submitted drift suspicion, naming no specific entry, anchored to the domain declaration:
+Except for omission suspicions, which enter the repository as pending entries, the carrier in which signals are submitted and flow is defined by the integration specification; the two examples below only illustrate the three qualifications and prescribe no format. A machine-submitted drift suspicion, naming no specific entry, anchored to the domain declaration:
 
 - Anchor: the domain declaration of the `src/billing` domain
 - Evidence: this change modified five files in the domain's implementation, and the truth records were not updated along with them
@@ -38,12 +38,13 @@ Discovery is decoupled from repair: submitting a signal does not require the dis
 
 ## Signal Categories
 
-The category list is open: as machine detection expands, new categories join under the qualifications above. The signals already minted by the specifications fall into six categories:
+The category list is open: as machine detection expands, new categories join under the qualifications above. The signals already minted by the specifications fall into seven categories:
 
 - **Conflict**: two declarations make mutually exclusive claims, and both holding at once violates the uniqueness constraints of the domain declaration or content structure specification. Machine-decidable.
 - **Violation**: content appears where the content structure specification forbids it. Machine-decidable.
 - **Term inconsistency**: a lower-level glossary's conflicting redefinition of a higher-level term, or body wording deviating from the glossary — confusable words are derived by tooling from term names and definitions. The suspicion is produced by machine comparison; whether it holds requires human adjudication.
 - **Drift suspicion**: a change touches a domain's implementation without touching its truth records, or changes only records without touching the implementation; also suspected contradictions between records and what is actually followed, found by inspection. Whether it holds requires human adjudication.
+- **Omission suspicion**: a choice hit in the course of work that the truth records have not pinned, that reasonable practice cannot settle uniquely, and that the project may care about. It points to a gap in the records rather than a deviation of an existing record; its evidence lives at the site of discovery and cannot be re-derived outside the loop, so it is carried by pending entries in `PENDING.md`, persisted with the repository — the entry is the signal, and also the anchor for adjudication and the cache. Whether the judgment is admitted into truth requires human adjudication.
 - **Propagation**: when a domain's truth records change, the domains related to it through `dependsOn`, hierarchy, or references enter check candidacy. Propagation produces candidates; whether a candidate holds requires human adjudication.
 - **Expiry**: a review clue attached to an entry expires. Clues are extracted from the entry text, and the extraction is tool-layer derivation; expiry is machine-decidable, while whether the entry still holds requires human adjudication.
 
@@ -64,6 +65,8 @@ Inspection points carry what structure cannot delimit: consuming the review clue
 Whether a record still holds **must** be adjudicated by a person. For machine-decidable conflicts and violations, machines **may** draft revisions that enter the change flow directly, with adjudication taking place in change review.
 
 Adjudication lands in two places: when the record needs revision or deletion, the revision enters the repository through the normal change flow; when the record is confirmed to still hold, the confirmation is written into the adjudication cache. New content produced during adjudication — the reason a rule still holds, a newly discovered boundary — enters the record itself through the normal change flow.
+
+The adjudication of an omission suspicion follows the same division: what needs writing — a new judgment or a revision of an existing record — enters the repository through the normal change flow; for a confirmed delegation, the confirmation is written into the adjudication cache. The reason of an admitted judgment is given or ratified by the adjudicator: the disposition reason in a pending entry explains why the interim disposition is sound, which is a different direction from why the project cares, and **should not** be carried over as the judgment's reason without the adjudicator's ratification; when the adjudicator cannot give a reason the project cares about, the disposition is delegation rather than admission. Whatever the disposition, the pending entry is deleted with the adjudication, the deletion entering the change flow together with the disposition; the deletion requirement is given by the domain declaration specification.
 
 A signal **must not** be silently dropped: every signal ends in one traceable disposition — a revision entering the repository through the change flow, a confirmation written into the adjudication cache, conclusion by screening at a point, or closure when its anchor is invalidated. Disposition records belong to tool-layer process state.
 

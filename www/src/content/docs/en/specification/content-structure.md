@@ -1,13 +1,13 @@
 ---
 title: Content Structure
-description: 'Defines the content structure inside domain declaration files: judgment entries in the TRUTH.md body — form, admission, expression, and structural constraints — plus term entries in GLOSSARY.md and residue entries in RESIDUE.md.'
+description: 'Defines the content structure inside domain declaration files: judgment entries in the TRUTH.md body — form, admission, expression, and structural constraints — plus term entries in GLOSSARY.md, residue entries in RESIDUE.md, and pending entries in PENDING.md.'
 dependsOn:
   - argument/what-is-project-truth
   - argument/truth-record-work-language
   - argument/project-truth-freshness-governance
   - argument/derivable-content-in-tool-layer
   - argument/history-still-in-effect
-sourceHash: 5949b1fbc56579a7a8b794d69f51cc759bd42cf75ec707b5ae8d27cf3cc654cb
+sourceHash: 3bd2910ee78d9cb29dbeb653dac2a203cd152b4fd081ce60d8fc96351408b8d2
 ---
 
 Content structure defines how domain declaration files are organized internally. The existence, location, and frontmatter fields of the files are defined by the domain declaration specification; this specification defines the body.
@@ -82,6 +82,21 @@ Entries are written in the working language. Unlike judgment entries, historical
 
 The provisions of "Structural Constraints" and "Entries and the Tool Layer" apply equally to residue entries.
 
+## Pending Entries
+
+The `PENDING.md` body is likewise a flat list consisting of pending entries. A pending entry states one choice awaiting adjudication: the unsettled part **should** be phrased as a question, followed by the disposition the discoverer has taken and its reason. The question keeps the space awaiting adjudication and the disposition already in place distinct within the entry, so the adjudicator need only answer the question itself. The disposition's reason explains why acting this way is sound while adjudication is pending — it argues from reasonable practice and does not presume the project's intent.
+
+An entry **should** carry only one independently adjudicable question, and several questions are split into several entries even when they share an origin: a bundled entry is stuck after a partial adjudication — deleting it loses the unadjudicated questions, while keeping it goes on displaying the already-adjudicated parts in a pending voice.
+
+```markdown
+- Does a verification-code request from an unregistered email create an account automatically? Currently implemented as automatic creation; merging login and signup is the common form for verification-code flows.
+- Does the session list include expired sessions? Currently returns only active sessions: the list serves the kick-out operation, and an expired session has no credential to revoke.
+```
+
+Entries are written in the working language. How the question and the disposition are joined follows the working language's writing habits and is not prescribed by this specification; splitting question from disposition within an entry is tool-layer derivation.
+
+The provisions of "Structural Constraints" and "Entries and the Tool Layer" apply equally to pending entries.
+
 ## Out of Scope
 
-The admission criterion and deletion requirements for residue are given by the domain declaration specification. The craft of writing judgments — how to phrase them concisely, which reasons to keep — is not prescribed by this specification. How checkpoints consume judgment entries and term-consistency signals, and the concrete mechanics of the tool-layer cache, belong to the governance specification. How projection views present body content belongs to the compilation specification.
+The admission criteria and deletion requirements for residue and pending entries are given by the domain declaration specification. The craft of writing judgments — how to phrase them concisely, which reasons to keep — is not prescribed by this specification. How checkpoints consume judgment entries and term-consistency signals, and the concrete mechanics of the tool-layer cache, belong to the governance specification. How projection views present body content belongs to the compilation specification.
