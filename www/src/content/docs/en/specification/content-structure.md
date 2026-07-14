@@ -7,7 +7,7 @@ dependsOn:
   - argument/project-truth-freshness-governance
   - argument/derivable-content-in-tool-layer
   - argument/history-still-in-effect
-sourceHash: 3bd2910ee78d9cb29dbeb653dac2a203cd152b4fd081ce60d8fc96351408b8d2
+sourceHash: ba1b2c822686a049eeb2da6d3273bfe426f2ed799dad0fb9dfa38c35afdea39c
 ---
 
 Content structure defines how domain declaration files are organized internally. The existence, location, and frontmatter fields of the files are defined by the domain declaration specification; this specification defines the body.
@@ -40,11 +40,28 @@ A judgment no longer followed **should** be deleted or revised in the change tha
 
 Judgments **should** be expressed in the working language and in project concepts. Coordinates derivable from the implementation, such as file paths, directory names, and symbol names, **should not** be written into judgments: coordinates break when the implementation is refactored, while project concepts stay stable. Engineering proper names can remain in their original language.
 
-When a judgment depends on an external fact to hold, a review clue — a date or a decidable expiry condition — **may** be attached to the entry. The clue internalizes the verifiable part of external drift into the record itself, for inspection to consume; it is expressed within the entry's text, with no separate structure.
+When a judgment depends on an external fact to hold, a review clue — a date or a decidable expiry condition — **may** be attached to the entry. The clue internalizes the verifiable part of external drift into the record itself; the substance of the clue is expressed within the entry's text, with no separate structure and no reliance on any habitual phrase. When the clue needs to be consumed by inspection on schedule, the entry declares itself into the inspection set with an inspection marker.
+
+## Inspection Marker
+
+A judgment entry whose external validity needs periodic checking **may** open its content with an inspection marker: `[?] ` immediately after `- ` — a single half-width question mark wrapped in square brackets, followed by a single space.
+
+```markdown
+- [?] Risk grading stays aligned with the association's current guideline. Check for guideline updates in 2027-01.
+- [?] The service runs on a single server, so sessions can live in memory. Recheck when the deployment topology changes.
+```
+
+The marker declares a maintenance commitment: the external fact the entry depends on needs periodic checking by inspection. The inspection set can therefore be delimited by machine directly — membership is decided without recognizing any wording in the text, and does not vary with the work language. The marker expresses a commitment, not a result: whether a check passed, and when it ran, are tool-layer process state and **must not** be written back into the entry.
+
+The marker is part of the entry's content and participates in normalization and the content hash: adding or removing the marker changes the entry's identity, and the derivations and adjudications attached to the old identity expire with it.
+
+This specification defines only one status character, `[?]`. Entry content that opens with a single character wrapped in square brackets followed by a space, where the character is not defined, constitutes a check signal. Status characters express maintenance commitments — each character corresponds to one machine-executable difference of behavior in the governance loop; the classification and grading of content can be derived from the judgment itself, belong in the tool-layer cache, and **must not** be expressed as status characters. New characters enter through revisions of this specification.
+
+The inspection marker is defined only for judgment entries in `TRUTH.md`. Residue entries expire by the world's doing and belong to the inspection scope as a whole kind, without per-entry marking.
 
 ## Structural Constraints
 
-Judgment entries **must not** be given titles, identifiers, type labels, or status markers, and the variant of using a bold lead as a title **must not** be used either. Such content can be derived from the judgment itself and belongs in the tool-layer cache.
+Judgment entries **must not** be given titles, identifiers, type labels, or check statuses, and the variant of using a bold lead as a title **must not** be used either. Such content can be derived from the judgment itself and belongs in the tool-layer cache. The inspection marker is not among these: the maintenance commitment it declares cannot be derived from the judgment, and is defined in "Inspection Marker".
 
 An entry opens with `- ` at the start of the line — a hyphen followed by a single space — and ends at the end of the line, with no leading indentation, and **must not** span multiple lines: the source-text boundary of an entry can therefore be recomputed identically by every implementation, and any non-blank line in the body that does not open with the entry marker is content outside the list.
 
@@ -99,4 +116,4 @@ The provisions of "Structural Constraints" and "Entries and the Tool Layer" appl
 
 ## Out of Scope
 
-The admission criteria and deletion requirements for residue and pending entries are given by the domain declaration specification. The craft of writing judgments — how to phrase them concisely, which reasons to keep — is not prescribed by this specification. How checkpoints consume judgment entries and term-consistency signals, and the concrete mechanics of the tool-layer cache, belong to the governance specification. How projection views present body content belongs to the compilation specification.
+The admission criteria and deletion requirements for residue and pending entries are given by the domain declaration specification. The craft of writing judgments — how to phrase them concisely, which reasons to keep — is not prescribed by this specification. How checkpoints consume judgment entries, the inspection set, and term-consistency signals, and the concrete mechanics of the tool-layer cache, belong to the governance specification. How projection views present body content belongs to the compilation specification.
