@@ -2,14 +2,14 @@
 title: 標識
 description: 定義架構各層共用的標識計算：條目內容雜湊的規範化與演算法、檔案與版本狀態的標識，以及領域路徑的書寫形態。
 dependsOn:
-  - argument/grounding-part-versioned-with-execution-part
+  - argument/truth-record-versioned-with-implementation
   - argument/derivable-content-in-tool-layer
-sourceHash: f0375a05ab58cc8c67ea5a5799a217717354592e882c851da42bfea86002e4a5
+sourceHash: 4beda3db09a191002ae146b569489d5b84271605d2005458b5fb4ddf5e2e5436
 ---
 
 標識定義內容如何獲得可跨工具復算的身分。治理的快取鍵、編譯的來源標識與條目身分都由這裡的部件構成；兩個實作對同一內容必須算出同一標識，共享與流轉才能成立。
 
-> 本規範落實 [可推導內容應留在工具層](/zh-hant/argument/derivable-content-in-tool-layer/) 的內容雜湊鍵法，版本標識建立在 [依據部分必須隨執行部分版本化](/zh-hant/argument/grounding-part-versioned-with-execution-part/) 提供的共享版本邊界上。立論回答為什麼，本規範回答怎麼做。
+> 本規範落實 [可推導內容應留在工具層](/zh-hant/argument/derivable-content-in-tool-layer/) 的內容雜湊鍵法，版本標識建立在 [真相記錄必須隨實作版本化](/zh-hant/argument/truth-record-versioned-with-implementation/) 提供的共享版本邊界上。立論回答為什麼，本規範回答怎麼做。
 
 ## 約定用語
 

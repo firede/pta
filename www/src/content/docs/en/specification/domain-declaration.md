@@ -6,7 +6,7 @@ dependsOn:
   - argument/project-truth-by-domain
   - argument/project-truth-freshness-governance
   - argument/history-still-in-effect
-sourceHash: a79cf188cd34f3245aa7910318f60d06adfb2de312b8887edd60122ce043a3d0
+sourceHash: aed6177a73f873c8201445669cb6cf6517d831a0a88e98fd57f329b225025d9c
 ---
 
 Domain declaration defines how domains are delimited, marked, and connected in the repository.
@@ -21,7 +21,7 @@ This specification expresses requirement levels with the following words: **must
 
 A directory constitutes a domain by carrying `TRUTH.md`. This is the only criterion for a domain's existence: people and machines identify domains by the same marker, without inference from conventions.
 
-`TRUTH.md` records the main content of the domain's grounding part: concepts, rules, constraints, and tradeoffs with their reasons. Details already expressed clearly by the execution part are not duplicated.
+`TRUTH.md` carries the domain's truth records: concepts, rules, constraints, and tradeoffs with their reasons. Content that restates implementation details is not written in.
 
 A domain is identified by the directory path it claims. For an in-directory `TRUTH.md`, its location is the domain boundary, and the path **must not** be declared in frontmatter. A domain declares no name or description; the human-readable display name is derived on demand by consuming interfaces. All frontmatter is optional:
 
@@ -35,25 +35,25 @@ dependsOn:
 ……
 ```
 
-**`dependsOn` (optional)** declares grounding dependencies that cannot be derived from existing structure: this domain's basis content depends on the content of the referenced domain, and when that domain changes, this domain becomes a check candidate. Each item contains `path` and `reason`, stating from this domain's perspective what it depends on.
+**`dependsOn` (optional)** declares record dependencies that cannot be derived from existing structure: this domain's truth records depend on the content of the referenced domain, and when that domain changes, this domain becomes a check candidate. Each item contains `path` and `reason`, stating from this domain's perspective what it depends on.
 
 Dependencies are directional and **must** be declared on the affected side; reverse relationships (who depends on this domain) are derived by tooling scanning all domain declarations, and **must not** be mirrored on the depended-upon side. When an undeclared dependency is discovered, whoever the discoverer is, the declaration is added to the affected domain.
 
-Relationships derivable from execution-part dependencies, references between basis content, or directory hierarchy **should not** be written into `dependsOn`: the declaration file is itself a grounding record subject to freshness governance, and the fewer the fields, the smaller the surface that must be kept fresh.
+Relationships derivable from implementation dependencies, references between records, or directory hierarchy **should not** be written into `dependsOn`: the declaration file is itself a truth record subject to freshness governance, and the fewer the fields, the smaller the surface that must be kept fresh.
 
 ## Domain Hierarchy
 
 A domain's parent is the domain formed by the nearest ancestor directory carrying `TRUTH.md`. An externally declared domain computes its hierarchy from its declared `path`; for an external domain carrying `files`, when the directory it points to constitutes a domain itself, that domain is its parent. Hierarchy is given by the directory structure, and `TRUTH.md` **must not** declare parent-child relationships separately.
 
-The parent domain's basis content forms the background of its child domains. A child `TRUTH.md` does not restate what already holds at the parent level; it records only the basis content specific to its own domain.
+The parent domain's records form the background of its child domains. A child `TRUTH.md` does not restate what already holds at the parent level; it records only the judgments specific to its own domain.
 
-When the repository root carries `TRUTH.md`, it forms the root domain, holding project-level basis content, with all other domains ultimately holding within its background; when it does not, top-level domains have no parent domain.
+When the repository root carries `TRUTH.md`, it forms the root domain, holding project-level judgments, with all other domains ultimately holding within its background; when it does not, top-level domains have no parent domain.
 
 ## Companion Files
 
 **`GLOSSARY.md` (optional)** maintains the domain's terms. Terms share background along the hierarchy: a child domain **must not** redefine a parent glossary's terms in conflicting ways, and a conflict constitutes a check signal. `GLOSSARY.md` may be drafted and maintained by an LLM, with adoption adjudicated by maintainers; it is part of project truth, not a projection view.
 
-**`RESIDUE.md` (optional)** records the domain's residue still in effect: consequences left by past versions acting on the real world, with no anchor in the current execution part, but still influencing later judgments. Each entry **should** be brief and carry a time or version clue, providing an entry point into the change record. The criterion for inclusion is that it still affects later judgment; entries that no longer do **should** be deleted. `RESIDUE.md` is not a release log, nor a place to store process materials; historical reasons that explain current judgments are recorded with those judgments in `TRUTH.md` and **must not** be written into residue.
+**`RESIDUE.md` (optional)** records the domain's residue still in effect: consequences left by past versions acting on the real world, with no anchor in the current implementation, but still influencing later judgments. Each entry **should** be brief and carry a time or version clue, providing an entry point into the change record. The criterion for inclusion is that it still affects later judgment; entries that no longer do **should** be deleted. `RESIDUE.md` is not a release log, nor a place to store process materials; historical reasons that explain current judgments are recorded with those judgments in `TRUTH.md` and **must not** be written into residue.
 
 ## External Domain Declarations
 

@@ -5,10 +5,10 @@ dependsOn:
   - argument/what-is-project-truth
   - argument/projection-view-compiled-on-demand
   - argument/project-truth-freshness-governance
-sourceHash: 62fcfcdbae7da7f921338f49312a393d8fb1414a1621098e56c97a78ca5a6cf2
+sourceHash: 7496d6d86bfdb3caf4c2797cbfa5496dcdb7b047940812b951e7b113217927c9
 ---
 
-Derivable content should stay in the tool layer. Derivable content is content that machines can re-derive from project truth and the execution part, such as summaries, display names, type judgments, and reverse dependency relationships. The tool layer is storage outside the repository, managed by the tools that consume and govern project truth.
+Derivable content should stay in the tool layer. Derivable content is content that machines can re-derive from the truth record and the implementation, such as summaries, display names, type judgments, and reverse dependency relationships. The tool layer is storage outside the repository, managed by the tools that consume and govern project truth.
 
 Staying in the tool layer means being managed with cache semantics: keyed by the content hash of the source, reused while the source is unchanged, invalidated and recomputed when the source changes; the storage can be cleared at any time, at the cost of paying for one round of re-derivation.
 
@@ -18,7 +18,7 @@ Staying in the tool layer means being managed with cache semantics: keyed by the
 
 Once project truth enters the repository and is organized by domain, the design of its record format repeatedly faces the same family of proposals: add identifiers to records for referencing, add type labels for tiered checking, add titles for scanning, add status markers to preserve check results. Each field looks useful on its own; together they push the record toward an ever-widening table.
 
-These fields share a common trait: their content can be re-derived by machines from the record body and the execution part, or they preserve the process state of some check or adjudication. Their usefulness is real; the problem is where they belong — written into the repository, they become part of the project truth record and begin participating in versioning, review, and governance.
+These fields share a common trait: their content can be re-derived by machines from the record body and the implementation, or they preserve the process state of some check or adjudication. Their usefulness is real; the problem is where they belong — written into the repository, they become part of the project truth record and begin participating in versioning, review, and governance.
 
 With LLMs taking over maintenance and inspection, the need for precomputation is declining at the same time. Information that once required manual pre-organization and annotation can now be re-derived by machines at the point of consumption, at a cost that is manageable and still falling.
 
@@ -44,19 +44,19 @@ The tool layer promises no durability. Its storage can be cleared at any time, a
 
 **Human adjudication results are managed with cache semantics as well.**
 
-Freshness governance leaves adjudication to people: whether a piece of grounding still holds is answered by the maintainer's intent, which machines cannot derive. But once an adjudication passes, the record remains in the repository, which already expresses the adjudication's conclusion; the remaining check metadata — when it was checked, against which content version — preserves process state and produces no new judgment.
+Freshness governance leaves adjudication to people: whether a judgment still holds is answered by the maintainer's intent, which machines cannot derive. But once an adjudication passes, the record remains in the repository, which already expresses the adjudication's conclusion; the remaining check metadata — when it was checked, against which content version — preserves process state and produces no new judgment.
 
-This metadata stays in the tool layer, keyed by the hash of the adjudicated content: while the content is unchanged, the adjudication remains in effect and inspections stop re-escalating the same question; once the content changes, the adjudication is automatically invalidated and the record re-enters the check candidates. The cost of loss is asking a person to adjudicate once more — again a fallback to the baseline. New grounding produced during adjudication — the reason a rule still holds, a newly discovered boundary — is a genuine judgment and should be written into the record itself through the normal change flow.
+This metadata stays in the tool layer, keyed by the hash of the adjudicated content: while the content is unchanged, the adjudication remains in effect and inspections stop re-escalating the same question; once the content changes, the adjudication is automatically invalidated and the record re-enters the check candidates. The cost of loss is asking a person to adjudicate once more — again a fallback to the baseline. New content produced during adjudication — the reason a rule still holds, a newly discovered boundary — is a genuine judgment and should be written into the record itself through the normal change flow.
 
 ## Boundaries
 
-**This article rules on the admission of grounding part records.**
+**This article rules on the admission of truth records.**
 
-Which artifacts within the execution part enter the repository — such as build outputs and dependency lockfiles — is settled by the conventions of each engineering ecosystem, and this article does not re-adjudicate them.
+Which artifacts within the implementation enter the repository — such as build outputs and dependency lockfiles — is settled by the conventions of each engineering ecosystem, and this article does not re-adjudicate them.
 
 **The criterion constrains both a record's structure and its body.**
 
-Restating details the execution part already expresses clearly is likewise writing derivable content into the record; the definition article already excludes such restatement, and this article gives the general form of the same criterion.
+Restating details the implementation already expresses clearly is likewise writing derivable content into the record; a judgment together with its binding force and reason cannot be derived from the implementation, so recording them explicitly is not restatement. The definition article already distinguishes the two, and this article gives the general form of the same criterion.
 
 **The storage form of the tool layer is not prescribed here.**
 

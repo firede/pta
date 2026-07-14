@@ -2,14 +2,14 @@
 title: Identity
 description: 'Defines the identity computation shared across the architecture: normalization and hashing of entry content, identification of files and version states, and the written form of domain paths.'
 dependsOn:
-  - argument/grounding-part-versioned-with-execution-part
+  - argument/truth-record-versioned-with-implementation
   - argument/derivable-content-in-tool-layer
-sourceHash: f0375a05ab58cc8c67ea5a5799a217717354592e882c851da42bfea86002e4a5
+sourceHash: 4beda3db09a191002ae146b569489d5b84271605d2005458b5fb4ddf5e2e5436
 ---
 
 Identity defines how content acquires an identity that any tool can recompute. The cache keys of governance, the source identification of compilation, and entry identity are all built from the parts defined here; two implementations must compute the same identity for the same content, or sharing and flow cannot hold.
 
-> This specification implements the content-hash keying of [Derivable Content Should Stay in the Tool Layer](/en/argument/derivable-content-in-tool-layer/); version identity builds on the shared version boundary provided by [The Grounding Part Must Be Versioned with the Execution Part](/en/argument/grounding-part-versioned-with-execution-part/). The arguments answer why; this specification answers how.
+> This specification implements the content-hash keying of [Derivable Content Should Stay in the Tool Layer](/en/argument/derivable-content-in-tool-layer/); version identity builds on the shared version boundary provided by [The Truth Record Must Be Versioned with the Implementation](/en/argument/truth-record-versioned-with-implementation/). The arguments answer why; this specification answers how.
 
 ## Terminology
 

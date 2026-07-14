@@ -1,8 +1,8 @@
 export const argumentIds = [
   'argument/what-is-project-truth',
-  'argument/grounding-part-versioned-with-execution-part',
+  'argument/truth-record-versioned-with-implementation',
   'argument/project-truth-by-domain',
-  'argument/grounding-part-work-language',
+  'argument/truth-record-work-language',
   'argument/projection-view-compiled-on-demand',
   'argument/project-truth-freshness-governance',
   'argument/derivable-content-in-tool-layer',

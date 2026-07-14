@@ -3,16 +3,16 @@ title: 內容結構
 description: 定義領域聲明檔案內部的內容結構：TRUTH.md 正文的判斷條目——形態、入選、表述與結構約束，GLOSSARY.md 的術語條目，以及 RESIDUE.md 的殘留條目。
 dependsOn:
   - argument/what-is-project-truth
-  - argument/grounding-part-work-language
+  - argument/truth-record-work-language
   - argument/project-truth-freshness-governance
   - argument/derivable-content-in-tool-layer
   - argument/history-still-in-effect
-sourceHash: f41c7def6ee1de8257b60ee54db11e6d4e7fb78658bbfe98b566abdcdeefd74d
+sourceHash: 5949b1fbc56579a7a8b794d69f51cc759bd42cf75ec707b5ae8d27cf3cc654cb
 ---
 
 內容結構定義領域聲明檔案內部如何組織。檔案的存在、位置與 frontmatter 欄位由領域聲明規範定義，本規範定義正文。
 
-> 本規範落實 [什麼是專案真相](/zh-hant/argument/what-is-project-truth/) 對依據部分內容的界定、[自然語言表達應與工作語言一致](/zh-hant/argument/grounding-part-work-language/) 的表述原則和 [可推導內容應留在工具層](/zh-hant/argument/derivable-content-in-tool-layer/) 的准入判據，並為 [新鮮度治理](/zh-hant/argument/project-truth-freshness-governance/) 的核查與裁決提供最小內容單元。
+> 本規範落實 [什麼是專案真相](/zh-hant/argument/what-is-project-truth/) 對真相記錄內容的界定、[自然語言表達應與工作語言一致](/zh-hant/argument/truth-record-work-language/) 的表述原則和 [可推導內容應留在工具層](/zh-hant/argument/derivable-content-in-tool-layer/) 的准入判據，並為 [新鮮度治理](/zh-hant/argument/project-truth-freshness-governance/) 的核查與裁決提供最小內容單元。
 
 ## 約定用語
 
@@ -32,13 +32,13 @@ sourceHash: f41c7def6ee1de8257b60ee54db11e6d4e7fb78658bbfe98b566abdcdeefd74d
 
 ## 入選與退出
 
-寫入正文的判斷 **必須** 是目前專案實際遵循、且執行部分難以可靠承擔的內容。執行部分已經清楚表達的細節 **不應** 複寫。檢驗方法是刪除測試：刪掉一個條目，後續迭代的判斷不會因此變化，它就不屬於正文。
+寫入正文的判斷 **必須** 滿足專案真相的准入條件：目前專案實際遵循，合理實踐推不出，且專案不接受偏離。複述實作細節的條目 **不應** 寫入。檢驗方法是刪除測試：刪掉一個條目，後續迭代按合理實踐處置仍可接受，它就不屬於正文。
 
 不再遵循的判斷 **應當** 隨確認失效的變更刪除或修訂，修訂經正常變更流程進入版本庫。
 
 ## 表述
 
-判斷 **應當** 以工作語言和專案概念表述。能從執行部分推導的實作座標，如檔案路徑、目錄名與符號名，**不應** 寫入判斷：實作重構時座標失效，專案概念保持穩定。工程專名可以保留原文。
+判斷 **應當** 以工作語言和專案概念表述。能從實作推導的座標，如檔案路徑、目錄名與符號名，**不應** 寫入判斷：實作重構時座標失效，專案概念保持穩定。工程專名可以保留原文。
 
 判斷依賴外部事實成立時，**可以** 隨條目附帶複查線索——日期或可判定的失效條件。線索把外部漂移中可檢驗的部分內化為記錄的一部分，供巡檢消費；線索隨條目正文表述，不設獨立結構。
 
@@ -48,7 +48,7 @@ sourceHash: f41c7def6ee1de8257b60ee54db11e6d4e7fb78658bbfe98b566abdcdeefd74d
 
 條目以行首的 `- `——連字符加單個空格——開啟，至行尾結束，行首不加縮排，**不得** 跨越多行：條目的原始文字邊界因此可由各實作一致復算，正文中不以條目標記開啟的非空行即清單之外的內容。
 
-正文 **不得** 在清單之外放置內容，單行的邊界規則讓違例可由語法檢查直接發現。單行條目也容不下子清單、表格、程式碼區塊等區塊級結構，一個判斷需要區塊級結構才能表達時，正文無法合法承載——它通常應當拆分為多個判斷、收斂為術語條目，或沉入執行部分的驗證。
+正文 **不得** 在清單之外放置內容，單行的邊界規則讓違例可由語法檢查直接發現。單行條目也容不下子清單、表格、程式碼區塊等區塊級結構，一個判斷需要區塊級結構才能表達時，正文無法合法承載——它通常應當拆分為多個判斷、收斂為術語條目，或沉入實作的驗證。
 
 ## 條目與工具層
 

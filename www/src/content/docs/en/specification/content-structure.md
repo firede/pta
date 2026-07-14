@@ -3,16 +3,16 @@ title: Content Structure
 description: 'Defines the content structure inside domain declaration files: judgment entries in the TRUTH.md body — form, admission, expression, and structural constraints — plus term entries in GLOSSARY.md and residue entries in RESIDUE.md.'
 dependsOn:
   - argument/what-is-project-truth
-  - argument/grounding-part-work-language
+  - argument/truth-record-work-language
   - argument/project-truth-freshness-governance
   - argument/derivable-content-in-tool-layer
   - argument/history-still-in-effect
-sourceHash: f41c7def6ee1de8257b60ee54db11e6d4e7fb78658bbfe98b566abdcdeefd74d
+sourceHash: 5949b1fbc56579a7a8b794d69f51cc759bd42cf75ec707b5ae8d27cf3cc654cb
 ---
 
 Content structure defines how domain declaration files are organized internally. The existence, location, and frontmatter fields of the files are defined by the domain declaration specification; this specification defines the body.
 
-> This specification implements the framing of grounding-part content in [What Is Project Truth](/en/argument/what-is-project-truth/), the expression principle of [Natural Language Expression Should Match the Working Language](/en/argument/grounding-part-work-language/), and the admission criterion of [Derivable Content Should Stay in the Tool Layer](/en/argument/derivable-content-in-tool-layer/), and provides the minimal content unit for the checks and adjudication of [Freshness Governance](/en/argument/project-truth-freshness-governance/).
+> This specification implements the framing of truth record content in [What Is Project Truth](/en/argument/what-is-project-truth/), the expression principle of [Natural Language Expression Should Match the Working Language](/en/argument/truth-record-work-language/), and the admission criterion of [Derivable Content Should Stay in the Tool Layer](/en/argument/derivable-content-in-tool-layer/), and provides the minimal content unit for the checks and adjudication of [Freshness Governance](/en/argument/project-truth-freshness-governance/).
 
 ## Terminology
 
@@ -32,13 +32,13 @@ An entry **should** carry only one independently adjudicable judgment: when a pe
 
 ## Admission and Removal
 
-A judgment written into the body **must** be content the project currently follows and that the execution part cannot reliably carry. Details the execution part already expresses clearly **should not** be restated. The test is deletion: if removing an entry would not change any later iteration's judgment, it does not belong in the body.
+A judgment written into the body **must** meet project truth's admission conditions: the project currently follows it, reasonable practice cannot derive it, and the project does not accept deviation from it. Entries that restate implementation details **should not** be written. The test is deletion: if, after an entry is removed, later iteration handled by reasonable practice still yields an acceptable result, it does not belong in the body.
 
 A judgment no longer followed **should** be deleted or revised in the change that confirms it invalid, with the revision entering the repository through the normal change flow.
 
 ## Expression
 
-Judgments **should** be expressed in the working language and in project concepts. Implementation coordinates derivable from the execution part, such as file paths, directory names, and symbol names, **should not** be written into judgments: coordinates break when the implementation is refactored, while project concepts stay stable. Engineering proper names can remain in their original language.
+Judgments **should** be expressed in the working language and in project concepts. Coordinates derivable from the implementation, such as file paths, directory names, and symbol names, **should not** be written into judgments: coordinates break when the implementation is refactored, while project concepts stay stable. Engineering proper names can remain in their original language.
 
 When a judgment depends on an external fact to hold, a review clue — a date or a decidable expiry condition — **may** be attached to the entry. The clue internalizes the verifiable part of external drift into the record itself, for inspection to consume; it is expressed within the entry's text, with no separate structure.
 
@@ -48,7 +48,7 @@ Judgment entries **must not** be given titles, identifiers, type labels, or stat
 
 An entry opens with `- ` at the start of the line — a hyphen followed by a single space — and ends at the end of the line, with no leading indentation, and **must not** span multiple lines: the source-text boundary of an entry can therefore be recomputed identically by every implementation, and any non-blank line in the body that does not open with the entry marker is content outside the list.
 
-The body **must not** place content outside the list, and the single-line boundary rule makes violations directly discoverable by syntax checking. A single-line entry also has no room for block-level structure such as nested lists, tables, or code fences; when a judgment seems to need block-level structure to express, the body cannot legally carry it — it usually should be split into several judgments, condensed into a term entry, or sunk into the execution part's verification.
+The body **must not** place content outside the list, and the single-line boundary rule makes violations directly discoverable by syntax checking. A single-line entry also has no room for block-level structure such as nested lists, tables, or code fences; when a judgment seems to need block-level structure to express, the body cannot legally carry it — it usually should be split into several judgments, condensed into a term entry, or sunk into the implementation's verification.
 
 ## Entries and the Tool Layer
 

@@ -5,7 +5,7 @@ dependsOn:
   - argument/projection-view-compiled-on-demand
   - argument/project-truth-by-domain
   - argument/derivable-content-in-tool-layer
-sourceHash: fac2764ec436d22a4bcd423e0c93b30f68650b0610abf085c82cb96c670eed6d
+sourceHash: 97eecd5f2fb0c9934ecc6ba74dc75143be86ad66856982e66cb299e0005fd32b
 ---
 
 Compilation defines how projection views are produced: what the inputs are, what obligations a projection carries, and how the cache is invalidated.
@@ -20,7 +20,7 @@ This specification expresses requirement levels with the following words: **must
 
 The input to compilation is project truth in some state, plus a usage context. The state is usually a version in the repository; it can also be a working tree containing uncommitted changes.
 
-Sources may be the grounding part, the execution part, or both, and are not required to be covered by any domain: an explanation obtained by asking ad-hoc questions against a piece of code is as much a projection view as a tour generated from domain declarations.
+Sources may be truth records, the implementation, or both, and are not required to be covered by any domain: an explanation obtained by asking ad-hoc questions against a piece of code is as much a projection view as a tour generated from domain declarations.
 
 The expression and origin of a usage context are open: tool built-in configuration, team-shared compilation configuration, and ad-hoc prompts can all carry the context. Where configuration is stored follows engineering-ecosystem conventions, and this specification does not adjudicate it. Configuration is not project truth: iteration does not depend on it, and losing it only re-pays one round of organizing cost. A tradeoff in configuration that carries decision weight enters `TRUTH.md` as a judgment entry, with the configuration merely implementing it.
 
@@ -38,7 +38,7 @@ A retained projection **should** record its source scope — domains, paths, or 
 
 Projections are read-only and **must not** accept corrections that do not return to the source. Returning to the source splits by cause: when the projection disagrees with its sources — omissions, alterations, or claims absent from the sources — fix the compiler or the usage context; when the sources themselves are no longer true, fix project truth. Both paths regenerate the projection after the correction. A projection **must not** enter the repository, an existing provision of the domain declaration specification.
 
-When a suspected deviation found while consuming a projection can be anchored to a project truth record, a check signal is submitted per the governance specification; discovery is decoupled from repair, and consumption is not interrupted. A discovery that cannot be anchored to a record does not constitute a check signal and is not disposed of through the governance loop: implementation defects are fixed in the execution part, and whether a new judgment enters the records is decided by the admission criteria of the content structure specification.
+When a suspected deviation found while consuming a projection can be anchored to a project truth record, a check signal is submitted per the governance specification; discovery is decoupled from repair, and consumption is not interrupted. A discovery that cannot be anchored to a record does not constitute a check signal and is not disposed of through the governance loop: implementation defects are fixed directly in the implementation, and whether a new judgment enters the records is decided by the admission criteria of the content structure specification.
 
 ## Projection Cache
 

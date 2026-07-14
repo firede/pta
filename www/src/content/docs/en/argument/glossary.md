@@ -2,20 +2,24 @@
 title: Glossary
 description: Core terms used in the Arguments section.
 tableOfContents: false
-sourceHash: 406021526125ff12d5b64f74478f1b7a968060085479cb38719df5dffe1104a7
+sourceHash: 659d77128b85ee1e97316697f23d51fc4b80065373c402976841727b69e08eaa
 ---
 
 **Project Truth**
 
-Project truth is the content the current project actually follows. It determines how the project runs now, how it is understood, what later changes and judgments must take into account, and provides the basis for generating projection views in different task contexts. Project truth consists of the execution part and the grounding part.
+Project truth is the judgments the current project actually follows: the decisions the project has made, and the premises the project has adopted. A piece of content belongs to project truth only when it meets two conditions: reasonable practice cannot derive it, and the project does not accept deviation from it. It grounds adjudication in later iteration and serves as the source for projection view generation.
 
-**Execution Part**
+**Reasonable Practice**
 
-The execution part is the part of project truth that participates in the current execution flow and determines the current version's result. It usually takes an operable, verifiable form; its specific form depends on the project type and workflow.
+Reasonable practice is what qualified practitioners, facing a problem of the same kind, can adopt without any project-specific information. For the parts project truth has not pinned down, any handling consistent with reasonable practice is acceptable; the baseline shifts with the capability of practitioners and tools.
 
-**Grounding Part**
+**Implementation**
 
-The grounding part is the part of project truth that does not participate in the current execution flow, but affects later iteration judgments and results. It preserves content that later iterations must follow but that the execution part cannot reliably carry.
+The implementation is the whole that enters the current execution flow and determines the current version's result, such as the codebase, engineering files, and workflows. It conforms to project truth without carrying it; the content in it not bound by any judgment constitutes the current state. Its specific form depends on the project type and workflow.
+
+**Truth Record**
+
+The truth record is the explicit record of project truth outside the implementation. Each record carries one judgment together with its reason; when record and implementation diverge, it must be adjudicated whether the implementation has strayed from the judgment or the judgment has changed.
 
 **Glossary**
 
@@ -27,11 +31,11 @@ The working language is the natural language that the project's primary maintain
 
 **Projection View**
 
-A projection view is a portion of project truth extracted, reorganized, and presented for a specific usage context. It is a derived result of project truth and can be regenerated on demand from project truth and the usage context; when content in a projection needs correction, the correction lands on project truth.
+A projection view is content extracted, reorganized, and presented from project truth and the implementation for a specific usage context. It is a consumption result and can be regenerated on demand from the sources and the usage context; when content in a projection needs correction, the correction lands on the sources — a judgment's deviation lands on the truth record, an implementation defect lands on the implementation.
 
 **Domain**
 
-A domain is the organizational unit of project truth. It organizes the execution part and grounding part that belong to the same long-term maintenance unit.
+A domain is the organizational unit of project truth. It organizes the implementation and truth records that belong to the same long-term maintenance unit.
 
 **Freshness**
 
@@ -39,7 +43,7 @@ Freshness is the degree of consistency between the project truth recorded in the
 
 **Internal Drift**
 
-Internal drift is record deviation triggered by changes inside the repository. It takes two forms: the execution part is updated while the same domain's basis content is not; or a domain's basis content is updated while the related domains that reference it are not re-checked.
+Internal drift is record deviation triggered by changes inside the repository. It takes two forms: the implementation is updated while the same domain's truth records are not re-checked; or a domain's truth records are updated while the related domains that reference them are not re-checked.
 
 **External Drift**
 
@@ -59,7 +63,7 @@ A check signal is a discovery suggesting that a project truth record may have de
 
 **Derivable Content**
 
-Derivable content is content that machines can re-derive from project truth and the execution part, such as summaries, display names, type judgments, and reverse dependency relationships. It does not enter project truth records; it stays in the tool layer, managed with cache semantics.
+Derivable content is content that machines can re-derive from the truth record and the implementation, such as summaries, display names, type judgments, and reverse dependency relationships. It does not enter project truth records; it stays in the tool layer, managed with cache semantics.
 
 **Tool-Layer Cache**
 
@@ -67,7 +71,7 @@ The tool-layer cache is storage outside the repository, managed by tooling, that
 
 **Residue**
 
-Residue is the still-effective consequence left by past project states acting on the real world. It has no anchor in the current execution part and cannot be derived from the current version's snapshot; it is recorded explicitly as a non-derivable judgment, with each entry carrying a time or version clue. Its expiry is driven by changes in the world, as external drift, and entries are deleted once they no longer influence later judgments.
+Residue is the still-effective consequence left by past project states acting on the real world. It has no anchor in the current implementation and cannot be derived from the current version's snapshot; it is recorded explicitly as a non-derivable judgment, with each entry carrying a time or version clue. Its expiry is driven by changes in the world, as external drift, and entries are deleted once they no longer influence later judgments.
 
 **Domain Knowledge Package**
 

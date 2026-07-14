@@ -4,16 +4,16 @@ description: When domain knowledge is shared across projects, the sharing unit s
 dependsOn:
   - argument/what-is-project-truth
   - argument/project-truth-by-domain
-  - argument/grounding-part-work-language
+  - argument/truth-record-work-language
   - argument/projection-view-compiled-on-demand
-sourceHash: 7a2ed38149f82341803aed0e679d2525d15e663fc5858ec9b2b5d2dd66024df7
+sourceHash: a6aa338410b010194b682d7a3de9587aa521d140349ee9e5aee41a4bdbcf5fc0
 ---
 
 Domain knowledge should be shared across projects with verifiers at the core. A domain knowledge package is a sharing unit of domain knowledge extracted from project truth after stripping project coupling and private information: the domain's term relationships, rules, edge cases, and the reasons behind tradeoffs form the normative content, and verifiers express the machine-verifiable part of it as executable verification; a reference implementation may optionally be attached as informative content.
 
 A domain knowledge package is not project truth for any project. Only after the target project re-implements the packaged knowledge in line with its own structure, technology stack, and working language, passes the package's verifiers, and actually adopts the result, does that content enter the target project's truth.
 
-> This article builds on the definition of domains in [Project Truth Should Be Organized by Domain](/en/argument/project-truth-by-domain/) and the judgment in [Natural-Language Expression Should Match the Working Language](/en/argument/grounding-part-work-language/) that cross-project reuse requires re-expression, and discusses in what form domain knowledge should be shared across projects.
+> This article builds on the definition of domains in [Project Truth Should Be Organized by Domain](/en/argument/project-truth-by-domain/) and the judgment in [Natural-Language Expression Should Match the Working Language](/en/argument/truth-record-work-language/) that cross-project reuse requires re-expression, and discusses in what form domain knowledge should be shared across projects.
 
 ## Background
 

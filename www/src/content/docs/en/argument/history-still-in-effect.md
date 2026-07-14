@@ -5,34 +5,34 @@ dependsOn:
   - argument/what-is-project-truth
   - argument/project-truth-freshness-governance
   - argument/derivable-content-in-tool-layer
-sourceHash: 8a0b40d83a9ee74d7380c9c3c963239635688bc995c88e3e35afa5600750e1c6
+sourceHash: 145c0ab7b28bb569308ba58cfdb06b97b110919597a4ae85844a49931f3bf352
 ---
 
 History still in effect belongs to project truth. Project truth emphasizes what is currently in effect, but not everything currently in effect originates from the current version: the reasons for some present judgments are anchored in past changes, and the consequences left by past versions acting on the real world may persist into the present. Both kinds of content still influence later iterations, and neither can be read out of the current version's snapshot.
 
-> This article builds on the treatment of necessary historical reasons in [What Is Project Truth](/en/argument/what-is-project-truth/) and gives it its general form; the judgment of expiry follows the drift-and-check framework of [Project Truth Needs Freshness Governance](/en/argument/project-truth-freshness-governance/); the division of labor with the complete change record follows the admission criterion of [Derivable Content Should Stay in the Tool Layer](/en/argument/derivable-content-in-tool-layer/).
+> This article builds on the principle that judgments carry their reasons in [What Is Project Truth](/en/argument/what-is-project-truth/) and gives it its general form; the judgment of expiry follows the drift-and-check framework of [Project Truth Needs Freshness Governance](/en/argument/project-truth-freshness-governance/); the division of labor with the complete change record follows the admission criterion of [Derivable Content Should Stay in the Tool Layer](/en/argument/derivable-content-in-tool-layer/).
 
 ## Background
 
-Project truth is bounded by the current version: the execution part determines the current result, the basis part influences later judgments, and truth updates as versions change. This definition fixes its gaze on the present.
+Project truth is bounded by the current version: it consists of the judgments currently followed, and updates as versions change. This definition fixes its gaze on the present.
 
-But a project does not exist only in the repository. Every released version acts on the real world; after versions change, the behavior disappears from the execution part, while the results it left in the world remain in effect and continue to constrain the project's later judgments.
+But a project does not exist only in the repository. Every released version acts on the real world; after versions change, the behavior disappears from the implementation, while the results it left in the world remain in effect and continue to constrain the project's later judgments.
 
-The current version's snapshot cannot answer questions of this kind. The execution part only describes present behavior; the repository preserves the complete change record but cannot tell which changes left behind things still in effect. The core question is: how does project truth carry content that remains valid along the time dimension?
+The current version's snapshot cannot answer questions of this kind. The implementation only describes present behavior; the repository preserves the complete change record but cannot tell which changes left behind things still in effect. The core question is: how does project truth carry content that remains valid along the time dimension?
 
 ## Reasons
 
 **The side effects of past versions are present facts.**
 
-Consequences still in effect exist in the present. For example, an early storage model could only express a single tooth position: interproximal caries across two neighboring teeth could not be distinguished in the data from each tooth having its own caries. Later modeling added an adjacent-teeth expression, but the data written before the change can no longer be distinguished retroactively. This limitation appears nowhere in the current execution part, yet it still constrains later judgments — any report involving data from that period must factor it in. Deleting the record would distort those judgments, which is precisely project truth's admission criterion. So the time dimension is not an exception carved out of "currently in effect": the current state of the world already contains the residue of the project's past states, and recording it is what makes "current" complete.
+Consequences still in effect exist in the present. For example, an early storage model could only express a single tooth position: interproximal caries across two neighboring teeth could not be distinguished in the data from each tooth having its own caries. Later modeling added an adjacent-teeth expression, but the data written before the change can no longer be distinguished retroactively. This limitation appears nowhere in the current implementation, yet it still constrains later judgments — any report involving data from that period must factor it in. Deleting the record would distort those judgments, which is precisely project truth's admission criterion. So the time dimension is not an exception carved out of "currently in effect": the current state of the world already contains the residue of the project's past states, and recording it is what makes "current" complete.
 
 **The distinguishing mark of a consequence is having no anchor in the present state.**
 
-Most records in the basis part hold together around the current execution part: rules explain current behavior, constraints bound the current implementation, and history the execution part still accommodates is carried by the accommodating rules and their reasons. The consequences this article points to lie outside all of that — the historical state that produced them no longer exists, no rule accommodates them, and no position in the current execution chain points to them. Without explicit recording, they exist only in maintainers' memory, rediscovered when some iteration steps on them. AI participation in maintenance amplifies this risk: AI can only read what has been made explicit, and unexpressed history is entirely invisible to it.
+Most judgments in the truth record hold together around the current implementation: rules explain current behavior, constraints bound the current implementation, and history the implementation still accommodates is carried by the accommodating rules and their reasons. The consequences this article points to lie outside all of that — the historical state that produced them no longer exists, no rule accommodates them, and no position in the current implementation points to them. Without explicit recording, they exist only in maintainers' memory, rediscovered when some iteration steps on them. AI participation in maintenance amplifies this risk: AI can only read what has been made explicit, and unexpressed history is entirely invisible to it.
 
 **The reasons for the present state are the other half of the same dimension.**
 
-The definition article points out that some current rules cannot be fully understood from the present state alone, and necessary historical reasons need to be kept. Reasons answer why the present is the way it is; consequences answer how the past persists into the present. The two share the same selection criterion — whether they still influence later judgments — and the same way of exiting: deletion once they no longer do. They belong to the same time dimension of awareness and are argued and governed by the same criterion; their carriage falls where each belongs — a reason is recorded with the judgment it explains; a consequence constitutes an independent judgment of its own and, having no anchor in the present state, is carried independently as a residue record.
+The definition article requires judgments to carry their reasons, and some reasons are anchored in past changes. Reasons answer why the present is the way it is; consequences answer how the past persists into the present. The two share the same selection criterion — whether they still influence later judgments — and the same way of exiting: deletion once they no longer do. They belong to the same time dimension of awareness and are argued and governed by the same criterion; their carriage falls where each belongs — a reason is recorded with the judgment it explains; a consequence constitutes an independent judgment of its own and, having no anchor in the present state, is carried independently as a residue record.
 
 **Selecting from history is a non-derivable judgment.**
 
@@ -76,7 +76,7 @@ This is precisely the defining scenario of external drift: no event appears insi
 
 **Necessary historical reasons are already in the definition article — what does this article add?**
 
-The definition article, while delimiting the basis part, points out that necessary historical reasons need to be kept, answering "why the present is the way it is." This article supplies the other half: the consequences of past states acting on the world may still be in effect even when they explain no present rule. Only with both halves together is the time dimension complete — one half explains the present, the other persists into it. The shared selection criterion and deletion criterion show that they are two halves of the same dimension and should be argued together.
+The definition article requires judgments to carry their reasons, answering "why the present is the way it is." This article supplies the other half: the consequences of past states acting on the world may still be in effect even when they explain no present rule. Only with both halves together is the time dimension complete — one half explains the present, the other persists into it. The shared selection criterion and deletion criterion show that they are two halves of the same dimension and should be argued together.
 
 ## Conclusion
 

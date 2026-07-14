@@ -5,7 +5,7 @@ dependsOn:
   - argument/project-truth-freshness-governance
   - argument/project-truth-by-domain
   - argument/derivable-content-in-tool-layer
-sourceHash: 63a1c39579fcfc5c2ffc27fa6ccc577223ed1a5afdcb231cc7ba732cdf106a63
+sourceHash: 62d5d96d804a855b2de888bd92d9fa83b9a71c625d42e15d801e4971b2ab6f59
 ---
 
 Governance defines the operating loop of freshness checks: how deviation becomes a signal, at which points signals are consumed, and how adjudication lands back on the records.
@@ -25,7 +25,7 @@ Signal sources have no fixed list: tooling's structural checks, models during in
 The carrier in which signals are submitted and flow is defined by the integration specification; the two examples below only illustrate the three qualifications and prescribe no format. A machine-submitted drift suspicion, naming no specific entry, anchored to the domain declaration:
 
 - Anchor: the domain declaration of the `src/billing` domain
-- Evidence: this change modified five files in the domain's execution part, and the basis content was not updated along with them
+- Evidence: this change modified five files in the domain's implementation, and the truth records were not updated along with them
 - Source: structural check at an event-triggered point
 
 A human-submitted external drift, anchored to a specific entry:
@@ -43,8 +43,8 @@ The category list is open: as machine detection expands, new categories join und
 - **Conflict**: two declarations make mutually exclusive claims, and both holding at once violates the uniqueness constraints of the domain declaration or content structure specification. Machine-decidable.
 - **Violation**: content appears where the content structure specification forbids it. Machine-decidable.
 - **Term inconsistency**: a lower-level glossary's conflicting redefinition of a higher-level term, or body wording deviating from the glossary — confusable words are derived by tooling from term names and definitions. The suspicion is produced by machine comparison; whether it holds requires human adjudication.
-- **Drift suspicion**: a change touches a domain's execution part without touching its basis content, or changes only basis content without touching the execution part; also suspected contradictions between records and current reality found by inspection. Whether it holds requires human adjudication.
-- **Propagation**: when a domain's basis content changes, the domains related to it through `dependsOn`, hierarchy, or references enter check candidacy. Propagation produces candidates; whether a candidate holds requires human adjudication.
+- **Drift suspicion**: a change touches a domain's implementation without touching its truth records, or changes only records without touching the implementation; also suspected contradictions between records and what is actually followed, found by inspection. Whether it holds requires human adjudication.
+- **Propagation**: when a domain's truth records change, the domains related to it through `dependsOn`, hierarchy, or references enter check candidacy. Propagation produces candidates; whether a candidate holds requires human adjudication.
 - **Expiry**: a review clue attached to an entry expires. Clues are extracted from the entry text, and the extraction is tool-layer derivation; expiry is machine-decidable, while whether the entry still holds requires human adjudication.
 
 ## Checkpoints
@@ -63,7 +63,7 @@ Inspection points carry what structure cannot delimit: consuming the review clue
 
 Whether a record still holds **must** be adjudicated by a person. For machine-decidable conflicts and violations, machines **may** draft revisions that enter the change flow directly, with adjudication taking place in change review.
 
-Adjudication lands in two places: when the record needs revision or deletion, the revision enters the repository through the normal change flow; when the record is confirmed to still hold, the confirmation is written into the adjudication cache. New basis content produced during adjudication — the reason a rule still holds, a newly discovered boundary — enters the record itself through the normal change flow.
+Adjudication lands in two places: when the record needs revision or deletion, the revision enters the repository through the normal change flow; when the record is confirmed to still hold, the confirmation is written into the adjudication cache. New content produced during adjudication — the reason a rule still holds, a newly discovered boundary — enters the record itself through the normal change flow.
 
 A signal **must not** be silently dropped: every signal ends in one traceable disposition — a revision entering the repository through the change flow, a confirmation written into the adjudication cache, conclusion by screening at a point, or closure when its anchor is invalidated. Disposition records belong to tool-layer process state.
 

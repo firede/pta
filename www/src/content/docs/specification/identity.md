@@ -2,13 +2,13 @@
 title: 标识
 description: 定义架构各层共用的标识计算：条目内容哈希的规范化与算法、文件与版本状态的标识，以及领域路径的书写形态。
 dependsOn:
-  - argument/grounding-part-versioned-with-execution-part
+  - argument/truth-record-versioned-with-implementation
   - argument/derivable-content-in-tool-layer
 ---
 
 标识定义内容如何获得可跨工具复算的身份。治理的缓存键、编译的来源标识与条目身份都由这里的部件构成；两个实现对同一内容必须算出同一标识，共享与流转才能成立。
 
-> 本规范落实 [可推导内容应留在工具层](/argument/derivable-content-in-tool-layer/) 的内容哈希键法，版本标识建立在 [依据部分必须随执行部分版本化](/argument/grounding-part-versioned-with-execution-part/) 提供的共享版本边界上。立论回答为什么，本规范回答怎么做。
+> 本规范落实 [可推导内容应留在工具层](/argument/derivable-content-in-tool-layer/) 的内容哈希键法，版本标识建立在 [真相记录必须随实现版本化](/argument/truth-record-versioned-with-implementation/) 提供的共享版本边界上。立论回答为什么，本规范回答怎么做。
 
 ## 约定用语
 
