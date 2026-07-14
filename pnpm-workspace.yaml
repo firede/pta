@@ -1,6 +1,5 @@
 packages:
   - www
-  - examples/*
 
 autoInstallPeers: false
 
