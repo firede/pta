@@ -12,6 +12,14 @@ async function fixture(): Promise<string> {
     'TRUTH.md': '- 项目级判断\n',
     'src/TRUTH.md': '---\npath: wrong\n---\n- 源码判断\n',
     'src/components/TRUTH.md': '- 组件判断\n',
+    'src/consumer/TRUTH.md': [
+      '---',
+      'dependsOn:',
+      '  - path: src/components',
+      '    reason: 组件口径构成消费背景',
+      '---',
+      '- 消费判断',
+    ].join('\n'),
     'internal/dsl/TRUTH.md': '- DSL 判断\n',
     'internal/dsl/lexer.go': 'package dsl\n',
     'internal/dsl/parser.go': 'package dsl\n',
@@ -65,13 +73,16 @@ test('发现目录与默认/配置外置领域，计算标识和层级', async (
       .filter((domain) => domain.kind === 'directory')
       .map((domain) => domain.identifier)
       .sort(),
-    ['', 'internal/dsl', 'src', 'src/components'],
+    ['', 'internal/dsl', 'src', 'src/components', 'src/consumer'],
   );
   assert.equal(byDeclaration.get('src/TRUTH.md')?.parentIdentifier, '');
   assert.deepEqual(byDeclaration.get('src/TRUTH.md')?.problems, [
     { code: 'directory-declares-path', value: 'wrong' },
   ]);
   assert.equal(byDeclaration.get('src/components/TRUTH.md')?.parentIdentifier, 'src');
+  assert.deepEqual(byDeclaration.get('src/consumer/TRUTH.md')?.dependsOn, [
+    { path: 'src/components', reason: '组件口径构成消费背景' },
+  ]);
 
   const compiler = byDeclaration.get('.pta/compiler/TRUTH.md');
   assert.equal(compiler?.identifier, '.pta/compiler');

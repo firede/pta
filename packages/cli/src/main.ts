@@ -1,11 +1,16 @@
 #!/usr/bin/env node
+import { execFile } from 'node:child_process';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 import {
+  classifyChanges,
   discoverDomains,
   extractDomainContent,
   lintDomainContents,
+  type ChangedPath,
+  type ChangeType,
+  type ChangeClassification,
   type CheckSignal,
 } from '@pta/core';
 
@@ -18,6 +23,84 @@ const processIO: CliIO = {
   stdout: (text) => process.stdout.write(text),
   stderr: (text) => process.stderr.write(text),
 };
+
+function runGit(args: readonly string[], cwd: string): Promise<string> {
+  return new Promise((resolveOutput, reject) => {
+    execFile(
+      'git',
+      args,
+      { cwd, encoding: 'utf8', maxBuffer: 10 * 1024 * 1024 },
+      (error, stdout, stderr) => {
+        if (error === null) resolveOutput(stdout);
+        else reject(new Error(stderr.trim() || stdout.trim() || error.message));
+      },
+    );
+  });
+}
+
+function changeType(status: string): ChangeType {
+  if (status.includes('?')) return 'untracked';
+  if (status.includes('R')) return 'renamed';
+  if (status.includes('C')) return 'copied';
+  if (status.includes('A')) return 'added';
+  if (status.includes('D')) return 'deleted';
+  return 'modified';
+}
+
+function parseStatus(output: string): ChangedPath[] {
+  const fields = output.split('\0');
+  const changes: ChangedPath[] = [];
+  for (let index = 0; index < fields.length; index += 1) {
+    const entry = fields[index];
+    if (entry === undefined || entry === '') continue;
+    const status = entry.slice(0, 2);
+    const path = entry.slice(3);
+    const type = changeType(status);
+    if (type === 'renamed' || type === 'copied') {
+      const previousPath = fields[index + 1];
+      if (previousPath !== undefined && previousPath !== '') {
+        if (type === 'renamed') changes.push({ path: previousPath, type: 'deleted' });
+        index += 1;
+      }
+    }
+    changes.push({ path, type });
+  }
+  return changes;
+}
+
+function parseDiff(output: string): ChangedPath[] {
+  const fields = output.split('\0');
+  const changes: ChangedPath[] = [];
+  for (let index = 0; index < fields.length;) {
+    const status = fields[index];
+    if (status === undefined || status === '') break;
+    const type = changeType(status);
+    const firstPath = fields[index + 1];
+    if (firstPath === undefined) break;
+    if (type === 'renamed' || type === 'copied') {
+      const secondPath = fields[index + 2];
+      if (secondPath === undefined) break;
+      if (type === 'renamed') changes.push({ path: firstPath, type: 'deleted' });
+      changes.push({ path: secondPath, type });
+      index += 3;
+    } else {
+      changes.push({ path: firstPath, type });
+      index += 2;
+    }
+  }
+  return changes;
+}
+
+async function gitChanges(repositoryRoot: string, base?: string): Promise<ChangedPath[]> {
+  if (base === undefined) {
+    return parseStatus(
+      await runGit(['status', '--porcelain=v1', '-z', '--untracked-files=all'], repositoryRoot),
+    );
+  }
+  return parseDiff(
+    await runGit(['diff', '--name-status', '-z', `${base}...HEAD`, '--'], repositoryRoot),
+  );
+}
 
 function domainLabel(signal: CheckSignal): string {
   const { anchor } = signal;
@@ -55,13 +138,112 @@ function formatSignals(signals: readonly CheckSignal[]): string {
   return `${sections.join('\n\n')}\n`;
 }
 
+function label(identifier: string): string {
+  return identifier === '' ? '.' : identifier;
+}
+
+const surfaceLabels: Readonly<Record<string, string>> = {
+  'truth-records': '真相记录被触',
+  implementation: '实现文件被触',
+  both: '真相记录与实现文件皆被触',
+  'inbox-only': '仅收件箱活动',
+};
+
+function formatChanges(result: ChangeClassification): string {
+  if (result.ownership.length === 0) return '未发现变更。\n';
+  const touched = new Map(result.touchedDomains.map((domain) => [domain.domainIdentifier, domain]));
+  const suspicions = new Map(
+    result.driftSuspicions.map((suspicion) => [suspicion.domainIdentifier, suspicion]),
+  );
+  const candidates = new Map(
+    result.propagationCandidates.map((candidate) => [candidate.domainIdentifier, candidate]),
+  );
+  const identifiers = new Set([...touched.keys(), ...candidates.keys()]);
+  const sections: string[] = [];
+  for (const identifier of [...identifiers].sort((left, right) => left.localeCompare(right))) {
+    const lines = [`领域 ${label(identifier)}`];
+    const domain = touched.get(identifier);
+    if (domain !== undefined) {
+      lines.push(`  触面：${surfaceLabels[domain.surface]}`);
+      for (const change of domain.changes) lines.push(`  变更：[${change.type}] ${change.path}`);
+      const suspicion = suspicions.get(identifier);
+      if (suspicion !== undefined) {
+        lines.push(`  [drift suspicion | suspicion] ${suspicion.evidence}`);
+      }
+      if (domain.inboxChanges.length > 0) {
+        lines.push(`  收件箱活动：${domain.inboxChanges.map((change) => change.path).join('、')}`);
+      }
+    }
+    const candidate = candidates.get(identifier);
+    if (candidate !== undefined) {
+      for (const reason of candidate.reasons) {
+        lines.push(`  [propagation | candidate] ${reason.evidence}`);
+      }
+    }
+    if (domain !== undefined) {
+      lines.push('  待裁决背景：');
+      if (domain.pendingContext.length === 0) lines.push('    无');
+      for (const context of domain.pendingContext) {
+        for (const entry of context.entries) {
+          lines.push(
+            `    ${label(context.domainIdentifier)} PENDING.md:${entry.line} ${entry.content}`,
+          );
+        }
+      }
+    }
+    sections.push(lines.join('\n'));
+  }
+  const uncovered = result.ownership.filter((item) => item.domainIdentifier === undefined);
+  if (uncovered.length > 0) {
+    sections.push(
+      [
+        '未覆盖',
+        ...uncovered.map((item) => `  变更：[${item.change.type}] ${item.change.path}`),
+      ].join('\n'),
+    );
+  }
+  return `${sections.join('\n\n')}\n`;
+}
+
+async function runChanges(base: string | undefined, io: CliIO, cwd: string): Promise<number> {
+  const repositoryRoot = resolve(cwd);
+  try {
+    const changes = await gitChanges(repositoryRoot, base);
+    const discovery = await discoverDomains(repositoryRoot);
+    const contents = await Promise.all(
+      discovery.domains.map((domain) => extractDomainContent(repositoryRoot, domain)),
+    );
+    const pendingEntries = Object.fromEntries(
+      contents.flatMap(({ domain, files }) =>
+        domain.identifier === undefined
+          ? []
+          : [[domain.identifier, files['PENDING.md']?.entries ?? []] as const],
+      ),
+    );
+    io.stdout(formatChanges(classifyChanges(discovery, changes, pendingEntries)));
+    return 0;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    io.stderr(`pta changes 失败：${message}\n`);
+    return 2;
+  }
+}
+
 export async function runCli(
   args: readonly string[],
   io: CliIO = processIO,
   cwd = process.cwd(),
 ): Promise<number> {
+  if (args[0] === 'changes') {
+    if (args.length > 2 || args[1]?.startsWith('-') === true) {
+      io.stderr('用法：pta changes [base]\n');
+      return 2;
+    }
+    return runChanges(args[1], io, cwd);
+  }
+
   if (args[0] !== 'check' || args.length > 2) {
-    io.stderr('用法：pta check [仓库根]\n');
+    io.stderr('用法：pta check [仓库根]\n       pta changes [base]\n');
     return 2;
   }
 

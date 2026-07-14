@@ -7,7 +7,7 @@ import {
   type ContentFileName,
   type ExtractedContent,
 } from './entries.ts';
-import { splitFrontmatter, type Frontmatter } from './frontmatter.ts';
+import { splitFrontmatter, type DomainDependency, type Frontmatter } from './frontmatter.ts';
 import { isDomainPath } from './identity.ts';
 
 export type DomainProblemCode =
@@ -35,6 +35,7 @@ export type Domain = Readonly<{
   claimedPath?: string;
   filesPresent: boolean;
   files?: readonly string[];
+  dependsOn: readonly DomainDependency[];
   parentIdentifier?: string;
   frontmatter: Frontmatter;
   problems: readonly DomainProblem[];
@@ -187,6 +188,7 @@ async function directoryDeclarations(
         identifier: directory,
         claimedPath: directory,
         filesPresent: false,
+        dependsOn: frontmatter.dependsOn ?? [],
         frontmatter,
         problems,
       });
@@ -274,6 +276,7 @@ async function externalDeclarations(
         ...(claimedPath === undefined ? {} : { claimedPath }),
         filesPresent: frontmatter.filesPresent,
         ...(frontmatter.files === undefined ? {} : { files: frontmatter.files }),
+        dependsOn: frontmatter.dependsOn ?? [],
         frontmatter,
         problems,
       });

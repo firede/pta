@@ -26,6 +26,7 @@ function directoryDomain(
       identifier,
       claimedPath: identifier,
       filesPresent: false,
+      dependsOn: frontmatter.dependsOn ?? [],
       frontmatter,
       problems: [],
     },
@@ -57,6 +58,7 @@ function externalDomain(
     claimedPath,
     filesPresent: files !== undefined,
     ...(files === undefined ? {} : { files }),
+    dependsOn: frontmatter.dependsOn ?? [],
     frontmatter,
     problems: [],
   };
