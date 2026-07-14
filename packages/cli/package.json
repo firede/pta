@@ -1,0 +1,22 @@
+{
+  "name": "@pta/cli",
+  "version": "0.0.0",
+  "private": true,
+  "bin": {
+    "pta": "./src/main.ts"
+  },
+  "type": "module",
+  "scripts": {
+    "check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@pta/core": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^24.10.1",
+    "typescript": "^7.0.2"
+  },
+  "engines": {
+    "node": ">=24"
+  }
+}
