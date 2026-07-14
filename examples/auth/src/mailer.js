@@ -74,11 +74,14 @@ export function createMailer(config, connect = net.createConnection) {
   const sockets = new Set();
 
   async function sendCode({ email, code, expiresInMinutes, subject, purpose }) {
-    const session = smtpSession({
-      host: config.smtpHost,
-      port: config.smtpPort,
-      timeoutMs: config.smtpTimeoutMs ?? 10 * 1000
-    }, connect);
+    const session = smtpSession(
+      {
+        host: config.smtpHost,
+        port: config.smtpPort,
+        timeoutMs: config.smtpTimeoutMs ?? 10 * 1000,
+      },
+      connect,
+    );
     sockets.add(session.socket);
     session.socket.once('close', () => sockets.delete(session.socket));
     const text = `Your ${purpose} code is ${code}. It expires in ${expiresInMinutes} minutes.`;
@@ -91,8 +94,10 @@ export function createMailer(config, connect = net.createConnection) {
       'MIME-Version: 1.0',
       'Content-Type: text/plain; charset=utf-8',
       '',
-      text
-    ].join('\r\n').replace(/^\./gm, '..');
+      text,
+    ]
+      .join('\r\n')
+      .replace(/^\./gm, '..');
 
     try {
       await session.expect(220);
@@ -112,18 +117,18 @@ export function createMailer(config, connect = net.createConnection) {
       return sendCode({
         ...message,
         subject: 'Your login code',
-        purpose: 'login'
+        purpose: 'login',
       });
     },
     sendEmailChangeCode(message) {
       return sendCode({
         ...message,
         subject: 'Confirm your new email address',
-        purpose: 'email change'
+        purpose: 'email change',
       });
     },
     close() {
       for (const socket of sockets) socket.destroy();
-    }
+    },
   };
 }

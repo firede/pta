@@ -34,7 +34,7 @@ export function buildApp(options = {}) {
         return response(
           429,
           { error: 'rate_limited', message: 'Too many login codes have been requested.' },
-          { 'retry-after': String(Math.ceil(result.retryAfterMs / 1000)) }
+          { 'retry-after': String(Math.ceil(result.retryAfterMs / 1000)) },
         );
       }
       return response(202, { challengeId: result.challengeId });
@@ -42,14 +42,17 @@ export function buildApp(options = {}) {
     if (method === 'POST' && url === '/auth/session') {
       const result = service.verifyCode(body?.challengeId, body?.code);
       if (result.kind !== 'authenticated') {
-        return response(401, { error: 'invalid_code', message: 'The login code is invalid or expired.' });
+        return response(401, {
+          error: 'invalid_code',
+          message: 'The login code is invalid or expired.',
+        });
       }
       return response(201, {
         token: result.token,
         tokenType: 'Bearer',
         expiresAt: new Date(result.session.expiresAt).toISOString(),
         account: result.account,
-        session: { id: result.session.id }
+        session: { id: result.session.id },
       });
     }
     if (method === 'POST' && url === '/auth/email/code') {
@@ -67,17 +70,13 @@ export function buildApp(options = {}) {
         return response(
           429,
           { error: 'rate_limited', message: 'Too many verification codes have been requested.' },
-          { 'retry-after': String(Math.ceil(result.retryAfterMs / 1000)) }
+          { 'retry-after': String(Math.ceil(result.retryAfterMs / 1000)) },
         );
       }
       return response(202, { challengeId: result.challengeId });
     }
     if (method === 'PUT' && url === '/auth/email') {
-      const result = service.verifyEmailChange(
-        bearerToken(request),
-        body?.challengeId,
-        body?.code
-      );
+      const result = service.verifyEmailChange(bearerToken(request), body?.challengeId, body?.code);
       if (result.kind === 'unauthorized') {
         return response(401, { error: 'unauthorized', message: 'A valid session is required.' });
       }
@@ -87,7 +86,7 @@ export function buildApp(options = {}) {
       if (result.kind !== 'email-changed') {
         return response(401, {
           error: 'invalid_code',
-          message: 'The email verification code is invalid or expired.'
+          message: 'The email verification code is invalid or expired.',
         });
       }
       return response(200, { account: result.account });
@@ -102,8 +101,8 @@ export function buildApp(options = {}) {
         session: {
           id: authenticated.session.id,
           createdAt: new Date(authenticated.session.createdAt).toISOString(),
-          expiresAt: new Date(authenticated.session.expiresAt).toISOString()
-        }
+          expiresAt: new Date(authenticated.session.expiresAt).toISOString(),
+        },
       });
     }
     if (method === 'GET' && url === '/auth/sessions') {
@@ -116,15 +115,12 @@ export function buildApp(options = {}) {
           id: session.id,
           createdAt: new Date(session.createdAt).toISOString(),
           expiresAt: new Date(session.expiresAt).toISOString(),
-          current: session.current
-        }))
+          current: session.current,
+        })),
       });
     }
     if (method === 'DELETE' && remoteSessionMatch) {
-      const result = service.revokeSessionById(
-        bearerToken(request),
-        remoteSessionMatch[1]
-      );
+      const result = service.revokeSessionById(bearerToken(request), remoteSessionMatch[1]);
       if (result.kind === 'unauthorized') {
         return response(401, { error: 'unauthorized', message: 'A valid session is required.' });
       }
@@ -149,10 +145,13 @@ export function buildApp(options = {}) {
     return {
       statusCode,
       body,
-      headers: payload === undefined
-        ? extraHeaders
-        : { 'content-type': 'application/json; charset=utf-8', ...extraHeaders },
-      json() { return JSON.parse(body); }
+      headers:
+        payload === undefined
+          ? extraHeaders
+          : { 'content-type': 'application/json; charset=utf-8', ...extraHeaders },
+      json() {
+        return JSON.parse(body);
+      },
     };
   }
 
@@ -175,7 +174,7 @@ export function buildApp(options = {}) {
         method: request.method,
         url: new URL(request.url, 'http://localhost').pathname,
         headers: request.headers,
-        body
+        body,
       });
       reply.writeHead(result.statusCode, result.headers);
       reply.end(result.body);
@@ -184,17 +183,19 @@ export function buildApp(options = {}) {
       const status = invalidJson ? 400 : 500;
       if (!invalidJson && options.logger) console.error(error);
       reply.writeHead(status, { 'content-type': 'application/json; charset=utf-8' });
-      reply.end(JSON.stringify({
-        error: invalidJson ? 'invalid_json' : 'internal_error',
-        message: invalidJson ? 'Request body must be valid JSON.' : 'An internal error occurred.'
-      }));
+      reply.end(
+        JSON.stringify({
+          error: invalidJson ? 'invalid_json' : 'internal_error',
+          message: invalidJson ? 'Request body must be valid JSON.' : 'An internal error occurred.',
+        }),
+      );
     }
   }
 
   return {
     async inject({ method = 'GET', url, headers = {}, payload }) {
       const normalizedHeaders = Object.fromEntries(
-        Object.entries(headers).map(([key, value]) => [key.toLowerCase(), value])
+        Object.entries(headers).map(([key, value]) => [key.toLowerCase(), value]),
       );
       return dispatch({ method, url, headers: normalizedHeaders, body: payload });
     },
@@ -211,13 +212,17 @@ export function buildApp(options = {}) {
       return server.address();
     },
     handle: nodeHandler,
-    address() { return server?.address(); },
+    address() {
+      return server?.address();
+    },
     async close() {
       if (server?.listening) {
-        await new Promise((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
+        await new Promise((resolve, reject) =>
+          server.close((error) => (error ? reject(error) : resolve())),
+        );
       }
       mailer.close?.();
       db.close();
-    }
+    },
   };
 }

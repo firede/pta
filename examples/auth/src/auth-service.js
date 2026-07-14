@@ -19,10 +19,9 @@ function hashOtp(secret, challengeId, code) {
 function generateOtp() {
   let code;
   do {
-    code = Array.from(
-      { length: 6 },
-      () => OTP_ALPHABET[randomInt(0, OTP_ALPHABET.length)]
-    ).join('');
+    code = Array.from({ length: 6 }, () => OTP_ALPHABET[randomInt(0, OTP_ALPHABET.length)]).join(
+      '',
+    );
   } while (!OTP_PATTERN.test(code));
   return code;
 }
@@ -144,7 +143,7 @@ export function createAuthService({ db, mailer, config, now = () => Date.now() }
     if (!row) return null;
     return {
       account: { id: row.account_id, email: row.email },
-      session: { id: row.session_id, createdAt: row.created_at, expiresAt: row.expires_at }
+      session: { id: row.session_id, createdAt: row.created_at, expiresAt: row.expires_at },
     };
   }
 
@@ -171,14 +170,14 @@ export function createAuthService({ db, mailer, config, now = () => Date.now() }
         email,
         hashOtp(config.authSecret, challengeId, code),
         timestamp,
-        timestamp + config.otpTtlMs
+        timestamp + config.otpTtlMs,
       );
 
       try {
         await mailer.sendLoginCode({
           email,
           code,
-          expiresInMinutes: Math.ceil(config.otpTtlMs / 60_000)
+          expiresInMinutes: Math.ceil(config.otpTtlMs / 60_000),
         });
         consumePreviousChallenges.run(now(), email, challengeId);
       } catch (error) {
@@ -198,8 +197,12 @@ export function createAuthService({ db, mailer, config, now = () => Date.now() }
       return transaction(db, () => {
         const timestamp = now();
         const challenge = findChallenge.get(challengeId);
-        if (!challenge || challenge.consumed_at !== null || challenge.expires_at <= timestamp ||
-            challenge.failed_attempts >= config.otpMaxAttempts) {
+        if (
+          !challenge ||
+          challenge.consumed_at !== null ||
+          challenge.expires_at <= timestamp ||
+          challenge.failed_attempts >= config.otpMaxAttempts
+        ) {
           return { kind: 'invalid-code' };
         }
 
@@ -220,14 +223,20 @@ export function createAuthService({ db, mailer, config, now = () => Date.now() }
         const session = {
           id: randomUUID(),
           createdAt: timestamp,
-          expiresAt: timestamp + config.sessionTtlMs
+          expiresAt: timestamp + config.sessionTtlMs,
         };
-        insertSession.run(session.id, account.id, hashToken(token), session.createdAt, session.expiresAt);
+        insertSession.run(
+          session.id,
+          account.id,
+          hashToken(token),
+          session.createdAt,
+          session.expiresAt,
+        );
         return {
           kind: 'authenticated',
           token,
           account: { id: account.id, email: account.email },
-          session
+          session,
         };
       });
     },
@@ -250,7 +259,7 @@ export function createAuthService({ db, mailer, config, now = () => Date.now() }
       const recent = findRecentEmailChange.get(
         authenticated.account.id,
         email,
-        timestamp - config.otpCooldownMs
+        timestamp - config.otpCooldownMs,
       );
       if (recent) return { kind: 'accepted', challengeId: recent.id, sent: false };
 
@@ -266,14 +275,14 @@ export function createAuthService({ db, mailer, config, now = () => Date.now() }
         email,
         hashOtp(config.authSecret, challengeId, code),
         timestamp,
-        timestamp + config.otpTtlMs
+        timestamp + config.otpTtlMs,
       );
 
       try {
         await mailer.sendEmailChangeCode({
           email,
           code,
-          expiresInMinutes: Math.ceil(config.otpTtlMs / 60_000)
+          expiresInMinutes: Math.ceil(config.otpTtlMs / 60_000),
         });
         consumePreviousEmailChanges.run(now(), authenticated.account.id, challengeId);
       } catch (error) {
@@ -293,9 +302,13 @@ export function createAuthService({ db, mailer, config, now = () => Date.now() }
       return transaction(db, () => {
         const timestamp = now();
         const challenge = findEmailChange.get(challengeId);
-        if (!challenge || challenge.account_id !== authenticated.account.id ||
-            challenge.consumed_at !== null || challenge.expires_at <= timestamp ||
-            challenge.failed_attempts >= config.otpMaxAttempts) {
+        if (
+          !challenge ||
+          challenge.account_id !== authenticated.account.id ||
+          challenge.consumed_at !== null ||
+          challenge.expires_at <= timestamp ||
+          challenge.failed_attempts >= config.otpMaxAttempts
+        ) {
           return { kind: 'invalid-code' };
         }
 
@@ -317,7 +330,7 @@ export function createAuthService({ db, mailer, config, now = () => Date.now() }
         consumeLoginChallengesForEmails.run(timestamp, account.email, challenge.email);
         return {
           kind: 'email-changed',
-          account: { id: account.id, email: challenge.email }
+          account: { id: account.id, email: challenge.email },
         };
       });
     },
@@ -329,7 +342,7 @@ export function createAuthService({ db, mailer, config, now = () => Date.now() }
         id: row.id,
         createdAt: row.created_at,
         expiresAt: row.expires_at,
-        current: row.id === authenticated.session.id
+        current: row.id === authenticated.session.id,
       }));
     },
 
@@ -340,12 +353,9 @@ export function createAuthService({ db, mailer, config, now = () => Date.now() }
         return { kind: 'not-found' };
       }
       const timestamp = now();
-      const revoked = revokeAccountSession.run(
-        timestamp,
-        sessionId,
-        authenticated.account.id,
-        timestamp
-      ).changes === 1;
+      const revoked =
+        revokeAccountSession.run(timestamp, sessionId, authenticated.account.id, timestamp)
+          .changes === 1;
       return { kind: revoked ? 'revoked' : 'not-found' };
     },
 
@@ -353,6 +363,6 @@ export function createAuthService({ db, mailer, config, now = () => Date.now() }
       if (typeof token !== 'string' || token.length < 20) return false;
       const timestamp = now();
       return revokeSession.run(timestamp, hashToken(token), timestamp).changes === 1;
-    }
+    },
   };
 }
