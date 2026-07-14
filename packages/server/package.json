@@ -1,19 +1,17 @@
 {
-  "name": "@pta/cli",
+  "name": "@pta/server",
   "version": "0.0.0",
   "private": true,
-  "bin": {
-    "pta": "./src/main.ts"
-  },
   "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
   "scripts": {
     "test": "node --test 'test/**/*.test.ts'",
     "check": "tsc --noEmit"
   },
   "dependencies": {
-    "@pta/core": "workspace:*",
-    "@pta/server": "workspace:*",
-    "smol-toml": "^1.7.0"
+    "@pta/web": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^24.10.1",

@@ -1,0 +1,130 @@
+import assert from 'node:assert/strict';
+import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { test } from 'node:test';
+
+import { buildAgentInvocation, runAgentTask } from '../src/agents.ts';
+import { defaultDaemonPort, loadGlobalConfig } from '../src/config.ts';
+import { readDerivation, writeDerivation } from '../src/derivations.ts';
+import { appendLogRecord, readLogRecords } from '../src/log.ts';
+import { resolveGlobalPaths, type GlobalPaths } from '../src/paths.ts';
+
+async function temporaryPaths(): Promise<{ paths: GlobalPaths; cleanup: () => Promise<void> }> {
+  const root = await mkdtemp(join(tmpdir(), 'pta-mgmt-'));
+  return {
+    paths: {
+      configDir: join(root, 'config', 'pta'),
+      cacheDir: join(root, 'cache', 'pta'),
+      stateDir: join(root, 'state', 'pta'),
+    },
+    cleanup: () => rm(root, { recursive: true, force: true }),
+  };
+}
+
+test('resolveGlobalPaths 按 XDG 变量解析并回退 HOME 约定', () => {
+  const fallback = resolveGlobalPaths({ HOME: '/home/u' });
+  assert.equal(fallback.configDir, '/home/u/.config/pta');
+  assert.equal(fallback.cacheDir, '/home/u/.cache/pta');
+  assert.equal(fallback.stateDir, '/home/u/.local/state/pta');
+
+  const explicit = resolveGlobalPaths({ HOME: '/home/u', XDG_CACHE_HOME: '/tmp/xdg-cache' });
+  assert.equal(explicit.cacheDir, '/tmp/xdg-cache/pta');
+});
+
+test('loadGlobalConfig 缺省回退、解析 agents 并报告问题', async (context) => {
+  const { paths, cleanup } = await temporaryPaths();
+  context.after(cleanup);
+
+  const missing = await loadGlobalConfig(paths);
+  assert.equal(missing.exists, false);
+  assert.equal(missing.daemonPort, defaultDaemonPort);
+
+  await mkdir(paths.configDir, { recursive: true });
+  await writeFile(
+    join(paths.configDir, 'config.toml'),
+    '[daemon]\nport = 8899\n\n[agents.default]\ncommand = ["node", "-e", "{prompt}"]\n\n[agents.bad]\ncommand = "not-array"\n',
+  );
+  const loaded = await loadGlobalConfig(paths);
+  assert.equal(loaded.daemonPort, 8899);
+  assert.deepEqual(loaded.agents['default']?.command, ['node', '-e', '{prompt}']);
+  assert.equal(loaded.agents['default']?.timeoutSeconds, 300);
+  assert.equal(loaded.agents['bad'], undefined);
+  assert.match(loaded.problems.join(''), /agents\.bad\.command/u);
+
+  await writeFile(join(paths.configDir, 'config.toml'), '[broken\n');
+  const broken = await loadGlobalConfig(paths);
+  assert.match(broken.problems.join(''), /无法按 TOML 1\.0 解析/u);
+});
+
+test('appendLogRecord 与 readLogRecords 往返并按时间合并', async (context) => {
+  const { paths, cleanup } = await temporaryPaths();
+  context.after(cleanup);
+
+  await appendLogRecord(paths, 'cli', 'pending-add', { id: 'abc' });
+  await appendLogRecord(paths, 'daemon', 'daemon-start', { port: 1 });
+  await appendLogRecord(paths, 'cli', 'pending-remove');
+
+  const records = await readLogRecords(paths, 10);
+  assert.equal(records.length, 3);
+  assert.deepEqual(records.map((record) => record.event).toSorted(), [
+    'daemon-start',
+    'pending-add',
+    'pending-remove',
+  ]);
+  const limited = await readLogRecords(paths, 2);
+  assert.equal(limited.length, 2);
+});
+
+test('buildAgentInvocation 有占位则替换，无占位走标准输入', () => {
+  const substituted = buildAgentInvocation(
+    { command: ['codex', 'exec', '{prompt}'], timeoutSeconds: 300 },
+    '问题',
+  );
+  assert.deepEqual(substituted.args, ['exec', '问题']);
+  assert.equal(substituted.stdin, undefined);
+
+  const piped = buildAgentInvocation({ command: ['some-agent'], timeoutSeconds: 300 }, '问题');
+  assert.deepEqual(piped.args, []);
+  assert.equal(piped.stdin, '问题');
+});
+
+test('runAgentTask 捕获标准输出与失败', async () => {
+  const echo = await runAgentTask(
+    {
+      command: ['node', '-e', 'process.stdin.pipe(process.stdout)'],
+      timeoutSeconds: 30,
+    },
+    '你好',
+    process.cwd(),
+  );
+  assert.equal(echo.ok, true);
+  assert.equal(echo.output, '你好');
+
+  const failed = await runAgentTask(
+    { command: ['node', '-e', 'console.error("坏了"); process.exit(3)'], timeoutSeconds: 30 },
+    '无',
+    process.cwd(),
+  );
+  assert.equal(failed.ok, false);
+  assert.match(failed.error ?? '', /坏了/u);
+});
+
+test('writeDerivation 与 readDerivation 往返，身份不符返回未定义', async (context) => {
+  const { paths, cleanup } = await temporaryPaths();
+  context.after(cleanup);
+  const hash = 'a'.repeat(64);
+
+  assert.equal(await readDerivation(paths, hash), undefined);
+  await writeDerivation(paths, {
+    contentHash: hash,
+    kind: 'review-clue',
+    type: 'date',
+    due: '2030-01',
+    registeredAt: '2026-07-15T00:00:00.000Z',
+    registeredBy: 'cli',
+  });
+  const loaded = await readDerivation(paths, hash);
+  assert.equal(loaded?.type, 'date');
+  assert.equal(loaded?.due, '2030-01');
+});
