@@ -3,6 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "pta": "node packages/cli/src/main.ts",
     "check": "pnpm run format:check && pnpm run lint && pnpm -r check",
     "ci": "pnpm run check && pnpm -r build",
     "format": "oxfmt --write",
