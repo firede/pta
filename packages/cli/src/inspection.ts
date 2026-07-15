@@ -366,7 +366,7 @@ export type InspectionReport = Readonly<{
 }>;
 
 export function reportFilePath(paths: GlobalPaths, identity: string): string {
-  return join(paths.stateDir, 'reports', `${sha256(identity)}.json`);
+  return join(paths.cacheDir, 'reports', `${sha256(identity)}.json`);
 }
 
 export async function writeInspectionReport(
@@ -379,7 +379,7 @@ export async function writeInspectionReport(
 }
 
 export async function readInspectionReports(paths: GlobalPaths): Promise<InspectionReport[]> {
-  const dir = join(paths.stateDir, 'reports');
+  const dir = join(paths.cacheDir, 'reports');
   let names: string[];
   try {
     names = await readdir(dir);
