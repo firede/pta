@@ -2,6 +2,7 @@
 import DefaultMarkdownContent from '@astrojs/starlight/components/MarkdownContent.astro';
 
 import ArgumentDependencies from '@/components/docs/ArgumentDependencies.astro';
+import GlossaryPopover from '@/components/docs/GlossaryPopover.astro';
 
 const dependsOn = Astro.locals.starlightRoute.entry.data.dependsOn ?? [];
 ---
@@ -9,4 +10,5 @@ const dependsOn = Astro.locals.starlightRoute.entry.data.dependsOn ?? [];
 <DefaultMarkdownContent>
   <slot />
   <ArgumentDependencies ids={dependsOn} />
+  <GlossaryPopover />
 </DefaultMarkdownContent>

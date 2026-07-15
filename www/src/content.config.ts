@@ -19,6 +19,7 @@ export const collections = {
     schema: i18nSchema({
       extend: z.object({
         'argumentDependencies.title': z.string(),
+        'glossary.viewEntry': z.string(),
         'sectionNav.accessibleLabel': z.string(),
       }),
     }),

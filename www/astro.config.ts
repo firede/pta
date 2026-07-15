@@ -8,6 +8,7 @@ import tailwindcss from '@tailwindcss/vite';
 import { argumentIds } from './src/data/arguments';
 import { specificationIds } from './src/data/specifications';
 import { getRootMessage, getStarlightTranslations, starlightI18n } from './src/lib/i18n';
+import { rehypeGlossaryTerms } from './src/lib/markdown/glossary-terms';
 import { rehypeStrongSubheading } from './src/lib/markdown/strong-subheading';
 
 // https://astro.build/config
@@ -16,7 +17,7 @@ export default defineConfig({
 
   markdown: {
     processor: unified({
-      rehypePlugins: [rehypeStrongSubheading],
+      rehypePlugins: [rehypeStrongSubheading, rehypeGlossaryTerms],
     }),
   },
 
