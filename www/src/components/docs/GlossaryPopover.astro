@@ -20,6 +20,8 @@ const glossaryHref = getDocsEntryHref(glossaryDocId, locale);
 <script>
   const OPEN_DELAY = 150;
   const CLOSE_DELAY = 250;
+  /** 触发术语视觉边缘到弹层的间距。 */
+  const GAP = 8;
 
   interface TermEntry {
     slug: string;
@@ -147,7 +149,7 @@ const glossaryHref = getDocsEntryHref(glossaryDocId, locale);
     button.insertAdjacentElement('afterend', popover);
     popover.hidden = false;
     popover.classList.remove('is-open');
-    position(button.getBoundingClientRect());
+    position(button);
     requestAnimationFrame(() => popover?.classList.add('is-open'));
   }
 
@@ -170,13 +172,14 @@ const glossaryHref = getDocsEntryHref(glossaryDocId, locale);
       close();
       return;
     }
-    position(rect);
+    position(activeButton);
   }
 
-  function position(rect: DOMRect) {
+  function position(button: HTMLButtonElement) {
     if (!popover) return;
     const margin = 12;
-    const gap = 10;
+    const rect = button.getBoundingClientRect();
+    const edges = visualEdges(button);
     const width = popover.offsetWidth;
     const height = popover.offsetHeight;
 
@@ -184,13 +187,48 @@ const glossaryHref = getDocsEntryHref(glossaryDocId, locale);
       Math.max(rect.left + rect.width / 2 - width / 2, margin),
       Math.max(window.innerWidth - margin - width, margin),
     );
-    let top = rect.bottom + gap;
-    if (top + height > window.innerHeight - margin && rect.top - gap - height >= margin) {
-      top = rect.top - gap - height;
+    let top = edges.bottom + GAP;
+    if (top + height > window.innerHeight - margin && edges.top - GAP - height >= margin) {
+      top = edges.top - GAP - height;
     }
 
     popover.style.left = `${Math.round(left)}px`;
     popover.style.top = `${Math.round(top)}px`;
+  }
+
+  let metricsCanvas: HTMLCanvasElement | null = null;
+
+  /**
+   * 触发术语的视觉上下边缘：上沿取字形墨迹顶，下沿取墨迹底与点线下划线的较大者。
+   * 行盒矩形含行距留白且上下不对称，直接用它定位会让两个方向的间距不等。
+   */
+  function visualEdges(button: HTMLButtonElement) {
+    const range = document.createRange();
+    range.selectNodeContents(button);
+    const textRect = range.getBoundingClientRect();
+
+    const context = (metricsCanvas ??= document.createElement('canvas')).getContext('2d');
+    if (!context) return { top: textRect.top, bottom: textRect.bottom };
+
+    const style = getComputedStyle(button);
+    context.font = `${style.fontStyle} ${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
+    const metrics = context.measureText(button.textContent ?? '');
+    if (metrics.fontBoundingBoxAscent === undefined) {
+      return { top: textRect.top, bottom: textRect.bottom };
+    }
+
+    const fontSize = parseFloat(style.fontSize) || 16;
+    const baseline = textRect.top + metrics.fontBoundingBoxAscent;
+    const underlineOffset = parseFloat(style.textUnderlineOffset) || 0.28 * fontSize;
+    const underlineThickness = parseFloat(style.textDecorationThickness) || 1;
+
+    return {
+      top: baseline - metrics.actualBoundingBoxAscent,
+      bottom: Math.max(
+        baseline + metrics.actualBoundingBoxDescent,
+        baseline + underlineOffset + underlineThickness,
+      ),
+    };
   }
 
   function setText(selector: string, value: string) {
@@ -233,6 +271,9 @@ const glossaryHref = getDocsEntryHref(glossaryDocId, locale);
   .glossary-popover {
     position: fixed;
     z-index: 50;
+    /* 归零外边距：挪入 .sl-markdown-content 后会命中 Starlight 的兄弟元素 margin 规则，
+       fixed 定位下 margin-top 会叠加到 top 上，导致两个展开方向的间距不对称。 */
+    margin: 0;
     max-width: min(22rem, calc(100vw - 1.5rem));
     padding: 0.8rem 1rem 0.7rem;
     background: var(--color-popover);
