@@ -5,7 +5,7 @@ dependsOn:
   - argument/project-truth-freshness-governance
   - argument/project-truth-by-domain
   - argument/derivable-content-in-tool-layer
-sourceHash: 5506f10c3f54dac69e54557a8804a837acba232c1b7a39176602f2b8465186e2
+sourceHash: f2e2786b44295e37e2c02f54f31d60d2e967bd829eb2e1c4100de52470df1906
 ---
 
 Governance defines the operating loop of freshness checks: how deviation becomes a signal, at which points signals are consumed, and how adjudication lands back on the records.
@@ -41,7 +41,7 @@ Discovery is decoupled from repair: submitting a signal does not require the dis
 The category list is open: as machine detection expands, new categories join under the qualifications above. The signals already minted by the specifications fall into seven categories:
 
 - **Conflict**: two declarations make mutually exclusive claims, and both holding at once violates the uniqueness constraints of the domain declaration or content structure specification. Machine-decidable.
-- **Violation**: content appears where the content structure specification forbids it. Machine-decidable.
+- **Violation**: a single piece of content on its own violates a constraint of its governing specification — appearing in a forbidden position, taking an undefined form, or referencing a nonexistent target. Machine-decidable.
 - **Term inconsistency**: a lower-level glossary's conflicting redefinition of a higher-level term, or body wording deviating from the glossary — confusable words are derived by tooling from term names and definitions. The suspicion is produced by machine comparison; whether it holds requires human adjudication.
 - **Drift suspicion**: a change touches a domain's implementation without touching its truth records, or changes only records without touching the implementation; also suspected contradictions between records and what is actually followed, found by inspection. Whether it holds requires human adjudication.
 - **Omission suspicion**: a choice hit in the course of work that the truth records have not pinned, that reasonable practice cannot settle uniquely, and that the project may care about. It points to a gap in the records rather than a deviation of an existing record; its evidence lives at the site of discovery and cannot be re-derived outside the loop, so it is carried by pending entries in `PENDING.md`, persisted with the repository — the entry is the signal, and also the anchor for adjudication and the cache. Whether the judgment is admitted into truth requires human adjudication.

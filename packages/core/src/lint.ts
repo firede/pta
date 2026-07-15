@@ -4,12 +4,7 @@ import type { DiscoveryResult, Domain, DomainContent } from './domains.ts';
 import type { ExtractedContent, ExtractedEntry, FileKind } from './entries.ts';
 import { normalizeEntryContent } from './identity.ts';
 
-export type CheckSignalCategory =
-  | 'conflict'
-  | 'violation'
-  | 'term inconsistency'
-  | 'missing dependency'
-  | 'expiry';
+export type CheckSignalCategory = 'conflict' | 'violation' | 'term inconsistency' | 'expiry';
 export type CheckSignalStatus = 'machine-decidable' | 'suspicion';
 export type CheckSignalSource = 'structural-check';
 
@@ -405,8 +400,7 @@ function missingDependencyTargets(contents: readonly DomainContent[]): CheckSign
       if (identifiers.has(dependency.path)) continue;
       signals.push(
         signal({
-          category: 'missing dependency',
-          status: 'suspicion',
+          category: 'violation',
           anchor: declarationAnchor(domain),
           message: `dependsOn 指向的「${dependency.path}」不是任何领域的标识；目标可能已迁移、更名或声明有误。`,
           file: domain.declarationPath,

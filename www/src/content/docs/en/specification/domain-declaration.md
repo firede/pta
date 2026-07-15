@@ -7,7 +7,7 @@ dependsOn:
   - argument/project-truth-freshness-governance
   - argument/history-still-in-effect
   - argument/material-temporal-claim
-sourceHash: 8c35d75e312d5762c8f225d8362d4f348644cfbd76335875c167ccc569e9e1fd
+sourceHash: 41eadd6368c3eaa4ef0d337732dff05d5d658dbd27c927adcc1efabe8618597f
 ---
 
 Domain declaration defines how domains are delimited, marked, and connected in the repository.
@@ -39,6 +39,8 @@ dependsOn:
 Frontmatter syntax follows YAML 1.2; the shape of each field is defined by the corresponding section of this specification, and unrecognized fields **should** be ignored. Frontmatter that cannot be parsed as YAML 1.2 constitutes a check signal.
 
 **`dependsOn` (optional)** declares record dependencies that cannot be derived from existing structure: this domain's truth records depend on the content of the referenced domain, and when that domain changes, this domain becomes a check candidate. Each item contains `path` and `reason`, stating from this domain's perspective what it depends on.
+
+Each item's `path` **must** be the identifier of a domain in the repository; a dependency pointing to a nonexistent domain constitutes a violation: a dependency's entire purpose is to send this domain into check candidacy when the other domain changes, and a dangling target silently breaks that propagation.
 
 Dependencies are directional and **must** be declared on the affected side; reverse relationships (who depends on this domain) are derived by tooling scanning all domain declarations, and **must not** be mirrored on the depended-upon side. When an undeclared dependency is discovered, whoever the discoverer is, the declaration is added to the affected domain.
 

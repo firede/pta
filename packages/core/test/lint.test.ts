@@ -202,14 +202,14 @@ test('下级同名术语定义不同只产生嫌疑，相同定义不产生', ()
   );
 });
 
-test('dependsOn 指向存在领域不产生信号，悬空目标产生嫌疑', () => {
+test('dependsOn 指向存在领域不产生信号，悬空目标构成违例', () => {
   const provider = directoryDomain('provider');
   const valid = directoryDomain(
     'consumer',
     '---\ndependsOn:\n  - path: provider\n    reason: 引用对方口径\n---\n- 判断',
   );
   assert.deepEqual(
-    lintDomainContents([valid, provider]).filter((item) => item.category === 'missing dependency'),
+    lintDomainContents([valid, provider]).filter((item) => item.category === 'violation'),
     [],
   );
 
@@ -218,11 +218,11 @@ test('dependsOn 指向存在领域不产生信号，悬空目标产生嫌疑', (
     '---\ndependsOn:\n  - path: ghost\n    reason: 目标已不存在\n---\n- 判断',
   );
   const signals = lintDomainContents([dangling, provider]).filter(
-    (item) => item.category === 'missing dependency',
+    (item) => item.category === 'violation',
   );
   assert.equal(signals.length, 1);
   const found = signals[0] as CheckSignal;
-  assert.equal(found.status, 'suspicion');
+  assert.equal(found.status, 'machine-decidable');
   assert.match(found.evidence.message, /「ghost」不是任何领域的标识/u);
   assert.equal(found.evidence.file, 'consumer/TRUTH.md');
   assert.equal(found.evidence.line, 2);
