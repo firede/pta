@@ -196,7 +196,7 @@
     font-family: var(--font-heading);
   }
 
-  :where(.sl-markdown-content p:has(> strong:only-child)) {
+  :where(.sl-markdown-content p[data-subheading]) {
     font-family: var(--font-heading);
   }
 
@@ -289,11 +289,11 @@ main [data-page-title] {
   margin-block-start: 2.1em;
 }
 
-.sl-markdown-content p:has(> strong:only-child):not(:where(.not-content *)) {
+.sl-markdown-content p[data-subheading]:not(:where(.not-content *)) {
   margin-block-start: 2em;
 }
 
-.sl-markdown-content p:has(> strong:only-child) strong {
+.sl-markdown-content p[data-subheading] strong {
   font-weight: 600;
 }
 

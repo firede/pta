@@ -7,10 +7,15 @@ import tailwindcss from '@tailwindcss/vite';
 import { argumentIds } from './src/data/arguments';
 import { specificationIds } from './src/data/specifications';
 import { getRootMessage, getStarlightTranslations, starlightI18n } from './src/lib/i18n';
+import { rehypeStrongSubheading } from './src/lib/markdown/strong-subheading';
 
 // https://astro.build/config
 export default defineConfig({
   site: 'https://pta.pub',
+
+  markdown: {
+    rehypePlugins: [rehypeStrongSubheading],
+  },
 
   integrations: [
     starlight({
