@@ -23,29 +23,13 @@ export default defineConfig({
       components: {
         MarkdownContent: './src/components/starlight/MarkdownContent.astro',
         Pagination: './src/components/starlight/Pagination.astro',
+        Sidebar: './src/components/starlight/Sidebar.astro',
       },
       routeMiddleware: ['./src/lib/starlight/toc.ts'],
       social: [{ icon: 'github', label: 'GitHub', href: 'https://github.com/firede/pta' }],
       defaultLocale: starlightI18n.defaultLocale,
       locales: starlightI18n.locales,
       sidebar: [
-        {
-          label: getRootMessage('guide'),
-          translations: getStarlightTranslations('guide'),
-          slug: 'guide',
-        },
-        {
-          label: getRootMessage('specification'),
-          translations: getStarlightTranslations('specification'),
-          items: [
-            {
-              slug: 'specification',
-              label: getRootMessage('overview'),
-              translations: getStarlightTranslations('overview'),
-            },
-            ...specificationIds,
-          ],
-        },
         {
           label: getRootMessage('arguments'),
           translations: getStarlightTranslations('arguments'),
@@ -60,16 +44,21 @@ export default defineConfig({
           ],
         },
         {
-          label: getRootMessage('topics'),
-          translations: getStarlightTranslations('topics'),
+          label: getRootMessage('specification'),
+          translations: getStarlightTranslations('specification'),
           items: [
             {
-              slug: 'topic',
+              slug: 'specification',
               label: getRootMessage('overview'),
               translations: getStarlightTranslations('overview'),
             },
-            { autogenerate: { directory: 'topic' } },
+            ...specificationIds,
           ],
+        },
+        {
+          label: getRootMessage('guide'),
+          translations: getStarlightTranslations('guide'),
+          slug: 'guide',
         },
       ],
     }),

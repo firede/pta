@@ -27,5 +27,6 @@
   "fileTree.directory": "文件夹",
   "builtWithStarlight.label": "基于 Starlight 构建",
   "heading.anchorLabel": "Section titled “{{title}}”",
-  "argumentDependencies.title": "支撑立论"
+  "argumentDependencies.title": "支撑立论",
+  "sectionNav.accessibleLabel": "内容板块"
 }

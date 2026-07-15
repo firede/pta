@@ -27,5 +27,6 @@
   "fileTree.directory": "目錄",
   "builtWithStarlight.label": "Built with Starlight",
   "heading.anchorLabel": "Section titled “{{title}}”",
-  "argumentDependencies.title": "支撐立論"
+  "argumentDependencies.title": "支撐立論",
+  "sectionNav.accessibleLabel": "內容板塊"
 }
