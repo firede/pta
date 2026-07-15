@@ -149,19 +149,38 @@ async function daemonStop(io: CliIO): Promise<number> {
   const home = process.env['HOME'] ?? '';
   const manager = await installedServiceManager(home);
   if (manager !== undefined) {
-    if (manager === 'launchd') await run('launchctl', ['unload', launchdPlistPath(home)]);
-    else await run('systemctl', ['--user', 'stop', 'pta-daemon']);
-    if (state !== undefined && isProcessAlive(state.pid)) {
-      for (let attempt = 0; attempt < 20 && isProcessAlive(state.pid); attempt += 1) {
-        await sleep(100);
-      }
-      if (isProcessAlive(state.pid)) {
-        io.stderr(`已通知 ${manager} 停止，但守护进程仍在运行（pid ${state.pid}）。\n`);
+    const result =
+      manager === 'launchd'
+        ? await run('launchctl', ['unload', launchdPlistPath(home)])
+        : await run('systemctl', ['--user', 'stop', 'pta-daemon']);
+    if (!result.ok) {
+      if (state !== undefined && (await verifyDaemonToken(state))) {
+        io.stderr(
+          `${manager} 停止命令失败：${result.stderr.trim()}，守护进程仍在运行（端口 ${state.port}）。\n`,
+        );
         return 2;
       }
+      await clearDaemonState(paths);
+      io.stdout('守护进程未在运行。\n');
+      return 0;
+    }
+    // legacy launchctl unload 失败时也可能退出 0，停没停以令牌端点消失为准
+    if (state !== undefined) {
+      let responding = await verifyDaemonToken(state);
+      for (let attempt = 0; attempt < 20 && responding; attempt += 1) {
+        await sleep(100);
+        responding = await verifyDaemonToken(state);
+      }
+      if (responding) {
+        io.stderr(`已通知 ${manager} 停止，但守护进程仍在响应（端口 ${state.port}）。\n`);
+        return 2;
+      }
+      await clearDaemonState(paths);
+      io.stdout(`守护进程已停止（经 ${manager}）。\n`);
+      return 0;
     }
     await clearDaemonState(paths);
-    io.stdout(`守护进程已停止（经 ${manager}）。\n`);
+    io.stdout(`已通知 ${manager} 停止。\n`);
     return 0;
   }
   if (state === undefined || !isProcessAlive(state.pid)) {
