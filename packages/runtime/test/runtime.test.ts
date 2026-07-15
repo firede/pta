@@ -349,3 +349,33 @@ test('crontab 读写往返、校验动作字段并容忍坏条目', async (conte
   assert.deepEqual(tolerated.entries, []);
   assert.match(tolerated.problems.join(''), /derive 动作必须指定 agent/u);
 });
+
+test('nextCronOccurrence 跳过夏令时不存在的本地时间，秋季重复时段正常返回', () => {
+  const originalTz = process.env['TZ'];
+  process.env['TZ'] = 'America/New_York';
+  try {
+    // 环境不响应 TZ 变更时跳过（2026-03-08 02:30 在纽约不存在）
+    const probe = new Date(2026, 2, 8, 2, 30);
+    if (probe.getHours() === 2) return;
+
+    const halfPastTwo = parseCronSchedule('30 2 * * *');
+    assert.ok(halfPastTwo);
+    const next = nextCronOccurrence(halfPastTwo, new Date(2026, 2, 8, 0, 0));
+    assert.ok(next);
+    assert.equal(cronMatches(halfPastTwo, next), true);
+    assert.deepEqual(
+      [next.getMonth() + 1, next.getDate(), next.getHours(), next.getMinutes()],
+      [3, 9, 2, 30],
+    );
+
+    const halfPastOne = parseCronSchedule('30 1 * * *');
+    assert.ok(halfPastOne);
+    const fall = nextCronOccurrence(halfPastOne, new Date(2026, 10, 1, 0, 0));
+    assert.ok(fall);
+    assert.equal(cronMatches(halfPastOne, fall), true);
+    assert.deepEqual([fall.getDate(), fall.getHours(), fall.getMinutes()], [1, 1, 30]);
+  } finally {
+    if (originalTz === undefined) delete process.env['TZ'];
+    else process.env['TZ'] = originalTz;
+  }
+});

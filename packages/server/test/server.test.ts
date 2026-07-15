@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { request as httpRequest } from 'node:http';
 import { test } from 'node:test';
 
 import { startServer } from '../src/index.ts';
@@ -127,6 +128,31 @@ test('缓存 GC 校验实例令牌与跨站来源', async () => {
       headers: { origin: `http://127.0.0.1:${server.port}`, 'x-pta-token': 'tok-3' },
     });
     assert.equal(authorized.status, 200);
+  } finally {
+    await server.close();
+  }
+});
+
+test('非本机 Host 的请求在进入任何路由前被拒绝', async () => {
+  const server = await startServer({ version: '9.9.9', instanceToken: 'tok-4' }, 0);
+  try {
+    const status = await new Promise<number>((resolve, reject) => {
+      const request = httpRequest(
+        {
+          host: '127.0.0.1',
+          port: server.port,
+          path: '/api/health',
+          headers: { host: 'evil.example' },
+        },
+        (response) => resolve(response.statusCode ?? 0),
+      );
+      request.on('error', reject);
+      request.end();
+    });
+    assert.equal(status, 403);
+
+    const health = await fetch(`http://127.0.0.1:${server.port}/api/health`);
+    assert.equal(health.status, 200);
   } finally {
     await server.close();
   }

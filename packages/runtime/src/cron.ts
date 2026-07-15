@@ -123,7 +123,10 @@ export function nextCronOccurrence(schedule: CronSchedule, from: Date): Date | u
         for (const minute of minutes) {
           const candidate = new Date(day.getTime());
           candidate.setHours(hour, minute, 0, 0);
-          if (candidate.getTime() >= start.getTime()) return candidate;
+          // 夏令时跳时会把不存在的本地时间归一化到别的时刻：复验字段匹配，幻影候选跳过
+          if (candidate.getTime() >= start.getTime() && cronMatches(schedule, candidate)) {
+            return candidate;
+          }
         }
       }
     }

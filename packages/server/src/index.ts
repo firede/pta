@@ -39,6 +39,16 @@ async function readBody(request: IncomingMessage): Promise<string | undefined> {
   return Buffer.concat(chunks).toString('utf8');
 }
 
+const allowedHostnames = new Set(['127.0.0.1', 'localhost', '[::1]']);
+
+function hostAllowed(host: string | undefined): boolean {
+  // 服务只面向 loopback：Host 白名单挡住 DNS rebinding——
+  // 攻击者域名解析到 127.0.0.1 时，浏览器带来的 Host 是攻击者域名而非本机名。
+  if (host === undefined) return false;
+  const name = host.startsWith('[') ? host.slice(0, host.indexOf(']') + 1) : host.split(':')[0];
+  return allowedHostnames.has(name ?? '');
+}
+
 function crossOriginRejected(request: IncomingMessage, response: ServerResponse): boolean {
   // 服务只监听 loopback，但浏览器里的第三方页面仍可发起跨站请求：
   // Origin 在场时必须与 Host 同源；写操作另需实例令牌（跨站页面读不到它）。
@@ -63,6 +73,11 @@ async function handle(
 ): Promise<void> {
   const url = new URL(request.url ?? '/', 'http://127.0.0.1');
   const method = request.method ?? 'GET';
+
+  if (!hostAllowed(request.headers.host)) {
+    sendJson(response, 403, { error: '仅接受本机主机名访问' });
+    return;
+  }
 
   if (url.pathname === '/api/health' && method === 'GET') {
     sendJson(response, 200, {
