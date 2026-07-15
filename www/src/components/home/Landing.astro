@@ -1,0 +1,400 @@
+---
+import ptaLogo from '@/assets/pta-logo.svg?raw';
+
+interface Cta {
+  label: string;
+  href: string;
+  primary?: boolean;
+}
+
+interface Entry {
+  ord: string;
+  name: string;
+  question: string;
+  blurb: string;
+  href: string;
+}
+
+interface Props {
+  /** 竖排题字（汉语区划用），拉丁语言用横排 */
+  vertical?: boolean;
+  title: string;
+  epigraph: string;
+  epigraphSource: string;
+  /** 题记的译文说明（非汉语区划用） */
+  epigraphNote?: string;
+  intro: readonly string[];
+  ctas: readonly Cta[];
+  mapLabel: string;
+  entries: readonly Entry[];
+  footnote: string;
+}
+
+const {
+  vertical = false,
+  title,
+  epigraph,
+  epigraphSource,
+  epigraphNote,
+  intro,
+  ctas,
+  mapLabel,
+  entries,
+  footnote,
+} = Astro.props;
+---
+
+<div class:list={['landing', { 'landing-vertical': vertical }]}>
+  <header class="landing-hero">
+    <div class="hero-script">
+      <h1 class="hero-title">{title}</h1>
+      <div class="hero-side">
+        <p class="hero-epigraph">
+          {epigraph}
+          <cite class="hero-cite">{epigraphSource}</cite>
+        </p>
+        <span class="hero-seal" set:html={ptaLogo} />
+      </div>
+    </div>
+    <div class="hero-body">
+      {epigraphNote && <p class="hero-note">{epigraphNote}</p>}
+      <div class="hero-lede">
+        {intro.map((paragraph) => <p>{paragraph}</p>)}
+      </div>
+      <div class="hero-ctas">
+        {
+          ctas.map((cta) => (
+            <a class:list={['cta', { 'cta-primary': cta.primary }]} href={cta.href}>
+              {cta.label}
+            </a>
+          ))
+        }
+      </div>
+    </div>
+  </header>
+
+  <nav class="landing-map" aria-label={mapLabel}>
+    <ol>
+      {
+        entries.map((entry) => (
+          <li>
+            <a href={entry.href}>
+              <span class="map-ord">{entry.ord}</span>
+              <span class="map-name">{entry.name}</span>
+              <span class="map-question">{entry.question}</span>
+              <span class="map-blurb">{entry.blurb}</span>
+            </a>
+          </li>
+        ))
+      }
+    </ol>
+  </nav>
+
+  <p class="landing-footnote">{footnote}</p>
+</div>
+
+<style is:global>
+  main:has(.landing) {
+    --sl-content-width: 66rem;
+  }
+
+  main:has(.landing) .sl-markdown-content {
+    text-align: start;
+  }
+
+  /* 首页题字自任 h1，隐去 Starlight 默认页标题面板 */
+  main:has(.landing) .content-panel:has(h1[id='_top']) {
+    display: none;
+  }
+
+  .landing .hero-seal svg {
+    inline-size: 2.25rem;
+    block-size: 2.25rem;
+  }
+
+  .landing .hero-seal .pta-logo__ground {
+    fill: var(--sl-color-white);
+  }
+
+  .landing .hero-seal .pta-logo__mark {
+    fill: var(--sl-color-black);
+  }
+</style>
+
+<style>
+  .landing {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-block-start: clamp(1rem, 4vh, 2.5rem);
+  }
+
+  .landing-hero {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .hero-body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-block-start: clamp(2rem, 5vh, 3rem);
+  }
+
+  /* 报纸式：竖排题字居左，横排导语居右 */
+  .landing-vertical .landing-hero {
+    flex-direction: row;
+    align-items: center;
+    gap: clamp(2.5rem, 6vw, 4.5rem);
+  }
+
+  .landing-vertical .hero-body {
+    align-items: flex-start;
+    max-inline-size: 33.5em;
+    margin-block-start: 0;
+  }
+
+  .landing-vertical .hero-ctas {
+    justify-content: flex-start;
+  }
+
+  /* 题字：默认横排（拉丁语言） */
+  .hero-script {
+    display: flex;
+    flex-direction: column-reverse;
+    align-items: center;
+    gap: 1.5rem;
+  }
+
+  .landing:not(.landing-vertical) .hero-side {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.6rem;
+  }
+
+  .landing:not(.landing-vertical) .hero-cite {
+    display: block;
+    letter-spacing: 0.02em;
+  }
+
+  .landing:not(.landing-vertical) .hero-cite::before {
+    content: '— ';
+  }
+
+  .landing:not(.landing-vertical) .hero-seal {
+    display: none;
+  }
+
+  .hero-title {
+    margin: 0;
+    font-family: var(--font-serif);
+    font-weight: 700;
+    font-size: clamp(2.2rem, 1.6rem + 2.4vw, 3.1rem);
+    line-height: 1.15;
+    color: var(--sl-color-white);
+    text-align: center;
+  }
+
+  .hero-epigraph {
+    margin: 0;
+    font-family: var(--font-serif);
+    font-size: 1rem;
+    letter-spacing: 0.28em;
+    color: var(--sl-color-gray-3);
+  }
+
+  .hero-cite {
+    font-style: normal;
+    font-size: 0.78rem;
+    letter-spacing: 0.12em;
+    color: var(--sl-color-gray-3);
+  }
+
+  .hero-note {
+    margin: 1.25rem 0 0;
+    max-width: 30em;
+    font-size: 0.88rem;
+    line-height: 1.7;
+    color: var(--sl-color-gray-3);
+    text-align: center;
+  }
+
+  .hero-seal {
+    line-height: 0;
+  }
+
+  /* 竖排题字：简牍之意，题名在右，题记居左，印作落款 */
+  .landing-vertical .hero-script {
+    writing-mode: vertical-rl;
+    flex-direction: column;
+    align-items: stretch;
+    gap: clamp(1.4rem, 4vw, 2.2rem);
+  }
+
+  .landing-vertical .hero-title {
+    font-size: clamp(2.5rem, 1.9rem + 2vw, 3.3rem);
+    line-height: 1;
+    letter-spacing: 0.16em;
+    text-align: start;
+  }
+
+  .landing-vertical .hero-side {
+    display: flex;
+    justify-content: space-between;
+    gap: 2rem;
+  }
+
+  .landing-vertical .hero-epigraph {
+    margin: 0;
+    letter-spacing: 0.4em;
+  }
+
+  .landing-vertical .hero-cite {
+    display: block;
+    margin-block-start: 1em;
+    margin-inline-start: 4.5em;
+  }
+
+  .hero-lede {
+    max-width: 33.5em;
+    display: flex;
+    flex-direction: column;
+    gap: 1em;
+  }
+
+  .hero-note + .hero-lede {
+    margin-block-start: 1.75rem;
+  }
+
+  .hero-lede p {
+    margin: 0;
+    font-size: 1.0625rem;
+    line-height: 1.95;
+  }
+
+  .hero-ctas {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.875rem;
+    margin-block-start: 2.25rem;
+  }
+
+  .cta {
+    font-family: var(--font-heading);
+    font-size: 0.95rem;
+    font-weight: 500;
+    text-decoration: none;
+    color: var(--sl-color-white);
+    border: 1px solid var(--sl-color-gray-4);
+    border-radius: 2px;
+    padding: 0.65em 1.6em;
+    transition:
+      color 0.15s,
+      border-color 0.15s,
+      background-color 0.15s;
+  }
+
+  .cta:hover {
+    border-color: var(--sl-color-white);
+  }
+
+  .cta-primary {
+    background-color: var(--sl-color-white);
+    border-color: var(--sl-color-white);
+    color: var(--sl-color-black);
+  }
+
+  .cta-primary:hover {
+    background-color: var(--sl-color-gray-1);
+    border-color: var(--sl-color-gray-1);
+  }
+
+  /* 阅读地图 */
+  .landing-map {
+    inline-size: 100%;
+    margin-block-start: clamp(3rem, 8vh, 4.5rem);
+  }
+
+  .landing-map ol {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(13.5rem, 1fr));
+    gap: 2.5rem 2rem;
+  }
+
+  .landing-map li {
+    border-block-start: 1px solid var(--sl-color-gray-5);
+  }
+
+  .landing-map a {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+    padding-block-start: 1.1rem;
+    text-decoration: none;
+    color: inherit;
+  }
+
+  .map-ord {
+    font-family: var(--font-heading);
+    font-size: 0.75rem;
+    letter-spacing: 0.14em;
+    color: var(--sl-color-gray-3);
+  }
+
+  .map-name {
+    font-family: var(--font-heading);
+    font-size: 1.28rem;
+    font-weight: 600;
+    color: var(--sl-color-white);
+    transition: color 0.15s;
+  }
+
+  .landing-map a:hover .map-name {
+    color: var(--sl-color-accent);
+  }
+
+  .map-question {
+    font-family: var(--font-serif);
+    font-size: 0.92rem;
+    color: var(--sl-color-gray-2);
+  }
+
+  .map-blurb {
+    font-size: 0.88rem;
+    line-height: 1.75;
+    color: var(--sl-color-gray-3);
+  }
+
+  .landing-footnote {
+    margin-block: clamp(3.5rem, 9vh, 5.5rem) 1rem;
+    font-size: 0.82rem;
+    letter-spacing: 0.04em;
+    color: var(--sl-color-gray-3);
+    text-align: center;
+  }
+
+  @media (max-width: 50rem) {
+    .landing-vertical .landing-hero {
+      flex-direction: column;
+      gap: 2.25rem;
+    }
+
+    .landing-vertical .hero-body {
+      align-items: center;
+    }
+
+    .landing-vertical .hero-ctas {
+      justify-content: center;
+    }
+
+    .landing-map ol {
+      gap: 1.75rem;
+    }
+  }
+</style>

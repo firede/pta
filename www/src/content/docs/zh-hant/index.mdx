@@ -6,20 +6,47 @@ editUrl: false
 head:
   - tag: title
     content: 專案真相架構
-hero:
-  tagline: Project Truth Architecture
-  actions:
-    - text: 閱讀規範
-      link: /zh-hant/specification/
-      icon: right-arrow
-    - text: GitHub
-      link: https://github.com/firede/pta
-      icon: external
-      variant: minimal
-sourceHash: 3c4076b41bc5fe96ed3e6db5632bde5b71fa5046cb00d64c176f5709b43a23a0
+sourceHash: 2cbadf76b7d897fbdbe5299d4e938c0d1f1e85e64876df9bd40664b9dcdc5310
 ---
 
-- [指南](/zh-hant/guide/)：實踐的方法與建議。
-- [規範](/zh-hant/specification/)：核心定義與約束。
-- [立論](/zh-hant/argument/)：成立所依賴的基本判斷。
-- [議題](/zh-hant/topic/)：綜合問題的探討。
+import Landing from '@/components/home/Landing.astro';
+
+<Landing
+  vertical
+  title="專案真相架構"
+  epigraph="名定而實辨，道行而志通"
+  epigraphSource="《荀子·正名》"
+  intro={[
+    '專案真相，是當前專案實際遵循的判斷：專案做出的決策，以及專案採用的前提。它回答的是，這個專案為什麼是現在這個樣子，而不是別的合格樣子。',
+    '長期專案中，這些判斷散落在檔案、工具與對話裡，靠人反覆講述來維持；而人的判斷頻寬是稀缺資源，講述消耗它，轉述偏離它。專案真相架構把判斷顯式記錄、持續生效，讓人與 AI 在同一語義空間裡協作。',
+  ]}
+  ctas={[
+    { label: '從立論開始', href: '/zh-hant/argument/', primary: true },
+    { label: '閱讀規範', href: '/zh-hant/specification/' },
+  ]}
+  mapLabel="閱讀地圖"
+  entries={[
+    {
+      ord: '一',
+      name: '立論',
+      question: '為什麼成立？',
+      blurb: '架構依賴的基本判斷，一切結論的推導起點。',
+      href: '/zh-hant/argument/',
+    },
+    {
+      ord: '二',
+      name: '規範',
+      question: '必須遵守什麼？',
+      blurb: '核心定義與約束，每條要求可追溯到立論。',
+      href: '/zh-hant/specification/',
+    },
+    {
+      ord: '三',
+      name: '指南',
+      question: '如何實踐？',
+      blurb: '面向日常協作的方法與建議。',
+      href: '/zh-hant/guide/',
+    },
+  ]}
+  footnote="簡體中文是本站的事實來源，其他語言版本由它翻譯而來。"
+/>
