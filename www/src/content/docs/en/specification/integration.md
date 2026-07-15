@@ -5,7 +5,7 @@ dependsOn:
   - argument/project-truth-freshness-governance
   - argument/projection-view-compiled-on-demand
   - argument/derivable-content-in-tool-layer
-sourceHash: ac9e6d9f0b51c90fe03216674391af4a2cae2c0b41d78844957f376b9c481dcb
+sourceHash: e33c68f038326ac18a6a67179289a3e8f15c811167b0417aba29079cfc9542fa
 ---
 
 Integration defines how the architecture plugs into an existing engineering environment: how the truth entry point coexists with ecosystem files, where project-level configuration lives, which facilities checkpoints attach to, and what sharing must satisfy at minimum.
@@ -24,7 +24,7 @@ Tools **must not** treat such files as a source of project truth: the entry poin
 
 Migration **may** proceed gradually: content not yet migrated is still consumed by ecosystem tools as usual and does not stop working because of this architecture; the project converges the duplication at its own adoption pace, and engineering instruction files slim down as migration proceeds.
 
-A project **may** place a reference to project truth in engineering instruction files, such as `[Project Truth](./TRUTH.md)`, so that tools and agents not connected to this architecture can discover it by following the link; consumers connected to this architecture obtain truth content through compiled projections, not through engineering instruction files.
+A project **may** place a reference to project truth in engineering instruction files, such as `[Project Truth](./TRUTH.md)`, so that tools and agents not connected to this architecture can discover it by following the link. Reading the original text by following the link is the complete degraded path, and instruction files need not restate truth content for it; consumers connected to this architecture obtain truth content through compiled projections, not through engineering instruction files.
 
 ## Project Configuration
 
