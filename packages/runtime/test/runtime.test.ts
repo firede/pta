@@ -6,7 +6,7 @@ import { test } from 'node:test';
 
 import { buildAgentInvocation, runAgentTask } from '../src/agents.ts';
 import { defaultDaemonPort, loadGlobalConfig } from '../src/config.ts';
-import { readDaemonState, writeDaemonState } from '../src/daemon.ts';
+import { isServiceNotLoadedError, readDaemonState, writeDaemonState } from '../src/daemon.ts';
 import { readDerivation, writeDerivation, type EntryLocator } from '../src/derivations.ts';
 import { appendLogRecord, readLogRecords } from '../src/log.ts';
 import { resolveGlobalPaths, type GlobalPaths } from '../src/paths.ts';
@@ -155,6 +155,29 @@ test('推导状态不跨领域、跨仓库串用', async (context) => {
   assert.notEqual(await readDerivation(paths, locator), undefined);
   assert.equal(await readDerivation(paths, { ...locator, domainIdentifier: 'ops' }), undefined);
   assert.equal(await readDerivation(paths, { ...locator, repository: 's'.repeat(40) }), undefined);
+});
+
+test('isServiceNotLoadedError 只把未加载类错误视为幂等成功', () => {
+  assert.equal(
+    isServiceNotLoadedError('launchd', 'Unload failed: 113: Could not find specified service'),
+    true,
+  );
+  assert.equal(isServiceNotLoadedError('launchd', 'Unload failed: 5: Input/output error'), false);
+  assert.equal(
+    isServiceNotLoadedError(
+      'systemd',
+      'Failed to stop pta-daemon.service: Unit pta-daemon.service not loaded.',
+    ),
+    true,
+  );
+  assert.equal(
+    isServiceNotLoadedError('systemd', 'Unit pta-daemon.service could not be found.'),
+    true,
+  );
+  assert.equal(
+    isServiceNotLoadedError('systemd', 'Failed to connect to bus: No medium found'),
+    false,
+  );
 });
 
 test('readDaemonState 往返并拒绝缺少令牌的旧状态', async (context) => {

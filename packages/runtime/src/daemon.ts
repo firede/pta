@@ -73,6 +73,12 @@ export async function verifiedDaemonState(paths: GlobalPaths): Promise<DaemonSta
 
 export type ServiceManager = 'launchd' | 'systemd';
 
+export function isServiceNotLoadedError(manager: ServiceManager, stderr: string): boolean {
+  return manager === 'launchd'
+    ? /could not find specified service|not currently loaded/iu.test(stderr)
+    : /not loaded|could not be found/iu.test(stderr);
+}
+
 export async function installedServiceManager(
   home: string,
   platform: NodeJS.Platform = process.platform,

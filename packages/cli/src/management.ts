@@ -11,6 +11,7 @@ import {
   daemonStateFilePath,
   installedServiceManager,
   isProcessAlive,
+  isServiceNotLoadedError,
   launchdPlistPath,
   loadGlobalConfig,
   newInstanceToken,
@@ -154,15 +155,18 @@ async function daemonStop(io: CliIO): Promise<number> {
         ? await run('launchctl', ['unload', launchdPlistPath(home)])
         : await run('systemctl', ['--user', 'stop', 'pta-daemon']);
     if (!result.ok) {
-      if (state !== undefined && (await verifyDaemonToken(state))) {
-        io.stderr(
-          `${manager} 停止命令失败：${result.stderr.trim()}，守护进程仍在运行（端口 ${state.port}）。\n`,
-        );
-        return 2;
+      const detail = result.stderr.trim();
+      if (isServiceNotLoadedError(manager, detail)) {
+        await clearDaemonState(paths);
+        io.stdout('守护进程未在运行。\n');
+        return 0;
       }
-      await clearDaemonState(paths);
-      io.stdout('守护进程未在运行。\n');
-      return 0;
+      let diagnostic = '';
+      if (state !== undefined && (await verifyDaemonToken(state))) {
+        diagnostic = `，守护进程仍在响应（端口 ${state.port}）`;
+      }
+      io.stderr(`${manager} 停止命令失败：${detail}${diagnostic}\n`);
+      return 2;
     }
     // legacy launchctl unload 失败时也可能退出 0，停没停以令牌端点消失为准
     if (state !== undefined) {
