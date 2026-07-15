@@ -32,22 +32,55 @@ const dependencies = await Promise.all(
 
 {
   dependencies.length > 0 && (
-    <section aria-labelledby={titleId} class="mt-8">
-      <p
-        id={titleId}
-        class="mt-0! mb-3 font-heading font-semibold text-muted-foreground"
-      >
+    <section aria-labelledby={titleId} class="argument-deps">
+      <p id={titleId} class="deps-label">
         {Astro.locals.t('argumentDependencies.title')}
       </p>
-      <ul class="my-0 list-disc ps-10">
-        {
-          dependencies.map((dependency) => (
-            <li>
-              <a href={getDocsEntryHref(dependency.sourceId, locale)}>{dependency.title}</a>
-            </li>
-          ))
-        }
+      <ul class="deps-list">
+        {dependencies.map((dependency) => (
+          <li>
+            <a href={getDocsEntryHref(dependency.sourceId, locale)}>{dependency.title}</a>
+          </li>
+        ))}
       </ul>
     </section>
   )
 }
+
+<style>
+  /* 注脚式依赖：与脚注同一视觉声部，不与正文抢权重 */
+  .argument-deps {
+    margin-block-start: 3.5rem;
+    padding-block-start: 1.2rem;
+    border-block-start: 1px solid var(--sl-color-gray-5);
+  }
+
+  .deps-label {
+    margin: 0 0 0.7rem;
+    font-family: var(--font-heading);
+    font-size: 0.78rem;
+    font-weight: 500;
+    letter-spacing: 0.22em;
+    color: var(--sl-color-gray-3);
+  }
+
+  .deps-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+  }
+
+  .deps-list a {
+    font-size: 0.95rem;
+    color: var(--sl-color-gray-2);
+    text-decoration: none;
+    transition: color 0.15s;
+  }
+
+  .deps-list a:hover {
+    color: var(--sl-color-accent);
+  }
+</style>

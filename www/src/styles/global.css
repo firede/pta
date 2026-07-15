@@ -297,6 +297,47 @@ main [data-page-title] {
   font-weight: 600;
 }
 
+/* 周边件：引用、脚注、分隔线、列表记号与链接卡收进同一语言 */
+.sl-markdown-content blockquote:not(:where(.not-content *)) {
+  border-inline-start: 2px solid var(--sl-color-gray-5);
+  padding-inline-start: 1.1em;
+  color: var(--sl-color-gray-2);
+  font-size: 0.98em;
+}
+
+.sl-markdown-content [data-footnotes] {
+  margin-block-start: 3.5rem;
+  border-block-start: 1px solid var(--sl-color-gray-5);
+  padding-block-start: 1.2rem;
+  font-size: 0.88rem;
+  line-height: 1.85;
+  color: var(--sl-color-gray-2);
+}
+
+.sl-markdown-content hr:not(:where(.not-content *)) {
+  border: 0;
+  border-block-start: 1px solid var(--sl-color-gray-5);
+  margin-block: 3rem;
+}
+
+.sl-markdown-content li::marker {
+  color: var(--sl-color-gray-4);
+}
+
+.sl-link-card {
+  border-radius: 0.5rem;
+  box-shadow: none;
+}
+
+.sl-link-card:hover {
+  background-color: var(--sl-color-gray-7, var(--sl-color-gray-6));
+}
+
+.sl-link-card .description {
+  font-size: 0.9rem;
+  line-height: 1.75;
+}
+
 /* 导航安静化：侧栏与页内目录用黑体、去大色块，正文是唯一主角 */
 .sidebar-content,
 .right-sidebar {
