@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-import { execFile } from 'node:child_process';
 import { readFile, rm, writeFile } from 'node:fs/promises';
 import { join, posix, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -11,7 +10,6 @@ import {
   discoverDomains,
   extractDomainContent,
   hashFileBytes,
-  inspectContents,
   lintDiscoveryProblems,
   lintDomainContents,
   planPendingAddition,
@@ -23,22 +21,29 @@ import {
   type CheckSignal,
   type ContextAssembly,
   type ExtractedEntry,
-  type InspectionMember,
   type PendingEntryRef,
 } from '@pta/core';
 
 import {
-  readDerivation,
+  loadGlobalConfig,
   resolveGlobalPaths,
   writeDerivation,
   type ClueDerivation,
 } from '@pta/runtime';
 
+import {
+  bucketViews,
+  collectInspectionViews,
+  gitRepositoryFiles,
+  repositoryIdentity,
+  runDerivationPass,
+  runGit,
+  shortId,
+  touchRepository,
+  type InspectionView,
+} from './inspection.ts';
+import { runCron } from './cron.ts';
 import { audit, runAgent, runDaemon, runDashboard, runDoctor, runLogs } from './management.ts';
-
-function shortId(entry: ExtractedEntry): string {
-  return entry.contentHash.slice(0, 8);
-}
 
 export type CliIO = Readonly<{
   stdout: (text: string) => void;
@@ -49,20 +54,6 @@ const processIO: CliIO = {
   stdout: (text) => process.stdout.write(text),
   stderr: (text) => process.stderr.write(text),
 };
-
-function runGit(args: readonly string[], cwd: string): Promise<string> {
-  return new Promise((resolveOutput, reject) => {
-    execFile(
-      'git',
-      args,
-      { cwd, encoding: 'utf8', maxBuffer: 10 * 1024 * 1024 },
-      (error, stdout, stderr) => {
-        if (error === null) resolveOutput(stdout);
-        else reject(new Error(stderr.trim() || stdout.trim() || error.message));
-      },
-    );
-  });
-}
 
 function changeType(status: string): ChangeType {
   if (status.includes('?')) return 'untracked';
@@ -117,7 +108,37 @@ function parseDiff(output: string): ChangedPath[] {
   return changes;
 }
 
-async function gitChanges(repositoryRoot: string, base?: string): Promise<ChangedPath[]> {
+function parseStagedStatus(output: string): ChangedPath[] {
+  const fields = output.split('\0');
+  const changes: ChangedPath[] = [];
+  for (let index = 0; index < fields.length; index += 1) {
+    const entry = fields[index];
+    if (entry === undefined || entry === '') continue;
+    const indexStatus = entry.slice(0, 1);
+    const path = entry.slice(3);
+    if (indexStatus === 'R' || indexStatus === 'C') {
+      const previousPath = fields[index + 1];
+      if (previousPath !== undefined && previousPath !== '') {
+        if (indexStatus === 'R') changes.push({ path: previousPath, type: 'deleted' });
+        index += 1;
+      }
+    }
+    if (indexStatus === ' ' || indexStatus === '?' || indexStatus === '!') continue;
+    changes.push({ path, type: changeType(indexStatus) });
+  }
+  return changes;
+}
+
+async function gitChanges(
+  repositoryRoot: string,
+  base?: string,
+  staged = false,
+): Promise<ChangedPath[]> {
+  if (staged) {
+    return parseStagedStatus(
+      await runGit(['status', '--porcelain=v1', '-z', '--untracked-files=all'], repositoryRoot),
+    );
+  }
   if (base === undefined) {
     return parseStatus(
       await runGit(['status', '--porcelain=v1', '-z', '--untracked-files=all'], repositoryRoot),
@@ -126,30 +147,6 @@ async function gitChanges(repositoryRoot: string, base?: string): Promise<Change
   return parseDiff(
     await runGit(['diff', '--name-status', '-z', `${base}...HEAD`, '--'], repositoryRoot),
   );
-}
-
-function parseRepositoryFiles(output: string): string[] {
-  return [...new Set(output.split('\0').filter((path) => path !== ''))].sort();
-}
-
-async function gitRepositoryFiles(repositoryRoot: string): Promise<string[]> {
-  const [listed, deleted] = await Promise.all([
-    runGit(['ls-files', '--cached', '--others', '--exclude-standard', '-z'], repositoryRoot),
-    runGit(['ls-files', '--deleted', '-z'], repositoryRoot),
-  ]);
-  const deletedPaths = new Set(parseRepositoryFiles(deleted));
-  return parseRepositoryFiles(listed).filter((path) => !deletedPaths.has(path));
-}
-
-async function repositoryIdentity(repositoryRoot: string): Promise<string> {
-  try {
-    const output = await runGit(['rev-list', '--max-parents=0', 'HEAD'], repositoryRoot);
-    const root = output.trim().split('\n').toSorted().at(0);
-    if (root !== undefined && root !== '') return root;
-  } catch {
-    // 无提交基线的仓库退回根路径标识
-  }
-  return repositoryRoot;
 }
 
 function domainLabel(signal: CheckSignal): string {
@@ -419,16 +416,6 @@ function formatPending(groups: readonly PendingGroup[]): string {
   return `${sections.join('\n\n')}\n\n共 ${total} 条待裁决条目，分布于 ${groups.length} 个领域。\n`;
 }
 
-type InspectionView = Readonly<{
-  member: InspectionMember;
-  effectiveDue?: string;
-  registered?: 'date' | 'condition';
-}>;
-
-function dueStart(due: string): string {
-  return due.length === 7 ? `${due}-01` : due;
-}
-
 function formatInspection(views: readonly InspectionView[], today: string): string {
   if (views.length === 0) {
     return '巡检集合为空：没有巡检标记条目与残留条目。\n';
@@ -439,96 +426,112 @@ function formatInspection(views: readonly InspectionView[], today: string): stri
   const memberLine = (view: InspectionView, prefix = ''): string =>
     `  ${prefix}${shortId(view.member.entry)} ${view.member.filePath}:${view.member.entry.line} ${view.member.entry.content}`;
 
-  const dated = views.filter(
-    (view) => view.member.kind === 'marked-truth' && view.effectiveDue !== undefined,
-  );
-  const expired = dated.filter((view) => dueStart(view.effectiveDue as string) <= today);
-  if (expired.length > 0) {
+  const buckets = bucketViews(views, today);
+  if (buckets.expired.length > 0) {
     lines.push('', '到期：');
-    for (const view of expired) {
+    for (const view of buckets.expired) {
       lines.push(
         `  [expiry | machine-decidable] ${view.member.filePath}:${view.member.entry.line} 复查线索 ${view.effectiveDue} 已到期。`,
       );
     }
   }
-  const upcoming = dated
-    .filter((view) => dueStart(view.effectiveDue as string) > today)
-    .toSorted((left, right) =>
-      (left.effectiveDue as string).localeCompare(right.effectiveDue as string),
-    );
-  if (upcoming.length > 0) {
+  if (buckets.conditionTriggered.length > 0) {
+    lines.push('', '条件型（评估为已触发，待人裁决）：');
+    for (const view of buckets.conditionTriggered) {
+      lines.push(memberLine(view));
+      const rationale = view.derivation?.evaluation?.rationale;
+      if (rationale !== undefined && rationale !== '') lines.push(`    评估理由：${rationale}`);
+    }
+  }
+  if (buckets.upcoming.length > 0) {
     lines.push('', '日期型（未到期）：');
-    for (const view of upcoming) lines.push(memberLine(view, `${view.effectiveDue} `));
+    for (const view of buckets.upcoming) lines.push(memberLine(view, `${view.effectiveDue} `));
   }
-  const confirmed = views.filter(
-    (view) => view.member.kind === 'marked-truth' && view.registered === 'condition',
+  const evaluatedPending = buckets.conditionPending.filter(
+    (view) => view.derivation?.evaluation !== undefined,
   );
-  if (confirmed.length > 0) {
-    lines.push('', '条件型（已盘存）：');
-    for (const view of confirmed) lines.push(memberLine(view));
-  }
-  const uninventoried = views.filter(
-    (view) =>
-      view.member.kind === 'marked-truth' &&
-      view.effectiveDue === undefined &&
-      view.registered === undefined,
+  const unevaluated = buckets.conditionPending.filter(
+    (view) => view.derivation?.evaluation === undefined,
   );
-  if (uninventoried.length > 0) {
-    lines.push('', '未盘存（待推导或注册）：');
-    for (const view of uninventoried) lines.push(memberLine(view));
+  if (evaluatedPending.length > 0) {
+    lines.push('', '条件型（评估未触发）：');
+    for (const view of evaluatedPending) {
+      const evaluation = view.derivation?.evaluation;
+      const suffix =
+        evaluation === undefined
+          ? ''
+          : `（${evaluation.result === 'unknown' ? '无法判断' : '未触发'}，${evaluation.evaluatedAt.slice(0, 10)} 由 ${evaluation.evaluatedBy} 评估）`;
+      lines.push(`${memberLine(view)}${suffix}`);
+    }
   }
-  const residue = views.filter((view) => view.member.kind === 'residue');
-  if (residue.length > 0) {
+  if (unevaluated.length > 0) {
+    lines.push('', '条件型（待评估）：');
+    for (const view of unevaluated) lines.push(memberLine(view));
+  }
+  if (buckets.noClue.length > 0) {
+    lines.push('', '无线索（已推导，语义通读兜底）：');
+    for (const view of buckets.noClue) lines.push(memberLine(view));
+  }
+  if (buckets.awaitingDerivation.length > 0) {
+    lines.push('', '待推导（无线索记录，可 pta inspect derive 或 pta inspect register）：');
+    for (const view of buckets.awaitingDerivation) lines.push(memberLine(view));
+  }
+  if (buckets.residue.length > 0) {
     lines.push('', '残留（整类巡检）：');
-    for (const view of residue) lines.push(memberLine(view));
+    for (const view of buckets.residue) lines.push(memberLine(view));
   }
   return `${lines.join('\n')}\n`;
-}
-
-async function collectInspectionViews(repositoryRoot: string): Promise<readonly InspectionView[]> {
-  const repositoryFiles = await gitRepositoryFiles(repositoryRoot);
-  const discovery = await discoverDomains(repositoryRoot, repositoryFiles);
-  const contents = await Promise.all(
-    discovery.domains.map((domain) =>
-      extractDomainContent(repositoryRoot, repositoryFiles, domain),
-    ),
-  );
-  const today = new Date().toISOString().slice(0, 10);
-  const report = inspectContents(contents, today);
-  const paths = resolveGlobalPaths();
-  const repository = await repositoryIdentity(repositoryRoot);
-  return Promise.all(
-    report.members.map(async (member): Promise<InspectionView> => {
-      if (member.kind !== 'marked-truth') return { member };
-      const derivation = await readDerivation(paths, {
-        repository,
-        domainIdentifier: member.domainIdentifier,
-        fileKind: 'truth',
-        contentHash: member.entry.contentHash,
-      });
-      if (derivation === undefined) {
-        return { member, ...(member.due === undefined ? {} : { effectiveDue: member.due }) };
-      }
-      return {
-        member,
-        registered: derivation.type,
-        ...(derivation.type === 'date' && derivation.due !== undefined
-          ? { effectiveDue: derivation.due }
-          : {}),
-      };
-    }),
-  );
 }
 
 async function runInspect(rootArg: string | undefined, io: CliIO, cwd: string): Promise<number> {
   const repositoryRoot = resolve(cwd, rootArg ?? '.');
   try {
     const views = await collectInspectionViews(repositoryRoot);
+    await touchRepository(repositoryRoot);
     io.stdout(formatInspection(views, new Date().toISOString().slice(0, 10)));
     return 0;
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     io.stderr(`pta inspect 失败：${message}\n`);
+    return 2;
+  }
+}
+
+async function runInspectDerive(
+  agentArg: string | undefined,
+  io: CliIO,
+  cwd: string,
+): Promise<number> {
+  const repositoryRoot = resolve(cwd);
+  const config = await loadGlobalConfig(resolveGlobalPaths());
+  const names = Object.keys(config.agents);
+  const name = agentArg ?? (names.length === 1 ? names[0] : undefined);
+  if (name === undefined) {
+    io.stderr('未指定 agent：pta inspect derive <agent 名称>（配置多个 agent 时必须点名）。\n');
+    return 2;
+  }
+  const agent = config.agents[name];
+  if (agent === undefined) {
+    io.stderr(`未找到 agent：${name}（见 pta agent list）\n`);
+    return 2;
+  }
+  try {
+    const result = await runDerivationPass(repositoryRoot, name, agent);
+    await touchRepository(repositoryRoot);
+    await audit(io, 'inspect-derive', {
+      agent: name,
+      derived: result.derived,
+      evaluated: result.evaluated,
+      failures: result.failures.length,
+    });
+    io.stdout(
+      `推导完成（agent ${name}）：新推导 ${result.derived} 条，评估 ${result.evaluated} 条。\n`,
+    );
+    for (const failure of result.failures) io.stderr(`${failure}\n`);
+    return result.failures.length > 0 ? 1 : 0;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    io.stderr(`pta inspect derive 失败：${message}\n`);
     return 2;
   }
 }
@@ -767,27 +770,17 @@ async function runPending(rootArg: string | undefined, io: CliIO, cwd: string): 
   }
 }
 
-async function runChanges(base: string | undefined, io: CliIO, cwd: string): Promise<number> {
+async function runChanges(
+  base: string | undefined,
+  io: CliIO,
+  cwd: string,
+  staged = false,
+): Promise<number> {
   const repositoryRoot = resolve(cwd);
   try {
-    const [changes, repositoryFiles] = await Promise.all([
-      gitChanges(repositoryRoot, base),
-      gitRepositoryFiles(repositoryRoot),
-    ]);
-    const discovery = await discoverDomains(repositoryRoot, repositoryFiles);
-    const contents = await Promise.all(
-      discovery.domains.map((domain) =>
-        extractDomainContent(repositoryRoot, repositoryFiles, domain),
-      ),
-    );
-    const pendingEntries = Object.fromEntries(
-      contents.flatMap(({ domain, files }) =>
-        domain.identifier === undefined
-          ? []
-          : [[domain.identifier, files['PENDING.md']?.entries ?? []] as const],
-      ),
-    );
-    io.stdout(formatChanges(classifyChanges(discovery, changes, pendingEntries)));
+    const result = await classifyRepository(repositoryRoot, base, staged);
+    await touchRepository(repositoryRoot);
+    io.stdout(formatChanges(result));
     return 0;
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
@@ -796,14 +789,46 @@ async function runChanges(base: string | undefined, io: CliIO, cwd: string): Pro
   }
 }
 
+async function classifyRepository(
+  repositoryRoot: string,
+  base: string | undefined,
+  staged: boolean,
+): Promise<ChangeClassification> {
+  const [changes, repositoryFiles] = await Promise.all([
+    gitChanges(repositoryRoot, base, staged),
+    gitRepositoryFiles(repositoryRoot),
+  ]);
+  const discovery = await discoverDomains(repositoryRoot, repositoryFiles);
+  const contents = await Promise.all(
+    discovery.domains.map((domain) =>
+      extractDomainContent(repositoryRoot, repositoryFiles, domain),
+    ),
+  );
+  const pendingEntries = Object.fromEntries(
+    contents.flatMap(({ domain, files }) =>
+      domain.identifier === undefined
+        ? []
+        : [[domain.identifier, files['PENDING.md']?.entries ?? []] as const],
+    ),
+  );
+  return classifyChanges(discovery, changes, pendingEntries);
+}
+
 export async function runCli(
   args: readonly string[],
   io: CliIO = processIO,
   cwd = process.cwd(),
 ): Promise<number> {
   if (args[0] === 'changes') {
+    if (args[1] === '--staged') {
+      if (args.length > 2) {
+        io.stderr('用法：pta changes [base|--staged]\n');
+        return 2;
+      }
+      return runChanges(undefined, io, cwd, true);
+    }
     if (args.length > 2 || args[1]?.startsWith('-') === true) {
-      io.stderr('用法：pta changes [base]\n');
+      io.stderr('用法：pta changes [base|--staged]\n');
       return 2;
     }
     return runChanges(args[1], io, cwd);
@@ -846,14 +871,23 @@ export async function runCli(
       }
       return runInspectRegister(idArg, valueArg, io, cwd);
     }
+    if (args[1] === 'derive') {
+      if (args.length > 3 || args[2]?.startsWith('-') === true) {
+        io.stderr('用法：pta inspect derive [agent 名称]\n');
+        return 2;
+      }
+      return runInspectDerive(args[2], io, cwd);
+    }
     if (args.length > 2 || args[1]?.startsWith('-') === true) {
       io.stderr(
-        '用法：pta inspect [仓库根]\n       pta inspect register <条目id> <到期日期|条件>\n',
+        '用法：pta inspect [仓库根]\n       pta inspect register <条目id> <到期日期|条件>\n       pta inspect derive [agent 名称]\n',
       );
       return 2;
     }
     return runInspect(args[1], io, cwd);
   }
+
+  if (args[0] === 'cron') return runCron(args.slice(1), io, cwd);
 
   if (args[0] === 'daemon') return runDaemon(args.slice(1), io);
 
@@ -888,7 +922,7 @@ export async function runCli(
 
   if (args[0] !== 'check' || args.length > 2) {
     io.stderr(
-      '用法：pta check [仓库根]\n       pta changes [base]\n       pta pending [仓库根]\n       pta context <路径>...\n       pta inspect [仓库根]\n       pta agent <list|run>\n       pta daemon <install|uninstall|status|start|stop|restart>\n       pta dashboard\n       pta doctor\n       pta logs [数量]\n',
+      '用法：pta check [仓库根]\n       pta changes [base|--staged]\n       pta pending [仓库根]\n       pta context <路径>...\n       pta inspect [仓库根]\n       pta agent <list|run>\n       pta cron <list|create|update|delete|run>\n       pta daemon <install|uninstall|status|start|stop|restart>\n       pta dashboard\n       pta doctor\n       pta logs [数量]\n',
     );
     return 2;
   }
@@ -909,6 +943,7 @@ export async function runCli(
     io.stderr(`pta check 失败：${message}\n`);
     return 2;
   }
+  await touchRepository(repositoryRoot);
   const signals = [...lintDiscoveryProblems(discovery), ...lintDomainContents(contents)];
 
   if (signals.length === 0) {

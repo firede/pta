@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, rm, utimes, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
@@ -7,8 +7,18 @@ import { test } from 'node:test';
 import { buildAgentInvocation, runAgentTask } from '../src/agents.ts';
 import { defaultDaemonPort, loadGlobalConfig } from '../src/config.ts';
 import { isServiceNotLoadedError, readDaemonState, writeDaemonState } from '../src/daemon.ts';
-import { readDerivation, writeDerivation, type EntryLocator } from '../src/derivations.ts';
+import {
+  derivationCacheStats,
+  derivationFilePath,
+  gcDerivations,
+  readDerivation,
+  writeDerivation,
+  type EntryLocator,
+} from '../src/derivations.ts';
+import { readRepositories, recordRepository } from '../src/repositories.ts';
 import { appendLogRecord, readLogRecords } from '../src/log.ts';
+import { cronMatches, nextCronOccurrence, parseCronSchedule } from '../src/cron.ts';
+import { readCrontab, validateCronEntry, writeCrontab } from '../src/crontab.ts';
 import { resolveGlobalPaths, type GlobalPaths } from '../src/paths.ts';
 
 async function temporaryPaths(): Promise<{ paths: GlobalPaths; cleanup: () => Promise<void> }> {
@@ -195,4 +205,177 @@ test('readDaemonState 往返并拒绝缺少令牌的旧状态', async (context) 
 
   await writeDaemonState(paths, { ...state, token: undefined as unknown as string });
   assert.equal(await readDaemonState(paths), undefined);
+});
+
+test('recordRepository 按身份与路径去重，readRepositories 容忍缺失', async (context) => {
+  const { paths, cleanup } = await temporaryPaths();
+  context.after(cleanup);
+  assert.deepEqual(await readRepositories(paths), []);
+  await recordRepository(paths, 'aaa', '/repo/a', '2026-07-15T00:00:00Z');
+  await recordRepository(paths, 'bbb', '/repo/b', '2026-07-15T00:00:01Z');
+  // 同一仓库的另一个 worktree：共享身份、并存不折叠
+  await recordRepository(paths, 'aaa', '/repo/a-worktree', '2026-07-15T00:00:02Z');
+  await recordRepository(paths, 'ccc', '/repo/b', '2026-07-15T00:00:03Z');
+  const records = await readRepositories(paths);
+  assert.deepEqual(
+    records.map((record) => [record.identity, record.root]),
+    [
+      ['aaa', '/repo/a'],
+      ['aaa', '/repo/a-worktree'],
+      ['ccc', '/repo/b'],
+    ],
+  );
+});
+
+test('derivationCacheStats 统计条目，gcDerivations 按 mtime 回收', async (context) => {
+  const { paths, cleanup } = await temporaryPaths();
+  context.after(cleanup);
+  const locator = (hash: string): EntryLocator => ({
+    repository: 'repo',
+    domainIdentifier: 'src',
+    fileKind: 'truth',
+    contentHash: hash,
+  });
+  const record = (hash: string) => ({
+    locator: locator(hash),
+    kind: 'review-clue' as const,
+    type: 'condition' as const,
+    condition: '外部条件',
+    registeredAt: '2026-07-15T00:00:00Z',
+    registeredBy: 'cli',
+  });
+  await writeDerivation(paths, record('a'.repeat(64)));
+  await writeDerivation(paths, record('b'.repeat(64)));
+  const stats = await derivationCacheStats(paths);
+  assert.equal(stats.entries, 2);
+  assert.equal(stats.bytes > 0, true);
+
+  const old = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
+  await utimes(derivationFilePath(paths, locator('a'.repeat(64))), old, old);
+  const result = await gcDerivations(paths, 30);
+  assert.deepEqual(result, { removed: 1, kept: 1 });
+  assert.equal((await derivationCacheStats(paths)).entries, 1);
+  assert.equal((await readDerivation(paths, locator('b'.repeat(64)))) !== undefined, true);
+});
+
+test('parseCronSchedule 解析五段表达式，cronMatches 遵循日/星期取或规则', () => {
+  assert.equal(parseCronSchedule('0 3 * *'), undefined);
+  assert.equal(parseCronSchedule('60 * * * *'), undefined);
+  assert.equal(parseCronSchedule('a * * * *'), undefined);
+
+  const nightly = parseCronSchedule('0 3 * * *');
+  assert.ok(nightly);
+  assert.equal(cronMatches(nightly, new Date(2026, 6, 15, 3, 0)), true);
+  assert.equal(cronMatches(nightly, new Date(2026, 6, 15, 3, 1)), false);
+
+  const weekdays = parseCronSchedule('*/15 9-17 * * 1-5');
+  assert.ok(weekdays);
+  assert.equal(cronMatches(weekdays, new Date(2026, 6, 15, 9, 30)), true);
+  assert.equal(cronMatches(weekdays, new Date(2026, 6, 15, 9, 20)), false);
+  assert.equal(cronMatches(weekdays, new Date(2026, 6, 19, 9, 30)), false);
+
+  // 日与星期都受限时取或：15 号或周一皆触发
+  const orRule = parseCronSchedule('0 0 15 * 1');
+  assert.ok(orRule);
+  assert.equal(cronMatches(orRule, new Date(2026, 6, 15, 0, 0)), true);
+  assert.equal(cronMatches(orRule, new Date(2026, 6, 13, 0, 0)), true);
+  assert.equal(cronMatches(orRule, new Date(2026, 6, 14, 0, 0)), false);
+
+  const sunday = parseCronSchedule('0 0 * * 7');
+  assert.ok(sunday);
+  assert.equal(cronMatches(sunday, new Date(2026, 6, 19, 0, 0)), true);
+
+  const next = nextCronOccurrence(nightly, new Date(2026, 6, 15, 3, 30));
+  assert.deepEqual(next, new Date(2026, 6, 16, 3, 0));
+
+  // 低频表达式：闰日从 2025-03-01 起要跨到 2028-02-29，不得误判不可达
+  const leapDay = parseCronSchedule('0 0 29 2 *');
+  assert.ok(leapDay);
+  assert.deepEqual(nextCronOccurrence(leapDay, new Date(2025, 2, 1)), new Date(2028, 1, 29));
+  const never = parseCronSchedule('0 0 31 2 *');
+  assert.ok(never);
+  assert.equal(nextCronOccurrence(never, new Date(2025, 2, 1)), undefined);
+});
+
+test('crontab 读写往返、校验动作字段并容忍坏条目', async (context) => {
+  const { paths, cleanup } = await temporaryPaths();
+  context.after(cleanup);
+
+  assert.deepEqual((await readCrontab(paths)).entries, []);
+  const entries = [
+    {
+      id: 'nightly-derive',
+      schedule: '0 3 * * *',
+      action: 'derive' as const,
+      repository: '/repo/a',
+      agent: 'codex',
+    },
+    {
+      id: 'daily-report',
+      schedule: '30 8 * * 1-5',
+      action: 'agent' as const,
+      repository: '/repo/a',
+      agent: 'codex',
+      prompt: '编译日报',
+    },
+  ];
+  await writeCrontab(paths, entries);
+  const loaded = await readCrontab(paths);
+  assert.deepEqual(loaded.entries, entries);
+  assert.deepEqual(loaded.problems, []);
+
+  assert.deepEqual(
+    validateCronEntry({
+      id: 'ok-floor',
+      schedule: '0 * * * *',
+      action: 'inspect',
+      repository: 'all',
+    }),
+    [],
+  );
+  const invalid = validateCronEntry({
+    id: 'Bad_Id',
+    schedule: '99 * * * *',
+    action: 'agent',
+    repository: 'all',
+  });
+  assert.equal(invalid.length >= 4, true);
+
+  await writeFile(
+    join(paths.configDir, 'crontab.toml'),
+    '[[cron]]\nid = "half"\nschedule = "0 3 * * *"\naction = "derive"\nrepository = "/repo/a"\n',
+  );
+  const tolerated = await readCrontab(paths);
+  assert.deepEqual(tolerated.entries, []);
+  assert.match(tolerated.problems.join(''), /derive 动作必须指定 agent/u);
+});
+
+test('nextCronOccurrence 跳过夏令时不存在的本地时间，秋季重复时段正常返回', () => {
+  const originalTz = process.env['TZ'];
+  process.env['TZ'] = 'America/New_York';
+  try {
+    // 环境不响应 TZ 变更时跳过（2026-03-08 02:30 在纽约不存在）
+    const probe = new Date(2026, 2, 8, 2, 30);
+    if (probe.getHours() === 2) return;
+
+    const halfPastTwo = parseCronSchedule('30 2 * * *');
+    assert.ok(halfPastTwo);
+    const next = nextCronOccurrence(halfPastTwo, new Date(2026, 2, 8, 0, 0));
+    assert.ok(next);
+    assert.equal(cronMatches(halfPastTwo, next), true);
+    assert.deepEqual(
+      [next.getMonth() + 1, next.getDate(), next.getHours(), next.getMinutes()],
+      [3, 9, 2, 30],
+    );
+
+    const halfPastOne = parseCronSchedule('30 1 * * *');
+    assert.ok(halfPastOne);
+    const fall = nextCronOccurrence(halfPastOne, new Date(2026, 10, 1, 0, 0));
+    assert.ok(fall);
+    assert.equal(cronMatches(halfPastOne, fall), true);
+    assert.deepEqual([fall.getDate(), fall.getHours(), fall.getMinutes()], [1, 1, 30]);
+  } finally {
+    if (originalTz === undefined) delete process.env['TZ'];
+    else process.env['TZ'] = originalTz;
+  }
 });

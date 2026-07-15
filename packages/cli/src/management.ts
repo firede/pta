@@ -3,20 +3,27 @@ import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { startServer } from '@pta/server';
+import { startServer, type ServerApi } from '@pta/server';
 
 import {
   appendLogRecord,
   clearDaemonState,
+  cronMatches,
   daemonStateFilePath,
+  derivationCacheStats,
+  gcDerivations,
   installedServiceManager,
   isProcessAlive,
   isServiceNotLoadedError,
   launchdPlistPath,
   loadGlobalConfig,
   newInstanceToken,
+  nextCronOccurrence,
+  parseCronSchedule,
+  readCrontab,
   readDaemonState,
   readLogRecords,
+  readRepositories,
   renderLaunchdPlist,
   renderSystemdUnit,
   resolveGlobalPaths,
@@ -25,7 +32,18 @@ import {
   verifiedDaemonState,
   verifyDaemonToken,
   writeDaemonState,
+  type GlobalPaths,
+  type LogSource,
 } from '@pta/runtime';
+
+import {
+  bucketViews,
+  collectInspectionViews,
+  collectSignalCounts,
+  readInspectionReports,
+  sweepRepositories,
+} from './inspection.ts';
+import { executeCronEntry } from './schedule.ts';
 
 export type CliIO = Readonly<{
   stdout: (text: string) => void;
@@ -77,6 +95,38 @@ function sleep(ms: number): Promise<void> {
   });
 }
 
+function buildServerApi(paths: GlobalPaths, logSource: LogSource): ServerApi {
+  return {
+    repositories: async () => {
+      const [repositories, reports] = await Promise.all([
+        readRepositories(paths),
+        readInspectionReports(paths),
+      ]);
+      const byRoot = new Map(reports.map((report) => [report.root, report]));
+      return repositories.map((repository) => ({
+        ...repository,
+        report: byRoot.get(repository.root) ?? null,
+      }));
+    },
+    logs: (limit) => readLogRecords(paths, limit),
+    cron: async () => {
+      const crontab = await readCrontab(paths);
+      const now = new Date();
+      return crontab.entries.map((entry) => {
+        const schedule = parseCronSchedule(entry.schedule);
+        const next = schedule === undefined ? undefined : nextCronOccurrence(schedule, now);
+        return { ...entry, nextWakeAt: next?.toISOString() ?? null };
+      });
+    },
+    cacheStats: () => derivationCacheStats(paths),
+    cacheGc: async (olderThanDays) => {
+      const result = await gcDerivations(paths, olderThanDays);
+      await appendLogRecord(paths, logSource, 'cache-gc', { olderThanDays, ...result });
+      return result;
+    },
+  };
+}
+
 async function daemonRun(io: CliIO): Promise<number> {
   const paths = resolveGlobalPaths();
   const config = await loadGlobalConfig(paths);
@@ -84,7 +134,10 @@ async function daemonRun(io: CliIO): Promise<number> {
   const token = newInstanceToken();
   let server;
   try {
-    server = await startServer({ version, instanceToken: token }, config.daemonPort);
+    server = await startServer(
+      { version, instanceToken: token, api: buildServerApi(paths, 'daemon') },
+      config.daemonPort,
+    );
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     io.stderr(`守护进程启动失败：${message}\n`);
@@ -97,8 +150,92 @@ async function daemonRun(io: CliIO): Promise<number> {
     startedAt: new Date().toISOString(),
   });
   await appendLogRecord(paths, 'daemon', 'daemon-start', { pid: process.pid, port: server.port });
+
+  // 地板扫描：零 LLM 的机械巡检，免费所以内建；agent 介入的任务一律走显式 cron 条目。
+  let sweeping = false;
+  const floorSweep = async (): Promise<void> => {
+    if (sweeping) return;
+    sweeping = true;
+    try {
+      const result = await sweepRepositories(paths);
+      await appendLogRecord(paths, 'daemon', 'inspect-sweep', {
+        inspected: result.inspected,
+        skipped: result.skipped,
+        expired: result.reports.reduce((sum, report) => sum + report.counts.expired, 0),
+        conditionTriggered: result.reports.reduce(
+          (sum, report) => sum + report.counts.conditionTriggered,
+          0,
+        ),
+        errors: result.errors,
+      });
+    } catch (error) {
+      await appendLogRecord(paths, 'daemon', 'inspect-sweep-error', {
+        message: error instanceof Error ? error.message : String(error),
+      });
+    } finally {
+      sweeping = false;
+    }
+  };
+
+  let lastMinute = '';
+  let running = false;
+  const cronTick = async (): Promise<void> => {
+    const stamp = new Date();
+    stamp.setSeconds(0, 0);
+    const key = stamp.toISOString().slice(0, 16);
+    if (key === lastMinute || running) return;
+    lastMinute = key;
+    running = true;
+    try {
+      const [crontab, currentConfig] = await Promise.all([
+        readCrontab(paths),
+        loadGlobalConfig(paths),
+      ]);
+      for (const entry of crontab.entries) {
+        const schedule = parseCronSchedule(entry.schedule);
+        if (schedule === undefined || !cronMatches(schedule, stamp)) continue;
+        try {
+          const outcome = await executeCronEntry(entry, paths, currentConfig, stamp);
+          await appendLogRecord(paths, 'daemon', 'cron-run', {
+            id: outcome.id,
+            action: outcome.action,
+            trigger: 'schedule',
+            ok: outcome.ok,
+            detail: outcome.detail,
+          });
+        } catch (error) {
+          await appendLogRecord(paths, 'daemon', 'cron-run', {
+            id: entry.id,
+            action: entry.action,
+            trigger: 'schedule',
+            ok: false,
+            detail: error instanceof Error ? error.message : String(error),
+          });
+        }
+      }
+    } finally {
+      running = false;
+    }
+  };
+
+  const warmup = setTimeout(() => {
+    void floorSweep();
+  }, 3000);
+  const floorSchedule = setInterval(
+    () => {
+      void floorSweep();
+    },
+    60 * 60 * 1000,
+  );
+  const cronSchedule = setInterval(() => {
+    void cronTick();
+  }, 20 * 1000);
+
   const shutdown = (): void => {
     void (async () => {
+      clearTimeout(warmup);
+      clearInterval(floorSchedule);
+      clearInterval(cronSchedule);
       await server.close();
       await appendLogRecord(paths, 'daemon', 'daemon-stop', { pid: process.pid });
       await clearDaemonState(paths);
@@ -107,7 +244,9 @@ async function daemonRun(io: CliIO): Promise<number> {
   };
   process.on('SIGTERM', shutdown);
   process.on('SIGINT', shutdown);
-  io.stdout(`守护进程运行中：http://127.0.0.1:${server.port}/（pid ${process.pid}）\n`);
+  io.stdout(
+    `守护进程运行中：http://127.0.0.1:${server.port}/（pid ${process.pid}，地板扫描每小时，cron 条目分钟级调度）\n`,
+  );
   return 0;
 }
 
@@ -325,11 +464,13 @@ export async function runDashboard(io: CliIO): Promise<number> {
   }
   const config = await loadGlobalConfig(paths);
   const version = await cliVersion();
+  const api = buildServerApi(paths, 'cli');
+  const instanceToken = newInstanceToken();
   let server;
   try {
-    server = await startServer({ version }, config.daemonPort);
+    server = await startServer({ version, instanceToken, api }, config.daemonPort);
   } catch {
-    server = await startServer({ version }, 0);
+    server = await startServer({ version, instanceToken, api }, 0);
   }
   const url = `http://127.0.0.1:${server.port}/`;
   io.stdout(
@@ -477,8 +618,24 @@ export async function runDoctor(io: CliIO, cwd: string): Promise<number> {
     detail: daemon !== undefined ? `运行中（pid ${daemon.pid}，端口 ${daemon.port}）` : '未运行',
   });
 
+  const repositories = await readRepositories(paths);
+  const reports = await readInspectionReports(paths);
+  const lastSweep = reports
+    .map((report) => report.generatedAt)
+    .toSorted()
+    .at(-1);
+  checks.push({
+    mark: repositories.length > 0 ? '✓' : '⚠',
+    name: '仓库注册表',
+    detail:
+      repositories.length > 0
+        ? `${repositories.length} 个仓库${lastSweep === undefined ? '，尚无巡检报告' : `，最近巡检 ${lastSweep.slice(0, 16).replace('T', ' ')}`}`
+        : '为空：在仓库里运行任一 pta 命令即可登记',
+  });
+
   const toplevel = await run('git', ['-C', cwd, 'rev-parse', '--show-toplevel']);
   if (toplevel.ok) {
+    const repositoryRoot = toplevel.stdout.trim();
     const roots = await run('git', ['-C', cwd, 'rev-list', '--max-parents=0', 'HEAD']);
     const root = roots.ok
       ? roots.stdout.trim().split('\n').toSorted().at(0)?.slice(0, 12)
@@ -486,8 +643,38 @@ export async function runDoctor(io: CliIO, cwd: string): Promise<number> {
     checks.push({
       mark: '✓',
       name: '当前仓库',
-      detail: `${toplevel.stdout.trim()}${root === undefined ? '（无提交基线）' : `（身份 ${root}）`}`,
+      detail: `${repositoryRoot}${root === undefined ? '（无提交基线）' : `（身份 ${root}）`}`,
     });
+    try {
+      const signals = await collectSignalCounts(repositoryRoot);
+      checks.push({
+        mark: signals.conflicts + signals.violations > 0 ? '⚠' : '✓',
+        name: '核查信号',
+        detail: `冲突 ${signals.conflicts}，违例 ${signals.violations}，嫌疑 ${signals.suspicions}`,
+      });
+    } catch (error) {
+      checks.push({
+        mark: '⚠',
+        name: '核查信号',
+        detail: error instanceof Error ? error.message : String(error),
+      });
+    }
+    try {
+      const views = await collectInspectionViews(repositoryRoot, paths);
+      const buckets = bucketViews(views, new Date().toISOString().slice(0, 10));
+      const attention = buckets.expired.length + buckets.conditionTriggered.length;
+      checks.push({
+        mark: attention > 0 ? '⚠' : '✓',
+        name: '巡检集合',
+        detail: `${views.length} 条：到期 ${buckets.expired.length}，评估已触发 ${buckets.conditionTriggered.length}，待推导 ${buckets.awaitingDerivation.length}`,
+      });
+    } catch (error) {
+      checks.push({
+        mark: '⚠',
+        name: '巡检集合',
+        detail: error instanceof Error ? error.message : String(error),
+      });
+    }
   } else {
     checks.push({ mark: '⚠', name: '当前仓库', detail: '当前目录不在 Git 仓库内' });
   }

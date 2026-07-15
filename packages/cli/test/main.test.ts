@@ -9,6 +9,8 @@ import { test } from 'node:test';
 import { hashEntryContent } from '@pta/core';
 
 import { runCli } from '../src/main.ts';
+import { readInspectionReports, sweepRepositories } from '../src/inspection.ts';
+import { resolveGlobalPaths } from '@pta/runtime';
 
 const globalDirs = await mkdtemp(join(tmpdir(), 'pta-global-'));
 process.env['XDG_STATE_HOME'] = join(globalDirs, 'state');
@@ -280,7 +282,10 @@ test('inspect 圈定巡检集合并报告到期', async (context) => {
     output.stdout(),
     /到期：\n {2}\[expiry \| machine-decidable\] TRUTH\.md:2 复查线索 2020-01 已到期/u,
   );
-  assert.match(output.stdout(), /未盘存（待推导或注册）：/u);
+  assert.match(
+    output.stdout(),
+    /待推导（无线索记录，可 pta inspect derive 或 pta inspect register）：/u,
+  );
   assert.match(output.stdout(), /^ {2}[0-9a-f]{8} TRUTH\.md:3 \[\?\] 服务部署在单台服务器上/mu);
   assert.match(output.stdout(), /残留（整类巡检）：/u);
   assert.match(output.stdout(), /^ {2}[0-9a-f]{8} RESIDUE\.md:1 2024-03 之前的数据/mu);
@@ -388,7 +393,10 @@ test('inspect register 注册推导叠加进报告，logs 记录关键行为', a
 
   const before = capture();
   assert.equal(await runCli(['inspect', root], before.io), 0);
-  assert.match(before.stdout(), /未盘存（待推导或注册）：/u);
+  assert.match(
+    before.stdout(),
+    /待推导（无线索记录，可 pta inspect derive 或 pta inspect register）：/u,
+  );
 
   const condition = capture();
   assert.equal(await runCli(['inspect', 'register', id, '条件'], condition.io, root), 0);
@@ -396,7 +404,7 @@ test('inspect register 注册推导叠加进报告，logs 记录关键行为', a
 
   const confirmed = capture();
   assert.equal(await runCli(['inspect', root], confirmed.io), 0);
-  assert.match(confirmed.stdout(), /条件型（已盘存）：/u);
+  assert.match(confirmed.stdout(), /条件型（待评估）：/u);
 
   const dated = capture();
   assert.equal(await runCli(['inspect', 'register', id, '2030-06'], dated.io, root), 0);
@@ -411,4 +419,182 @@ test('inspect register 注册推导叠加进报告，logs 记录关键行为', a
   const logs = capture();
   assert.equal(await runCli(['logs', '10'], logs.io, root), 0);
   assert.match(logs.stdout(), /\[cli\] derivation-register/u);
+});
+
+test('inspect derive 经 agent 推导条件线索并评估，报告随之升级', async (context) => {
+  const root = await repository({
+    'TRUTH.md': '- [?] 服务部署在单台服务器上。部署拓扑变化时复查。\n',
+  });
+  context.after(() => rm(root, { recursive: true, force: true }));
+  await git(root, ['init', '-q']);
+
+  const scriptPath = join(globalDirs, 'fake-agent.mjs');
+  await writeFile(
+    scriptPath,
+    [
+      "let data = '';",
+      "process.stdin.on('data', (chunk) => { data += chunk; });",
+      "process.stdin.on('end', () => {",
+      "  if (data.includes('复查条件')) {",
+      '    console.log(\'{"result":"triggered","rationale":"生态已变化"}\');',
+      '  } else {',
+      '    console.log(\'{"type":"condition","condition":"部署拓扑发生变化"}\');',
+      '  }',
+      '});',
+    ].join('\n'),
+  );
+  const configDir = join(globalDirs, 'config', 'pta');
+  await mkdir(configDir, { recursive: true });
+  await writeFile(
+    join(configDir, 'config.toml'),
+    `[agents.fake]\ncommand = ["${process.execPath}", "${scriptPath}"]\n`,
+  );
+  context.after(() => rm(join(configDir, 'config.toml'), { force: true }));
+
+  const before = capture();
+  assert.equal(await runCli(['inspect', root], before.io), 0);
+  assert.match(
+    before.stdout(),
+    /待推导（无线索记录，可 pta inspect derive 或 pta inspect register）：/u,
+  );
+
+  const derive = capture();
+  assert.equal(await runCli(['inspect', 'derive', 'fake'], derive.io, root), 0);
+  assert.match(derive.stdout(), /推导完成（agent fake）：新推导 1 条，评估 1 条。/u);
+
+  const after = capture();
+  assert.equal(await runCli(['inspect', root], after.io), 0);
+  assert.match(after.stdout(), /条件型（评估为已触发，待人裁决）：/u);
+  assert.match(after.stdout(), /评估理由：生态已变化/u);
+
+  const missingAgent = capture();
+  assert.equal(await runCli(['inspect', 'derive', 'absent'], missingAgent.io, root), 2);
+  assert.match(missingAgent.stderr(), /未找到 agent：absent/u);
+});
+
+test('sweepRepositories 扫描注册仓库并落巡检报告，doctor 展示仓库健康', async (context) => {
+  const root = await repository({
+    'TRUTH.md': '- [?] 风险分级与学会指南一致。2020-01 核对指南是否更新。\n',
+  });
+  context.after(() => rm(root, { recursive: true, force: true }));
+  await git(root, ['init', '-q']);
+
+  const seed = capture();
+  assert.equal(await runCli(['inspect', root], seed.io), 0);
+
+  const paths = resolveGlobalPaths();
+  const sweep = await sweepRepositories(paths);
+  assert.equal(sweep.errors.length, 0);
+  const report = sweep.reports.find((item) => item.root === root);
+  assert.ok(report);
+  assert.equal(report.counts.expired, 1);
+
+  const listed = await readInspectionReports(paths);
+  assert.equal(
+    listed.some((item) => item.root === root && item.counts.expired === 1),
+    true,
+  );
+
+  const doctor = capture();
+  assert.equal(await runCli(['doctor'], doctor.io, root), 0);
+  assert.match(doctor.stdout(), /仓库注册表/u);
+  assert.match(doctor.stdout(), /核查信号：冲突 0，违例 0，嫌疑 0/u);
+  assert.match(doctor.stdout(), /巡检集合：1 条：到期 1/u);
+});
+
+test('cron 条目 CRUD、校验与手动执行', async (context) => {
+  const root = await repository({ 'TRUTH.md': '- 根判断\n' });
+  context.after(() => rm(root, { recursive: true, force: true }));
+  await git(root, ['init', '-q']);
+
+  const scriptPath = join(globalDirs, 'report-agent.mjs');
+  await writeFile(scriptPath, "console.log('日报正文');");
+  const configDir = join(globalDirs, 'config', 'pta');
+  await mkdir(configDir, { recursive: true });
+  await writeFile(
+    join(configDir, 'config.toml'),
+    `[agents.reporter]\ncommand = ["${process.execPath}", "${scriptPath}"]\n`,
+  );
+  context.after(() => rm(join(configDir, 'config.toml'), { force: true }));
+  context.after(() => rm(join(configDir, 'crontab.toml'), { force: true }));
+
+  const bad = capture();
+  assert.equal(
+    await runCli(['cron', 'create', 'bad-entry', '0 3 * * *', 'derive'], bad.io, root),
+    2,
+  );
+  assert.match(bad.stderr(), /derive 动作必须指定 agent/u);
+
+  const create = capture();
+  assert.equal(
+    await runCli(
+      [
+        'cron',
+        'create',
+        'daily-report',
+        '30 8 * * 1-5',
+        'agent',
+        '--agent',
+        'reporter',
+        '--prompt',
+        '编译日报',
+      ],
+      create.io,
+      root,
+    ),
+    0,
+  );
+  assert.match(create.stdout(), /已创建 cron 条目 daily-report/u);
+
+  const list = capture();
+  assert.equal(await runCli(['cron', 'list'], list.io, root), 0);
+  assert.match(list.stdout(), /daily-report：\[30 8 \* \* 1-5\] agent/u);
+  assert.match(list.stdout(), /下次唤醒：\d{4}-\d{2}-\d{2} \d{2}:\d{2}/u);
+
+  const run = capture();
+  assert.equal(await runCli(['cron', 'run', 'daily-report'], run.io, root), 0);
+  assert.match(run.stdout(), /完成/u);
+  const output = await readFile(
+    join(globalDirs, 'cache', 'pta', 'cron-output', 'daily-report.txt'),
+    'utf8',
+  );
+  assert.match(output, /日报正文/u);
+
+  const update = capture();
+  assert.equal(
+    await runCli(['cron', 'update', 'daily-report', '--schedule', '0 9 * * *'], update.io, root),
+    0,
+  );
+  const updated = capture();
+  assert.equal(await runCli(['cron', 'list'], updated.io, root), 0);
+  assert.match(updated.stdout(), /\[0 9 \* \* \*\]/u);
+
+  const remove = capture();
+  assert.equal(await runCli(['cron', 'delete', 'daily-report'], remove.io, root), 0);
+  const empty = capture();
+  assert.equal(await runCli(['cron', 'list'], empty.io, root), 0);
+  assert.match(empty.stdout(), /没有 cron 条目/u);
+});
+
+test('crontab 含无效条目时拒绝写操作', async (context) => {
+  const root = await repository({ 'TRUTH.md': '- 根判断\n' });
+  context.after(() => rm(root, { recursive: true, force: true }));
+  await git(root, ['init', '-q']);
+
+  const configDir = join(globalDirs, 'config', 'pta');
+  await mkdir(configDir, { recursive: true });
+  await writeFile(
+    join(configDir, 'crontab.toml'),
+    '[[cron]]\nid = "half"\nschedule = "0 3 * * *"\naction = "derive"\nrepository = "/repo/a"\n\n[[cron]]\nid = "ok-entry"\nschedule = "0 4 * * *"\naction = "inspect"\nrepository = "/repo/a"\n',
+  );
+  context.after(() => rm(join(configDir, 'crontab.toml'), { force: true }));
+
+  const refused = capture();
+  assert.equal(
+    await runCli(['cron', 'create', 'new-entry', '0 5 * * *', 'inspect'], refused.io, root),
+    2,
+  );
+  assert.match(refused.stderr(), /写操作会将其永久丢弃，已拒绝执行/u);
+  const preserved = await readFile(join(configDir, 'crontab.toml'), 'utf8');
+  assert.match(preserved, /id = "half"/u);
 });
