@@ -1,15 +1,15 @@
 ---
 title: Domain Knowledge Should Be Shared Across Projects with Verifiers at the Core
-description: When domain knowledge is shared across projects, the sharing unit should have rules and verifiers as its normative content, with a reference implementation optionally attached as informative content; package content enters the target project's truth only after being re-implemented and passing verification.
+description: When domain knowledge is shared across projects, the sharing unit has rules, normative data, and operation contracts as its normative content, with verifiers responsible for testing and a reference implementation optionally attached as informative content; package content enters the target project's truth only after being re-implemented and passing verification.
 dependsOn:
   - argument/what-is-project-truth
   - argument/project-truth-by-domain
   - argument/truth-record-work-language
   - argument/projection-view-compiled-on-demand
-sourceHash: a6aa338410b010194b682d7a3de9587aa521d140349ee9e5aee41a4bdbcf5fc0
+sourceHash: 501f52fc5873de7eb9002a98425ea0f20927aa7c2a272f3af10be8dfc10a4cae
 ---
 
-Domain knowledge should be shared across projects with verifiers at the core. A domain knowledge package is a sharing unit of domain knowledge extracted from project truth after stripping project coupling and private information: the domain's term relationships, rules, edge cases, and the reasons behind tradeoffs form the normative content, and verifiers express the machine-verifiable part of it as executable verification; a reference implementation may optionally be attached as informative content.
+Domain knowledge should be shared across projects with verifiers at the core. A domain knowledge package is a sharing unit of domain knowledge extracted from project truth after stripping project coupling and private information: the domain's term relationships, rules, edge cases, and the reasons behind tradeoffs — together with content in structural form such as normative data and operation contracts — form the normative content, and verifiers express the machine-verifiable part of it as executable verification; a reference implementation may optionally be attached as informative content.
 
 A domain knowledge package is not project truth for any project. Only after the target project re-implements the packaged knowledge in line with its own structure, technology stack, and working language, passes the package's verifiers, and actually adopts the result, does that content enter the target project's truth.
 
@@ -29,7 +29,7 @@ The central question is therefore: when domain knowledge is shared across projec
 
 **Verifiers are the most portable form of domain knowledge.**
 
-The core of domain knowledge is what must still hold under a different implementation: invariants, rules, and edge cases. Verifiers express this content as executable verification — a conformance case is both a statement of the knowledge and a test of it.
+The core of domain knowledge is what must still hold under a different implementation: invariants, rules, and edge cases. Verifiers express this content as executable verification — whether the knowledge is being followed is answered by the run's outcome.
 
 Executable expression bypasses two kinds of loss. It does not pass through natural-language retelling: domain constraints run directly as tests, introducing no translation bias. And it verifies semantics rather than structure, binding to no particular implementation. Technical specifications being re-implemented across language ecosystems against conformance suites is the precedent that proves this path.
 
@@ -38,6 +38,12 @@ Executable expression bypasses two kinds of loss. It does not pass through natur
 The project truth facing the package author is interwoven with implementation. To judge whether a piece of content is domain knowledge, apply this criterion repeatedly: under a different implementation, must this still hold? What must hold enters the package's normative content; what could be otherwise is implementation accident, entering the informative layer at most.
 
 The same criterion performs the stripping. Project-specific constraints, conventions, and private information do not satisfy "anyone implementing this domain must follow it," and are naturally excluded from the normative content.
+
+**Normative content takes two forms: statement and structure.**
+
+Not all domain knowledge exists as stated judgments. Normative data such as a complete correspondence table, and operation contracts expressed in domain language and laws, must equally hold under a different implementation; they enter the normative content in structural form. The mix of the two forms varies by domain: where knowledge is mostly tradeoffs and conventions, the package is mostly statements; where operational semantics are dense, structural form carries the main weight. Rewriting a table row by row into statements pays translation cost to obtain the same facts in a form harder to test. An operation contract states only semantics and laws, such as conversion round-trips being identity, or serialize-then-parse returning the original set; function signatures are implementation coordinates, left for the consumer to decide.
+
+Definition and testing stay separate: normative data enumerates the facts, operation contracts state the laws, and verifiers do the testing; verification cases reference normative data rather than copy it, so authoritative content exists in exactly one place. The separation makes the package's range of assurance statable: which rules and data are backed by verifiers, and which are left to human adjudication. This boundary, like the cases themselves, can be reviewed before adoption.
 
 **Normative and informative content must be layered.**
 
@@ -101,6 +107,6 @@ The package's own freshness rests on the source project: when the source project
 
 ## Conclusion
 
-Domain knowledge should be shared across projects with verifiers at the core. A domain knowledge package has rules and verifiers as its normative content and a reference implementation as a rebuildable example; the extraction criterion is what must still hold under a different implementation, and the consumption path is re-implementation plus a verification loop.
+Domain knowledge should be shared across projects with verifiers at the core. A domain knowledge package's normative content takes both statement and structural form, with verifiers doing the testing and a reference implementation as a rebuildable example; the extraction criterion is what must still hold under a different implementation, and the consumption path is re-implementation plus a verification loop.
 
 A package is not project truth for any project. Only through re-implementation, verification, and adoption does domain knowledge become part of the target project's truth. This path turns domain knowledge into a reusable asset: the authoring cost is paid once, the consumption threshold keeps falling with model capability, and the knowledge itself is always maintained by each project as its own project truth.
