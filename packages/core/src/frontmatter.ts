@@ -25,7 +25,7 @@ export type Frontmatter = Readonly<{
 }>;
 
 export type DomainDependency = Readonly<{
-  path: string;
+  domain: string;
   reason: string;
 }>;
 
@@ -98,11 +98,12 @@ function parseFrontmatter(raw: string): Omit<Frontmatter, 'present' | 'closed' |
   const dependsOn =
     Array.isArray(dependsOnValue) &&
     dependsOnValue.every(
-      (item) => isRecord(item) && typeof item.path === 'string' && typeof item.reason === 'string',
+      (item) =>
+        isRecord(item) && typeof item.domain === 'string' && typeof item.reason === 'string',
     )
       ? dependsOnValue.map((item) => {
           const dependency = item as Record<string, unknown>;
-          return { path: dependency.path as string, reason: dependency.reason as string };
+          return { domain: dependency.domain as string, reason: dependency.reason as string };
         })
       : undefined;
   if (dependsOnPresent && dependsOn === undefined)

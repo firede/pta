@@ -230,11 +230,7 @@ async function externalDeclarations(
         containerPath,
         externalRoot: root.path,
         name,
-        ...(frontmatter.filesPresent
-          ? { identifier: containerPath }
-          : validPath
-            ? { identifier: claimedPath }
-            : {}),
+        identifier: containerPath,
         ...(claimedPath === undefined ? {} : { claimedPath }),
         filesPresent: frontmatter.filesPresent,
         ...(frontmatter.files === undefined ? {} : { files: frontmatter.files }),
@@ -250,18 +246,28 @@ async function externalDeclarations(
 function parentFor(domain: Domain, domains: readonly Domain[]): string | undefined {
   const path = domain.claimedPath;
   if (path === undefined || domain.identifier === undefined) return undefined;
-  const wholeDirectoryIds = new Set(
-    domains
-      .filter((candidate) => !candidate.filesPresent && candidate.identifier !== undefined)
-      .map((candidate) => candidate.identifier as string),
-  );
+  const wholeDirectoryByClaim = new Map<string, string>();
+  for (const candidate of domains) {
+    if (
+      candidate.filesPresent ||
+      candidate.identifier === undefined ||
+      candidate.claimedPath === undefined ||
+      wholeDirectoryByClaim.has(candidate.claimedPath)
+    )
+      continue;
+    wholeDirectoryByClaim.set(candidate.claimedPath, candidate.identifier);
+  }
 
-  if (domain.filesPresent && wholeDirectoryIds.has(path)) return path;
+  if (domain.filesPresent) {
+    const claimant = wholeDirectoryByClaim.get(path);
+    if (claimant !== undefined) return claimant;
+  }
   let ancestor = path;
   while (ancestor !== '') {
     const slash = ancestor.lastIndexOf('/');
     ancestor = slash === -1 ? '' : ancestor.slice(0, slash);
-    if (wholeDirectoryIds.has(ancestor)) return ancestor;
+    const claimant = wholeDirectoryByClaim.get(ancestor);
+    if (claimant !== undefined && claimant !== domain.identifier) return claimant;
   }
   return undefined;
 }

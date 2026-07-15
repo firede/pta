@@ -7,7 +7,7 @@ dependsOn:
   - argument/project-truth-freshness-governance
   - argument/history-still-in-effect
   - argument/material-temporal-claim
-sourceHash: 41eadd6368c3eaa4ef0d337732dff05d5d658dbd27c927adcc1efabe8618597f
+sourceHash: 3ce7391559e29afb7c75681dfede475cb65682d40dde033e8678f05a35140a8c
 ---
 
 Domain declaration defines how domains are delimited, marked, and connected in the repository.
@@ -24,12 +24,12 @@ A directory constitutes a domain by carrying `TRUTH.md`. This is the only criter
 
 `TRUTH.md` carries the domain's truth records: concepts, rules, constraints, and tradeoffs with their reasons. Content that restates implementation details is not written in.
 
-A domain is identified by the directory path it claims. For an in-directory `TRUTH.md`, its location is the domain boundary, and the path **must not** be declared in frontmatter. A domain declares no name or description; the human-readable display name is derived on demand by consuming interfaces. All frontmatter is optional:
+A domain is identified by the directory path where its declaration lives. Identifier and claim play separate roles: the identifier carries identity — references and adjudication anchors attach to it, and it stays stable with the declaration's location; the claim carries scope — hierarchy and file ownership are computed from it, and it is revised with the declaration's content. For an in-directory declaration, its location coincides with the claimed directory, and the identifier is that directory path; the location of `TRUTH.md` is the domain boundary, and the path **must not** be declared in frontmatter. A domain declares no name or description; the human-readable display name is derived on demand by consuming interfaces. All frontmatter is optional:
 
 ```markdown
 ---
 dependsOn:
-  - path: src/components/screening-form
+  - domain: src/components/screening-form
     reason: The display rules depend on the screening form's entry conventions
 ---
 
@@ -38,9 +38,9 @@ dependsOn:
 
 Frontmatter syntax follows YAML 1.2; the shape of each field is defined by the corresponding section of this specification, and unrecognized fields **should** be ignored. Frontmatter that cannot be parsed as YAML 1.2 constitutes a check signal.
 
-**`dependsOn` (optional)** declares record dependencies that cannot be derived from existing structure: this domain's truth records depend on the content of the referenced domain, and when that domain changes, this domain becomes a check candidate. Each item contains `path` and `reason`, stating from this domain's perspective what it depends on.
+**`dependsOn` (optional)** declares record dependencies that cannot be derived from existing structure: this domain's truth records depend on the content of the referenced domain, and when that domain changes, this domain becomes a check candidate. Each item contains `domain` and `reason`: `domain` is the identifier of the referenced domain, and `reason` states from this domain's perspective what it depends on.
 
-Each item's `path` **must** be the identifier of a domain in the repository; a dependency pointing to a nonexistent domain constitutes a violation: a dependency's entire purpose is to send this domain into check candidacy when the other domain changes, and a dangling target silently breaks that propagation.
+The domain referenced by `domain` **must** exist in the repository; a dependency pointing to a nonexistent domain constitutes a violation: a dependency's entire purpose is to send this domain into check candidacy when the other domain changes, and a dangling target silently breaks that propagation.
 
 Dependencies are directional and **must** be declared on the affected side; reverse relationships (who depends on this domain) are derived by tooling scanning all domain declarations, and **must not** be mirrored on the depended-upon side. When an undeclared dependency is discovered, whoever the discoverer is, the declaration is added to the affected domain.
 
@@ -48,7 +48,7 @@ Relationships derivable from implementation dependencies, references between rec
 
 ## Domain Hierarchy
 
-A domain's parent is the domain formed by the nearest ancestor directory carrying `TRUTH.md`. An externally declared domain computes its hierarchy from its declared `path`; for an external domain carrying `files`, when the directory it points to constitutes a domain itself, that domain is its parent. Hierarchy is given by the directory structure, and `TRUTH.md` **must not** declare parent-child relationships separately.
+A domain's parent is computed from the claimed directory: the nearest ancestor directory in the tree that constitutes a domain gives the parent, regardless of the form in which that domain is declared. For an external domain carrying `files`, when the directory it points to constitutes a domain itself, that domain is its parent. Hierarchy is given by the directory structure, and `TRUTH.md` **must not** declare parent-child relationships separately.
 
 The parent domain's records form the background of its child domains. A child `TRUTH.md` does not restate what already holds at the parent level; it records only the judgments specific to its own domain.
 
@@ -81,7 +81,7 @@ files:
 ……
 ```
 
-A `path`-only external domain is identified by the directory path it claims, consistent with in-directory declarations; an external domain carrying `files` is identified by the directory path where its declaration resides (`{externalRoot}/{name}`).
+An external domain is identified by the directory path where its declaration resides (`{externalRoot}/{name}`), unchanged by the presence or absence of `files`. An in-directory declaration derives both identifier and claim from its location; an external declaration carries its own identity, with the claim stated separately by `path` and `files` — when the claimed directory is renamed, revising `path` suffices, and the identifier, together with the references and adjudications attached to it, stays intact.
 
 Members of `files` are path fragments relative to `path`, inheriting the segment rules of the identity specification: separated by `/`, with segments that **must not** be empty or be `.` or `..`, spelled byte-for-byte with no case folding. The repository-root path obtained by joining `path` with a member **must** point to a file that actually exists in the repository rather than a directory; the list **must not** contain duplicates.
 

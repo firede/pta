@@ -16,7 +16,7 @@ function domain(
     containerPath?: string;
     claimedPath?: string;
     files?: readonly string[];
-    dependsOn?: readonly { path: string; reason: string }[];
+    dependsOn?: readonly { domain: string; reason: string }[];
   }> = {},
 ): Domain {
   const containerPath = options.containerPath ?? identifier;
@@ -112,7 +112,7 @@ test('真相记录变更沿 dependsOn 反向关系与全部层级下级传播', 
       domain('source/child'),
       domain('source/child/grandchild'),
       domain('consumer', {
-        dependsOn: [{ path: 'source', reason: '消费来源口径' }],
+        dependsOn: [{ domain: 'source', reason: '消费来源口径' }],
       }),
     ]),
     [{ path: 'source/TRUTH.md', type: 'modified' }],

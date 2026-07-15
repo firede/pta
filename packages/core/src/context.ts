@@ -24,8 +24,8 @@ export type ContextAssembly = Readonly<{
   domains: readonly ContextDomain[];
 }>;
 
-function domainDepth(identifier: string): number {
-  return identifier === '' ? 0 : identifier.split('/').length;
+function hierarchyDepth(identifier: string, domains: ReadonlyMap<string, Domain>): number {
+  return ancestors(identifier, domains).length;
 }
 
 export function assembleContext(
@@ -62,7 +62,11 @@ export function assembleContext(
   }
 
   const domains = [...involved]
-    .sort((left, right) => domainDepth(left) - domainDepth(right) || left.localeCompare(right))
+    .sort(
+      (left, right) =>
+        hierarchyDepth(left, domainsById) - hierarchyDepth(right, domainsById) ||
+        left.localeCompare(right),
+    )
     .map((identifier): ContextDomain => {
       const domain = domainsById.get(identifier) as Domain;
       const files = contentById.get(identifier)?.files ?? {};

@@ -15,7 +15,7 @@ async function fixture(): Promise<{ root: string; repositoryFiles: string[] }> {
     'src/consumer/TRUTH.md': [
       '---',
       'dependsOn:',
-      '  - path: src/components',
+      '  - domain: src/components',
       '    reason: 组件口径构成消费背景',
       '---',
       '- 消费判断',
@@ -38,6 +38,7 @@ async function fixture(): Promise<{ root: string; repositoryFiles: string[] }> {
     '.pta/missing/TRUTH.md': '- 没有 frontmatter 仍需保留\n',
     '.pta/case/TRUTH.md': '---\npath: internal/dsl\nfiles: [case.go]\n---\n- 大小写事实\n',
     'packages/legacy/keep.txt': 'legacy\n',
+    'packages/legacy/sub/TRUTH.md': '- 遗留子域判断\n',
     '.pta/legacy/TRUTH.md': '---\npath: packages/legacy\n---\n- 遗留包判断\n',
     'packages/web/.pta/components/TRUTH.md': '---\npath: src/components\n---\n- 外置重复主张\n',
     'pta.toml': 'externalRoots = ["packages/web/.pta"]\n',
@@ -73,7 +74,7 @@ test('发现目录与默认/配置外置领域，计算标识和层级', async (
       .filter((domain) => domain.kind === 'directory')
       .map((domain) => domain.identifier)
       .sort(),
-    ['', 'internal/dsl', 'src', 'src/components', 'src/consumer'],
+    ['', 'internal/dsl', 'packages/legacy/sub', 'src', 'src/components', 'src/consumer'],
   );
   assert.equal(byDeclaration.get('src/TRUTH.md')?.parentIdentifier, '');
   assert.deepEqual(byDeclaration.get('src/TRUTH.md')?.problems, [
@@ -81,7 +82,7 @@ test('发现目录与默认/配置外置领域，计算标识和层级', async (
   ]);
   assert.equal(byDeclaration.get('src/components/TRUTH.md')?.parentIdentifier, 'src');
   assert.deepEqual(byDeclaration.get('src/consumer/TRUTH.md')?.dependsOn, [
-    { path: 'src/components', reason: '组件口径构成消费背景' },
+    { domain: 'src/components', reason: '组件口径构成消费背景' },
   ]);
 
   const compiler = byDeclaration.get('.pta/compiler/TRUTH.md');
@@ -96,15 +97,17 @@ test('发现目录与默认/配置外置领域，计算标识和层级', async (
   ]);
 
   const legacy = byDeclaration.get('.pta/legacy/TRUTH.md');
-  assert.equal(legacy?.identifier, 'packages/legacy');
+  assert.equal(legacy?.identifier, '.pta/legacy');
+  assert.equal(legacy?.claimedPath, 'packages/legacy');
   assert.equal(legacy?.parentIdentifier, '');
+  assert.equal(byDeclaration.get('packages/legacy/sub/TRUTH.md')?.parentIdentifier, '.pta/legacy');
 
   const configured = byDeclaration.get('packages/web/.pta/components/TRUTH.md');
-  assert.equal(configured?.identifier, 'src/components');
+  assert.equal(configured?.identifier, 'packages/web/.pta/components');
   assert.equal(configured?.parentIdentifier, 'src');
 });
 
-test('缺 path 的外置声明保留原文事实而没有臆造标识', async (context) => {
+test('缺 path 的外置声明保留原文事实，标识仍来自声明位置', async (context) => {
   const { root, repositoryFiles } = await fixture();
   context.after(() => rm(root, { recursive: true, force: true }));
   const result = await discoverDomains(root, repositoryFiles);
@@ -113,13 +116,18 @@ test('缺 path 的外置声明保留原文事实而没有臆造标识', async (c
   );
 
   assert.ok(missing);
-  assert.equal(missing.identifier, undefined);
+  assert.equal(missing.identifier, '.pta/missing');
+  assert.equal(missing.claimedPath, undefined);
+  assert.equal(missing.parentIdentifier, undefined);
   assert.equal(missing.frontmatter.present, false);
   assert.deepEqual(missing.problems, [{ code: 'missing-path' }]);
 
   const content = await extractDomainContent(root, repositoryFiles, missing);
   assert.equal(content.files['TRUTH.md']?.entries[0]?.content, '没有 frontmatter 仍需保留');
-  assert.equal(content.files['TRUTH.md']?.entries[0]?.identifier, undefined);
+  assert.deepEqual(content.files['TRUTH.md']?.entries[0]?.identifier?.container, {
+    domainIdentifier: '.pta/missing',
+    fileKind: 'truth',
+  });
 });
 
 test('从领域容器的四种文件提取内容，外置领域使用声明目录中的伴随文件', async (context) => {

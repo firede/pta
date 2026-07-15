@@ -328,7 +328,7 @@ function formatContext(
     if (domain.dependsOn.length > 0) {
       lines.push('', '### 依赖领域（未展开，可按标识另行查询）', '');
       for (const dependency of domain.dependsOn) {
-        lines.push(`- ${dependency.path}：${dependency.reason}`);
+        lines.push(`- ${dependency.domain}：${dependency.reason}`);
       }
     }
   }

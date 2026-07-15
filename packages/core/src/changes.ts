@@ -228,7 +228,7 @@ export function classifyChanges(
       if (domain.identifier === undefined || domain.identifier === source.domainIdentifier)
         continue;
       for (const dependency of domain.dependsOn) {
-        if (dependency.path === source.domainIdentifier) {
+        if (dependency.domain === source.domainIdentifier) {
           addReason(domain.identifier, {
             relation: 'dependsOn',
             sourceDomainIdentifier: source.domainIdentifier,

@@ -114,7 +114,7 @@ function contentViolations(contents: readonly DomainContent[]): CheckSignal[] {
           'invalid-document': `${content.fileName} 的 frontmatter 必须是映射。`,
           'invalid-path-field': `${content.fileName} 的 frontmatter 字段 path 必须是字符串。`,
           'invalid-files-field': `${content.fileName} 的 frontmatter 字段 files 必须是字符串序列。`,
-          'invalid-depends-on-field': `${content.fileName} 的 frontmatter 字段 dependsOn 必须是含字符串 path 与 reason 的映射序列。`,
+          'invalid-depends-on-field': `${content.fileName} 的 frontmatter 字段 dependsOn 必须是含字符串 domain 与 reason 的映射序列。`,
         } as const;
         signals.push(
           signal({
@@ -184,17 +184,18 @@ function duplicateWholeDirectoryDeclarations(contents: readonly DomainContent[])
   const signals: CheckSignal[] = [];
   const firstByPath = new Map<string, Domain>();
   for (const { domain } of contents) {
-    if (domain.filesPresent || domain.identifier === undefined) continue;
-    const first = firstByPath.get(domain.identifier);
+    if (domain.filesPresent || domain.identifier === undefined || domain.claimedPath === undefined)
+      continue;
+    const first = firstByPath.get(domain.claimedPath);
     if (first === undefined) {
-      firstByPath.set(domain.identifier, domain);
+      firstByPath.set(domain.claimedPath, domain);
       continue;
     }
     signals.push(
       signal({
         category: 'conflict',
         anchor: declarationAnchor(domain),
-        message: `该整目录声明与 ${first.declarationPath}:1 重复主张目录「${domain.identifier}」。`,
+        message: `该整目录声明与 ${first.declarationPath}:1 重复主张目录「${domain.claimedPath}」。`,
         file: domain.declarationPath,
         line: 1,
       }),
@@ -235,8 +236,8 @@ function fileBoundaryConflicts(contents: readonly DomainContent[]): CheckSignal[
   const boundaries = contents
     .map(({ domain }) => domain)
     .filter(
-      (domain): domain is Domain & { identifier: string } =>
-        !domain.filesPresent && domain.identifier !== undefined,
+      (domain): domain is Domain & { identifier: string; claimedPath: string } =>
+        !domain.filesPresent && domain.identifier !== undefined && domain.claimedPath !== undefined,
     );
 
   for (const { domain } of contents) {
@@ -245,17 +246,17 @@ function fileBoundaryConflicts(contents: readonly DomainContent[]): CheckSignal[
       const claimedFile = posix.join(domain.claimedPath, member);
       const boundary = boundaries.find(
         (candidate) =>
-          candidate.identifier !== domain.claimedPath &&
-          candidate.identifier.startsWith(`${domain.claimedPath}/`) &&
-          (claimedFile === candidate.identifier ||
-            claimedFile.startsWith(`${candidate.identifier}/`)),
+          candidate.claimedPath !== domain.claimedPath &&
+          candidate.claimedPath.startsWith(`${domain.claimedPath}/`) &&
+          (claimedFile === candidate.claimedPath ||
+            claimedFile.startsWith(`${candidate.claimedPath}/`)),
       );
       if (boundary === undefined) continue;
       signals.push(
         signal({
           category: 'conflict',
           anchor: declarationAnchor(domain),
-          message: `files 成员「${claimedFile}」越过更具体领域「${boundary.identifier}」的边界（${boundary.declarationPath}:1）。`,
+          message: `files 成员「${claimedFile}」越过更具体领域「${boundary.claimedPath}」的边界（${boundary.declarationPath}:1）。`,
           file: domain.declarationPath,
           line: frontmatterKeyLine(domain, 'files'),
         }),
@@ -321,13 +322,14 @@ function isAncestor(ancestor: Domain, descendant: Domain): boolean {
   if (
     ancestor.filesPresent ||
     ancestor.identifier === undefined ||
+    ancestor.claimedPath === undefined ||
     descendant.claimedPath === undefined
   )
     return false;
-  if (descendant.filesPresent && ancestor.identifier === descendant.claimedPath) return true;
+  if (descendant.filesPresent && ancestor.claimedPath === descendant.claimedPath) return true;
   return (
-    ancestor.identifier !== descendant.claimedPath &&
-    (ancestor.identifier === '' || descendant.claimedPath.startsWith(`${ancestor.identifier}/`))
+    ancestor.claimedPath !== descendant.claimedPath &&
+    (ancestor.claimedPath === '' || descendant.claimedPath.startsWith(`${ancestor.claimedPath}/`))
   );
 }
 
@@ -397,12 +399,12 @@ function missingDependencyTargets(contents: readonly DomainContent[]): CheckSign
   for (const { domain } of contents) {
     if (domain.identifier === undefined) continue;
     for (const dependency of domain.dependsOn) {
-      if (identifiers.has(dependency.path)) continue;
+      if (identifiers.has(dependency.domain)) continue;
       signals.push(
         signal({
           category: 'violation',
           anchor: declarationAnchor(domain),
-          message: `dependsOn 指向的「${dependency.path}」不是任何领域的标识；目标可能已迁移、更名或声明有误。`,
+          message: `dependsOn 指向的「${dependency.domain}」不是任何领域的标识；目标可能已迁移、更名或声明有误。`,
           file: domain.declarationPath,
           line: frontmatterKeyLine(domain, 'dependsOn'),
         }),

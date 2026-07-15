@@ -16,7 +16,7 @@ import {
 function domain(
   identifier: string,
   options: Readonly<{
-    dependsOn?: readonly { path: string; reason: string }[];
+    dependsOn?: readonly { domain: string; reason: string }[];
   }> = {},
 ): Domain {
   const dependsOn = options.dependsOn ?? [];
@@ -130,8 +130,39 @@ test('assembleContext 限定文件的外置领域优先于目录覆盖，路径�
   assert.deepEqual(assembly.domains[2]?.consumedFiles, ['.pta/slice/TRUTH.md']);
 });
 
+test('assembleContext 按层级深度排序，配置外置根中的整目录上级先于标识更浅的下级', () => {
+  const frontmatter = splitFrontmatter('- 判断\n').frontmatter;
+  const base: Domain = {
+    kind: 'external',
+    declarationPath: 'packages/web/.pta/base/TRUTH.md',
+    containerPath: 'packages/web/.pta/base',
+    externalRoot: 'packages/web/.pta',
+    name: 'base',
+    identifier: 'packages/web/.pta/base',
+    claimedPath: 'src',
+    filesPresent: false,
+    dependsOn: [],
+    frontmatter,
+    problems: [],
+  };
+  const result = discovery([domain(''), base, domain('src/child')]);
+  const byId = new Map(result.domains.map((item) => [item.identifier, item]));
+  const contents = [
+    content(byId.get('') as Domain, { 'TRUTH.md': '- 根判断\n' }),
+    content(byId.get('packages/web/.pta/base') as Domain, { 'TRUTH.md': '- 库判断\n' }),
+    content(byId.get('src/child') as Domain, { 'TRUTH.md': '- 子判断\n' }),
+  ];
+
+  const assembly = assembleContext(result, contents, ['src/child/a.ts']);
+
+  assert.deepEqual(
+    assembly.domains.map((item) => item.domainIdentifier),
+    ['', 'packages/web/.pta/base', 'src/child'],
+  );
+});
+
 test('assembleContext 未覆盖路径无归属，dependsOn 原样携带', () => {
-  const dependsOn = [{ path: 'shared', reason: '引用共享术语' }];
+  const dependsOn = [{ domain: 'shared', reason: '引用共享术语' }];
   const result = discovery([domain('src', { dependsOn }), domain('shared')]);
   const byId = new Map(result.domains.map((item) => [item.identifier, item]));
   const contents = [

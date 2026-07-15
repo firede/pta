@@ -55,7 +55,7 @@ function externalDomain(
     containerPath,
     externalRoot: '.pta',
     name,
-    identifier: files === undefined ? claimedPath : containerPath,
+    identifier: containerPath,
     claimedPath,
     filesPresent: files !== undefined,
     ...(files === undefined ? {} : { files }),
@@ -206,7 +206,7 @@ test('dependsOn 指向存在领域不产生信号，悬空目标构成违例', (
   const provider = directoryDomain('provider');
   const valid = directoryDomain(
     'consumer',
-    '---\ndependsOn:\n  - path: provider\n    reason: 引用对方口径\n---\n- 判断',
+    '---\ndependsOn:\n  - domain: provider\n    reason: 引用对方口径\n---\n- 判断',
   );
   assert.deepEqual(
     lintDomainContents([valid, provider]).filter((item) => item.category === 'violation'),
@@ -215,7 +215,7 @@ test('dependsOn 指向存在领域不产生信号，悬空目标构成违例', (
 
   const dangling = directoryDomain(
     'consumer',
-    '---\ndependsOn:\n  - path: ghost\n    reason: 目标已不存在\n---\n- 判断',
+    '---\ndependsOn:\n  - domain: ghost\n    reason: 目标已不存在\n---\n- 判断',
   );
   const signals = lintDomainContents([dangling, provider]).filter(
     (item) => item.category === 'violation',
