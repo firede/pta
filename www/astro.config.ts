@@ -1,4 +1,5 @@
 import { defineConfig } from 'astro/config';
+import { unified } from '@astrojs/markdown-remark';
 import starlight from '@astrojs/starlight';
 
 import react from '@astrojs/react';
@@ -14,7 +15,9 @@ export default defineConfig({
   site: 'https://pta.pub',
 
   markdown: {
-    rehypePlugins: [rehypeStrongSubheading],
+    processor: unified({
+      rehypePlugins: [rehypeStrongSubheading],
+    }),
   },
 
   integrations: [
