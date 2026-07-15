@@ -280,7 +280,10 @@ test('inspect 圈定巡检集合并报告到期', async (context) => {
     output.stdout(),
     /到期：\n {2}\[expiry \| machine-decidable\] TRUTH\.md:2 复查线索 2020-01 已到期/u,
   );
-  assert.match(output.stdout(), /未盘存（待推导或注册）：/u);
+  assert.match(
+    output.stdout(),
+    /待推导（无线索记录，可 pta inspect derive 或 pta inspect register）：/u,
+  );
   assert.match(output.stdout(), /^ {2}[0-9a-f]{8} TRUTH\.md:3 \[\?\] 服务部署在单台服务器上/mu);
   assert.match(output.stdout(), /残留（整类巡检）：/u);
   assert.match(output.stdout(), /^ {2}[0-9a-f]{8} RESIDUE\.md:1 2024-03 之前的数据/mu);
@@ -388,7 +391,10 @@ test('inspect register 注册推导叠加进报告，logs 记录关键行为', a
 
   const before = capture();
   assert.equal(await runCli(['inspect', root], before.io), 0);
-  assert.match(before.stdout(), /未盘存（待推导或注册）：/u);
+  assert.match(
+    before.stdout(),
+    /待推导（无线索记录，可 pta inspect derive 或 pta inspect register）：/u,
+  );
 
   const condition = capture();
   assert.equal(await runCli(['inspect', 'register', id, '条件'], condition.io, root), 0);
@@ -396,7 +402,7 @@ test('inspect register 注册推导叠加进报告，logs 记录关键行为', a
 
   const confirmed = capture();
   assert.equal(await runCli(['inspect', root], confirmed.io), 0);
-  assert.match(confirmed.stdout(), /条件型（已盘存）：/u);
+  assert.match(confirmed.stdout(), /条件型（待评估）：/u);
 
   const dated = capture();
   assert.equal(await runCli(['inspect', 'register', id, '2030-06'], dated.io, root), 0);
@@ -411,4 +417,55 @@ test('inspect register 注册推导叠加进报告，logs 记录关键行为', a
   const logs = capture();
   assert.equal(await runCli(['logs', '10'], logs.io, root), 0);
   assert.match(logs.stdout(), /\[cli\] derivation-register/u);
+});
+
+test('inspect derive 经 agent 推导条件线索并评估，报告随之升级', async (context) => {
+  const root = await repository({
+    'TRUTH.md': '- [?] 服务部署在单台服务器上。部署拓扑变化时复查。\n',
+  });
+  context.after(() => rm(root, { recursive: true, force: true }));
+  await git(root, ['init', '-q']);
+
+  const scriptPath = join(globalDirs, 'fake-agent.mjs');
+  await writeFile(
+    scriptPath,
+    [
+      "let data = '';",
+      "process.stdin.on('data', (chunk) => { data += chunk; });",
+      "process.stdin.on('end', () => {",
+      "  if (data.includes('复查条件')) {",
+      '    console.log(\'{"result":"triggered","rationale":"生态已变化"}\');',
+      '  } else {',
+      '    console.log(\'{"type":"condition","condition":"部署拓扑发生变化"}\');',
+      '  }',
+      '});',
+    ].join('\n'),
+  );
+  const configDir = join(globalDirs, 'config', 'pta');
+  await mkdir(configDir, { recursive: true });
+  await writeFile(
+    join(configDir, 'config.toml'),
+    `[agents.fake]\ncommand = ["${process.execPath}", "${scriptPath}"]\n`,
+  );
+  context.after(() => rm(join(configDir, 'config.toml'), { force: true }));
+
+  const before = capture();
+  assert.equal(await runCli(['inspect', root], before.io), 0);
+  assert.match(
+    before.stdout(),
+    /待推导（无线索记录，可 pta inspect derive 或 pta inspect register）：/u,
+  );
+
+  const derive = capture();
+  assert.equal(await runCli(['inspect', 'derive', 'fake'], derive.io, root), 0);
+  assert.match(derive.stdout(), /推导完成（agent fake）：新推导 1 条，评估 1 条。/u);
+
+  const after = capture();
+  assert.equal(await runCli(['inspect', root], after.io), 0);
+  assert.match(after.stdout(), /条件型（评估为已触发，待人裁决）：/u);
+  assert.match(after.stdout(), /评估理由：生态已变化/u);
+
+  const missingAgent = capture();
+  assert.equal(await runCli(['inspect', 'derive', 'absent'], missingAgent.io, root), 2);
+  assert.match(missingAgent.stderr(), /未找到 agent：absent/u);
 });

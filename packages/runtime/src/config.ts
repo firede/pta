@@ -14,11 +14,14 @@ export type GlobalConfig = Readonly<{
   path: string;
   exists: boolean;
   daemonPort: number;
+  daemonInspectIntervalMinutes: number;
+  daemonDerivationAgent?: string;
   agents: Readonly<Record<string, AgentConfig>>;
   problems: readonly string[];
 }>;
 
 export const defaultDaemonPort = 7823;
+export const defaultInspectIntervalMinutes = 60;
 
 export async function loadGlobalConfig(paths: GlobalPaths): Promise<GlobalConfig> {
   const path = join(paths.configDir, 'config.toml');
@@ -26,7 +29,14 @@ export async function loadGlobalConfig(paths: GlobalPaths): Promise<GlobalConfig
   try {
     source = await readFile(path, 'utf8');
   } catch {
-    return { path, exists: false, daemonPort: defaultDaemonPort, agents: {}, problems: [] };
+    return {
+      path,
+      exists: false,
+      daemonPort: defaultDaemonPort,
+      daemonInspectIntervalMinutes: defaultInspectIntervalMinutes,
+      agents: {},
+      problems: [],
+    };
   }
 
   const problems: string[] = [];
@@ -37,11 +47,20 @@ export async function loadGlobalConfig(paths: GlobalPaths): Promise<GlobalConfig
     problems.push(
       `config.toml 无法按 TOML 1.0 解析：${error instanceof Error ? error.message : String(error)}`,
     );
-    return { path, exists: true, daemonPort: defaultDaemonPort, agents: {}, problems };
+    return {
+      path,
+      exists: true,
+      daemonPort: defaultDaemonPort,
+      daemonInspectIntervalMinutes: defaultInspectIntervalMinutes,
+      agents: {},
+      problems,
+    };
   }
 
   const table = parsed as Record<string, unknown>;
   let daemonPort = defaultDaemonPort;
+  let daemonInspectIntervalMinutes = defaultInspectIntervalMinutes;
+  let daemonDerivationAgent: string | undefined;
   const daemon = table['daemon'];
   if (daemon !== undefined && typeof daemon === 'object' && daemon !== null) {
     const port = (daemon as Record<string, unknown>)['port'];
@@ -49,6 +68,18 @@ export async function loadGlobalConfig(paths: GlobalPaths): Promise<GlobalConfig
       daemonPort = port;
     } else if (port !== undefined) {
       problems.push('daemon.port 必须是 1–65535 的整数，已回退默认值。');
+    }
+    const interval = (daemon as Record<string, unknown>)['inspectIntervalMinutes'];
+    if (typeof interval === 'number' && Number.isInteger(interval) && interval >= 0) {
+      daemonInspectIntervalMinutes = interval;
+    } else if (interval !== undefined) {
+      problems.push('daemon.inspectIntervalMinutes 必须是 ≥0 的整数（0 关闭调度），已回退默认值。');
+    }
+    const agent = (daemon as Record<string, unknown>)['derivationAgent'];
+    if (typeof agent === 'string' && agent !== '') {
+      daemonDerivationAgent = agent;
+    } else if (agent !== undefined) {
+      problems.push('daemon.derivationAgent 必须是非空字符串，已忽略。');
     }
   }
 
@@ -76,5 +107,13 @@ export async function loadGlobalConfig(paths: GlobalPaths): Promise<GlobalConfig
     }
   }
 
-  return { path, exists: true, daemonPort, agents, problems };
+  return {
+    path,
+    exists: true,
+    daemonPort,
+    daemonInspectIntervalMinutes,
+    ...(daemonDerivationAgent === undefined ? {} : { daemonDerivationAgent }),
+    agents,
+    problems,
+  };
 }

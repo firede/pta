@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, rm, utimes, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
@@ -7,7 +7,15 @@ import { test } from 'node:test';
 import { buildAgentInvocation, runAgentTask } from '../src/agents.ts';
 import { defaultDaemonPort, loadGlobalConfig } from '../src/config.ts';
 import { isServiceNotLoadedError, readDaemonState, writeDaemonState } from '../src/daemon.ts';
-import { readDerivation, writeDerivation, type EntryLocator } from '../src/derivations.ts';
+import {
+  derivationCacheStats,
+  derivationFilePath,
+  gcDerivations,
+  readDerivation,
+  writeDerivation,
+  type EntryLocator,
+} from '../src/derivations.ts';
+import { readRepositories, recordRepository } from '../src/repositories.ts';
 import { appendLogRecord, readLogRecords } from '../src/log.ts';
 import { resolveGlobalPaths, type GlobalPaths } from '../src/paths.ts';
 
@@ -195,4 +203,75 @@ test('readDaemonState 往返并拒绝缺少令牌的旧状态', async (context) 
 
   await writeDaemonState(paths, { ...state, token: undefined as unknown as string });
   assert.equal(await readDaemonState(paths), undefined);
+});
+
+test('recordRepository 按身份与路径去重，readRepositories 容忍缺失', async (context) => {
+  const { paths, cleanup } = await temporaryPaths();
+  context.after(cleanup);
+  assert.deepEqual(await readRepositories(paths), []);
+  await recordRepository(paths, 'aaa', '/repo/a', '2026-07-15T00:00:00Z');
+  await recordRepository(paths, 'bbb', '/repo/b', '2026-07-15T00:00:01Z');
+  await recordRepository(paths, 'aaa', '/repo/a-moved', '2026-07-15T00:00:02Z');
+  await recordRepository(paths, 'ccc', '/repo/b', '2026-07-15T00:00:03Z');
+  const records = await readRepositories(paths);
+  assert.deepEqual(
+    records.map((record) => [record.identity, record.root]),
+    [
+      ['aaa', '/repo/a-moved'],
+      ['ccc', '/repo/b'],
+    ],
+  );
+});
+
+test('derivationCacheStats 统计条目，gcDerivations 按 mtime 回收', async (context) => {
+  const { paths, cleanup } = await temporaryPaths();
+  context.after(cleanup);
+  const locator = (hash: string): EntryLocator => ({
+    repository: 'repo',
+    domainIdentifier: 'src',
+    fileKind: 'truth',
+    contentHash: hash,
+  });
+  const record = (hash: string) => ({
+    locator: locator(hash),
+    kind: 'review-clue' as const,
+    type: 'condition' as const,
+    condition: '外部条件',
+    registeredAt: '2026-07-15T00:00:00Z',
+    registeredBy: 'cli',
+  });
+  await writeDerivation(paths, record('a'.repeat(64)));
+  await writeDerivation(paths, record('b'.repeat(64)));
+  const stats = await derivationCacheStats(paths);
+  assert.equal(stats.entries, 2);
+  assert.equal(stats.bytes > 0, true);
+
+  const old = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
+  await utimes(derivationFilePath(paths, locator('a'.repeat(64))), old, old);
+  const result = await gcDerivations(paths, 30);
+  assert.deepEqual(result, { removed: 1, kept: 1 });
+  assert.equal((await derivationCacheStats(paths)).entries, 1);
+  assert.equal((await readDerivation(paths, locator('b'.repeat(64)))) !== undefined, true);
+});
+
+test('loadGlobalConfig 解析 daemon 巡检调度字段', async (context) => {
+  const { paths, cleanup } = await temporaryPaths();
+  context.after(cleanup);
+  await mkdir(paths.configDir, { recursive: true });
+  await writeFile(
+    join(paths.configDir, 'config.toml'),
+    '[daemon]\ninspectIntervalMinutes = 30\nderivationAgent = "codex"\n',
+  );
+  const loaded = await loadGlobalConfig(paths);
+  assert.equal(loaded.daemonInspectIntervalMinutes, 30);
+  assert.equal(loaded.daemonDerivationAgent, 'codex');
+
+  await writeFile(
+    join(paths.configDir, 'config.toml'),
+    '[daemon]\ninspectIntervalMinutes = -1\nderivationAgent = ""\n',
+  );
+  const invalid = await loadGlobalConfig(paths);
+  assert.equal(invalid.daemonInspectIntervalMinutes, 60);
+  assert.equal(invalid.daemonDerivationAgent, undefined);
+  assert.equal(invalid.problems.length, 2);
 });
