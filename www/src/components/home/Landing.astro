@@ -15,6 +15,13 @@ interface Entry {
   href: string;
 }
 
+interface Lineage {
+  before?: string;
+  title: string;
+  href: string;
+  after: string;
+}
+
 interface Props {
   /** 竖排题字（汉语区划用），拉丁语言用横排 */
   vertical?: boolean;
@@ -27,6 +34,8 @@ interface Props {
   ctas: readonly Cta[];
   mapLabel: string;
   entries: readonly Entry[];
+  /** 渊源牌记：指向《人类带宽设计》总纲 */
+  lineage?: Lineage;
   footnote: string;
 }
 
@@ -40,6 +49,7 @@ const {
   ctas,
   mapLabel,
   entries,
+  lineage,
   footnote,
 } = Astro.props;
 ---
@@ -90,7 +100,16 @@ const {
     </ol>
   </nav>
 
-  <p class="landing-footnote">{footnote}</p>
+  <footer class="landing-colophon">
+    {
+      lineage && (
+        <p class="colophon-lineage">
+          {lineage.before}<a href={lineage.href}><cite>{lineage.title}</cite></a>{lineage.after}
+        </p>
+      )
+    }
+    <p class="colophon-note">{footnote}</p>
+  </footer>
 </div>
 
 <style is:global>
@@ -371,12 +390,51 @@ const {
     color: var(--sl-color-gray-3);
   }
 
-  .landing-footnote {
+  /* 牌记：渊源在上，事实来源声明作小字 */
+  .landing-colophon {
     margin-block: clamp(3.5rem, 9vh, 5.5rem) 1rem;
-    font-size: 0.82rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.55rem;
+    text-align: center;
+  }
+
+  .colophon-lineage {
+    margin: 0;
+    font-size: 0.9rem;
+    letter-spacing: 0.02em;
+    color: var(--sl-color-gray-2);
+  }
+
+  .colophon-lineage a {
+    color: inherit;
+    text-decoration: underline;
+    text-underline-offset: 0.3em;
+    text-decoration-color: var(--sl-color-gray-4);
+    transition:
+      color 0.15s,
+      text-decoration-color 0.15s;
+  }
+
+  .colophon-lineage a:hover {
+    color: var(--sl-color-accent);
+    text-decoration-color: currentColor;
+  }
+
+  .colophon-lineage cite {
+    font-style: italic;
+  }
+
+  :global(:root[lang^='zh']) .colophon-lineage cite {
+    font-style: normal;
+  }
+
+  .colophon-note {
+    margin: 0;
+    font-size: 0.8rem;
     letter-spacing: 0.04em;
     color: var(--sl-color-gray-3);
-    text-align: center;
   }
 
   @media (max-width: 50rem) {
