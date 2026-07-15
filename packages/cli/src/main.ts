@@ -43,6 +43,7 @@ import {
   type InspectionView,
 } from './inspection.ts';
 import { runCron } from './cron.ts';
+import { runHook } from './hooks.ts';
 import { audit, runAgent, runDaemon, runDashboard, runDoctor, runLogs } from './management.ts';
 
 export type CliIO = Readonly<{
@@ -108,7 +109,37 @@ function parseDiff(output: string): ChangedPath[] {
   return changes;
 }
 
-async function gitChanges(repositoryRoot: string, base?: string): Promise<ChangedPath[]> {
+function parseStagedStatus(output: string): ChangedPath[] {
+  const fields = output.split('\0');
+  const changes: ChangedPath[] = [];
+  for (let index = 0; index < fields.length; index += 1) {
+    const entry = fields[index];
+    if (entry === undefined || entry === '') continue;
+    const indexStatus = entry.slice(0, 1);
+    const path = entry.slice(3);
+    if (indexStatus === 'R' || indexStatus === 'C') {
+      const previousPath = fields[index + 1];
+      if (previousPath !== undefined && previousPath !== '') {
+        if (indexStatus === 'R') changes.push({ path: previousPath, type: 'deleted' });
+        index += 1;
+      }
+    }
+    if (indexStatus === ' ' || indexStatus === '?' || indexStatus === '!') continue;
+    changes.push({ path, type: changeType(indexStatus) });
+  }
+  return changes;
+}
+
+async function gitChanges(
+  repositoryRoot: string,
+  base?: string,
+  staged = false,
+): Promise<ChangedPath[]> {
+  if (staged) {
+    return parseStagedStatus(
+      await runGit(['status', '--porcelain=v1', '-z', '--untracked-files=all'], repositoryRoot),
+    );
+  }
   if (base === undefined) {
     return parseStatus(
       await runGit(['status', '--porcelain=v1', '-z', '--untracked-files=all'], repositoryRoot),
@@ -740,33 +771,75 @@ async function runPending(rootArg: string | undefined, io: CliIO, cwd: string): 
   }
 }
 
-async function runChanges(base: string | undefined, io: CliIO, cwd: string): Promise<number> {
+async function runChanges(
+  base: string | undefined,
+  io: CliIO,
+  cwd: string,
+  staged = false,
+): Promise<number> {
   const repositoryRoot = resolve(cwd);
   try {
-    const [changes, repositoryFiles] = await Promise.all([
-      gitChanges(repositoryRoot, base),
-      gitRepositoryFiles(repositoryRoot),
-    ]);
-    const discovery = await discoverDomains(repositoryRoot, repositoryFiles);
-    const contents = await Promise.all(
-      discovery.domains.map((domain) =>
-        extractDomainContent(repositoryRoot, repositoryFiles, domain),
-      ),
-    );
-    const pendingEntries = Object.fromEntries(
-      contents.flatMap(({ domain, files }) =>
-        domain.identifier === undefined
-          ? []
-          : [[domain.identifier, files['PENDING.md']?.entries ?? []] as const],
-      ),
-    );
+    const result = await classifyRepository(repositoryRoot, base, staged);
     await touchRepository(repositoryRoot);
-    io.stdout(formatChanges(classifyChanges(discovery, changes, pendingEntries)));
+    io.stdout(formatChanges(result));
     return 0;
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     io.stderr(`pta changes 失败：${message}\n`);
     return 2;
+  }
+}
+
+async function classifyRepository(
+  repositoryRoot: string,
+  base: string | undefined,
+  staged: boolean,
+): Promise<ChangeClassification> {
+  const [changes, repositoryFiles] = await Promise.all([
+    gitChanges(repositoryRoot, base, staged),
+    gitRepositoryFiles(repositoryRoot),
+  ]);
+  const discovery = await discoverDomains(repositoryRoot, repositoryFiles);
+  const contents = await Promise.all(
+    discovery.domains.map((domain) =>
+      extractDomainContent(repositoryRoot, repositoryFiles, domain),
+    ),
+  );
+  const pendingEntries = Object.fromEntries(
+    contents.flatMap(({ domain, files }) =>
+      domain.identifier === undefined
+        ? []
+        : [[domain.identifier, files['PENDING.md']?.entries ?? []] as const],
+    ),
+  );
+  return classifyChanges(discovery, changes, pendingEntries);
+}
+
+async function runRemind(staged: boolean, io: CliIO, cwd: string): Promise<number> {
+  const repositoryRoot = resolve(cwd);
+  try {
+    const result = await classifyRepository(repositoryRoot, undefined, staged);
+    const drifting = result.touchedDomains.filter((domain) => domain.surface === 'implementation');
+    if (drifting.length === 0) return 0;
+    const lines = ['PTA 提醒（不拦截）：实现被触及，真相记录与收件箱未动——'];
+    for (const domain of drifting) {
+      const backlog = domain.pendingContext.reduce(
+        (sum, context) => sum + context.entries.length,
+        0,
+      );
+      lines.push(
+        `  领域 ${label(domain.domainIdentifier)}：${domain.implementationChanges.length} 个文件${backlog > 0 ? `（该域及祖先已有 ${backlog} 条待裁决）` : ''}`,
+      );
+    }
+    lines.push(
+      '  变更含新判断或未裁决选择时：pnpm run pta pending add <领域> "<问题？>"',
+      '  确认真相中立可直接继续；详情：pnpm run pta changes' + (staged ? ' --staged' : ''),
+    );
+    io.stdout(`${lines.join('\n')}\n`);
+    return 0;
+  } catch {
+    // 提醒是合作式辅助，任何失败都不打扰提交
+    return 0;
   }
 }
 
@@ -776,12 +849,29 @@ export async function runCli(
   cwd = process.cwd(),
 ): Promise<number> {
   if (args[0] === 'changes') {
+    if (args[1] === '--staged') {
+      if (args.length > 2) {
+        io.stderr('用法：pta changes [base|--staged]\n');
+        return 2;
+      }
+      return runChanges(undefined, io, cwd, true);
+    }
     if (args.length > 2 || args[1]?.startsWith('-') === true) {
-      io.stderr('用法：pta changes [base]\n');
+      io.stderr('用法：pta changes [base|--staged]\n');
       return 2;
     }
     return runChanges(args[1], io, cwd);
   }
+
+  if (args[0] === 'remind') {
+    if (args.length > 2 || (args[1] !== undefined && args[1] !== '--staged')) {
+      io.stderr('用法：pta remind [--staged]\n');
+      return 2;
+    }
+    return runRemind(args[1] === '--staged', io, cwd);
+  }
+
+  if (args[0] === 'hook') return runHook(args.slice(1), io, cwd);
 
   if (args[0] === 'pending') {
     if (args[1] === 'remove') {
@@ -871,7 +961,7 @@ export async function runCli(
 
   if (args[0] !== 'check' || args.length > 2) {
     io.stderr(
-      '用法：pta check [仓库根]\n       pta changes [base]\n       pta pending [仓库根]\n       pta context <路径>...\n       pta inspect [仓库根]\n       pta agent <list|run>\n       pta cron <list|create|update|delete|run>\n       pta daemon <install|uninstall|status|start|stop|restart>\n       pta dashboard\n       pta doctor\n       pta logs [数量]\n',
+      '用法：pta check [仓库根]\n       pta changes [base|--staged]\n       pta remind [--staged]\n       pta pending [仓库根]\n       pta context <路径>...\n       pta inspect [仓库根]\n       pta agent <list|run>\n       pta cron <list|create|update|delete|run>\n       pta hook <install|uninstall|status>\n       pta daemon <install|uninstall|status|start|stop|restart>\n       pta dashboard\n       pta doctor\n       pta logs [数量]\n',
     );
     return 2;
   }

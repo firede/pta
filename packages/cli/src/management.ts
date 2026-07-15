@@ -674,6 +674,28 @@ export async function runDoctor(io: CliIO, cwd: string): Promise<number> {
         detail: error instanceof Error ? error.message : String(error),
       });
     }
+    try {
+      const gitDir = (await run('git', ['-C', cwd, 'rev-parse', '--git-dir'])).stdout.trim();
+      const hookPath = join(
+        gitDir.startsWith('/') ? gitDir : join(cwd, gitDir),
+        'hooks',
+        'pre-commit',
+      );
+      const hook = await readFile(hookPath, 'utf8').catch(() => '');
+      checks.push({
+        mark: hook.includes('remind') ? '✓' : '⚠',
+        name: '提交前提醒',
+        detail: hook.includes('remind')
+          ? 'pre-commit 已接入 pta remind'
+          : '未接线：pta hook install，或在既有钩子链加入 pta remind --staged',
+      });
+    } catch (error) {
+      checks.push({
+        mark: '⚠',
+        name: '提交前提醒',
+        detail: error instanceof Error ? error.message : String(error),
+      });
+    }
   } else {
     checks.push({ mark: '⚠', name: '当前仓库', detail: '当前目录不在 Git 仓库内' });
   }

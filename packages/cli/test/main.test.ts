@@ -575,3 +575,41 @@ test('cron 条目 CRUD、校验与手动执行', async (context) => {
   assert.equal(await runCli(['cron', 'list'], empty.io, root), 0);
   assert.match(empty.stdout(), /没有 cron 条目/u);
 });
+
+test('remind 只在实现漂移时开口，hook 三动词合作式管理', async (context) => {
+  const root = await repository({ 'TRUTH.md': '- 根判断\n', 'src.txt': '实现\n' });
+  context.after(() => rm(root, { recursive: true, force: true }));
+  await git(root, ['init', '-q']);
+  await git(root, ['add', '-A']);
+  await git(root, ['-c', 'user.email=t@t', '-c', 'user.name=t', 'commit', '-qm', 'base']);
+
+  await writeFile(join(root, 'src.txt'), '实现已改\n');
+  await git(root, ['add', 'src.txt']);
+  const noisy = capture();
+  assert.equal(await runCli(['remind', '--staged'], noisy.io, root), 0);
+  assert.match(noisy.stdout(), /PTA 提醒（不拦截）/u);
+  assert.match(noisy.stdout(), /领域 \.：1 个文件/u);
+
+  await git(root, ['-c', 'user.email=t@t', '-c', 'user.name=t', 'commit', '-qm', 'impl']);
+  const quiet = capture();
+  assert.equal(await runCli(['remind', '--staged'], quiet.io, root), 0);
+  assert.equal(quiet.stdout(), '');
+
+  const absent = capture();
+  assert.equal(await runCli(['hook', 'status'], absent.io, root), 0);
+  assert.match(absent.stdout(), /未接线/u);
+  const install = capture();
+  assert.equal(await runCli(['hook', 'install'], install.io, root), 0);
+  assert.match(install.stdout(), /只提醒，不拦截/u);
+  const installed = capture();
+  assert.equal(await runCli(['hook', 'status'], installed.io, root), 0);
+  assert.match(installed.stdout(), /已接线/u);
+  const uninstall = capture();
+  assert.equal(await runCli(['hook', 'uninstall'], uninstall.io, root), 0);
+
+  await mkdir(join(root, '.git', 'hooks'), { recursive: true });
+  await writeFile(join(root, '.git', 'hooks', 'pre-commit'), '#!/bin/sh\necho other\n');
+  const foreign = capture();
+  assert.equal(await runCli(['hook', 'install'], foreign.io, root), 2);
+  assert.match(foreign.stderr(), /不代为改写/u);
+});

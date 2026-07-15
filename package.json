@@ -20,7 +20,7 @@
     "wrangler": "^4.107.1"
   },
   "simple-git-hooks": {
-    "pre-commit": "pnpm exec nano-staged",
+    "pre-commit": "pnpm exec nano-staged && pnpm run --silent pta remind --staged",
     "pre-push": "pnpm --filter www i18n:check"
   }
 }
