@@ -1,12 +1,17 @@
 ---
 title: What Is Project Truth
 description: Project truth is the set of judgments the current project actually follows — decisions and premises that reasonable practice cannot derive and the project does not accept deviating from. The implementation conforms to truth without carrying it, and truth grounds continuous iteration and projection view generation.
-sourceHash: b2add8291d457b27367325102cbd02bb321e1486dc2fac9205d773f632f23123
+sourceHash: 4f52c78fbf0219d22c4ed415b5b74b3508a97da0b2789c631c41ddc78293164d
 ---
 
 Project truth is the judgments the current project actually follows: the decisions the project has made, and the premises the project has adopted. It answers why this project is the way it is now, rather than some other qualified way.
 
-A piece of content belongs to project truth only when it meets two conditions: reasonable practice cannot derive it — projects of the same kind facing the same problem have multiple qualified approaches, or it deviates from the prevailing default; and the project does not accept deviation from it — swap in another qualified approach, and the result is no longer this project. Both conditions are necessary: content that reasonable practice reliably supplies is, when written down, merely a restatement of common knowledge; pinning a choice the project does not care about only constrains later iteration.
+A piece of content belongs to project truth only when it meets two conditions:
+
+- **Reasonable practice cannot derive it**: projects of the same kind facing the same problem have multiple qualified approaches, or it deviates from the prevailing default.
+- **The project does not accept deviation from it**: swap in another qualified approach, and the result is no longer this project.
+
+Both conditions are necessary: content that reasonable practice reliably supplies is, when written down, merely a restatement of common knowledge; pinning a choice the project does not care about only constrains later iteration.
 
 Project truth primarily serves continuous project iteration. As long as a project will continue to be understood, changed, explained, audited, or used to generate projection views, it needs project truth. It may be used by people or by AI, and it is meant for understanding and judgment while the project keeps changing.
 
@@ -26,7 +31,12 @@ Therefore, when defining project truth, the central question is: which judgments
 
 **Project truth consists of judgments: the decisions the project has made, and the premises it has adopted.**
 
-Decisions are choices the project has pinned down among multiple qualified options: the wording of business rules, the boundaries of product capability, designs that deviate from prevailing defaults. Premises are the real-world conditions the project has adopted: external constraints such as user scale, deployment environment, and compliance requirements. Premises mark out the room where the implementation may simplify, and bring the requirements the implementation must satisfy. Decisions and premises together answer why the project is the way it is; making them explicit lets later iteration and rebuilding proceed under the same judgments.
+- **Decisions**: choices the project has pinned down among multiple qualified options, such as the wording of business rules, the boundaries of product capability, and designs that deviate from prevailing defaults.
+- **Premises**: real-world conditions the project has adopted, external constraints such as user scale, deployment environment, and compliance requirements.
+
+Premises mark out the room where the implementation may simplify, and bring the requirements the implementation must satisfy: once a single-machine deployment premise is made explicit, rate limiting need not defend against distributed scenarios; simplification of this kind rests on the premise, and without it, it is just an assumption no one vouches for.
+
+Decisions and premises together answer why the project is the way it is; making them explicit lets later iteration and rebuilding proceed under the same judgments. A judgment can also hold ahead of the implementation: a decision pinned down but not yet built constrains iteration all the same, and the implementation leaves room for it in its structure before delivering it.
 
 **The two conditions jointly draw the boundary of truth.**
 
@@ -38,7 +48,9 @@ The second condition keeps choices the project does not care about out of truth.
 
 An implementation can fully express behavior; it cannot express a judgment's standing. An implementation in which one-time passwords are only six characters and case-insensitive reads exactly like a security oversight; only the truth record can state that this is a deliberate tradeoff for reading mail on a phone. When judgments stay implicit in the implementation, sharing and reuse require extraction through interpretation, and iteration tends to treat them as details available for optimization.
 
-Therefore, project truth needs to be explicitly recorded outside the implementation. Writing down a judgment the implementation already embodies is different from restating the implementation: the record carries the judgment together with its binding force and its reason, and neither can be derived from the implementation. When record and implementation diverge, either the implementation has strayed from the judgment or the judgment has changed; both cases call for adjudication — divergence thus becomes a signal sent for review, rather than rot that no one owns.
+Therefore, project truth needs to be explicitly recorded outside the implementation. Writing down a judgment the implementation already embodies is different from restating the implementation: the record carries the judgment together with its binding force and its reason, and neither can be derived from the implementation.
+
+When record and implementation diverge, either the implementation has strayed from the judgment or the judgment has changed; both cases call for adjudication — divergence thus becomes a signal sent for review, rather than rot that no one owns. The direction of adjudication also comes from the record: when the implementation strays from a judgment, the repair brings it back in line with the record; when a judgment stands with its reason present, review reads it as a tradeoff, not an oversight awaiting a fix.
 
 **Everything outside the judgments is handled by reasonable practice.**
 
@@ -90,7 +102,10 @@ Load-bearing judgments often surface only when deviated from: a change overturns
 
 **Context and projection views are consumption results of project truth.**
 
-Context is a session projection formed from project truth, the task goal, and the current conversation state, used for a specific act of understanding or execution. A projection view targets a specific usage context and extracts, reorganizes, and presents content from project truth and the implementation. They can be generated, displayed, cached, and passed to AI for use. Content that can be regenerated from project truth and the usage context can usually remain a consumption result.
+- **Context**: a session projection formed from project truth, the task goal, and the current conversation state, used for a specific act of understanding or execution.
+- **Projection view**: content extracted, reorganized, and presented from project truth and the implementation for a specific usage context.
+
+They can be generated, displayed, cached, and passed to AI for use. Content that can be regenerated from project truth and the usage context can usually remain a consumption result.
 
 This article only defines what project truth is. How project truth enters the repository, and how it is reviewed, updated, deprecated, and governed, are outside its scope.
 
