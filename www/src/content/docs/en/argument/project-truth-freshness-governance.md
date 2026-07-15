@@ -5,7 +5,7 @@ dependsOn:
   - argument/what-is-project-truth
   - argument/truth-record-versioned-with-implementation
   - argument/project-truth-by-domain
-sourceHash: f8f6c9448c4ba50779164d4cdb0659c95c8201d9143fdfc32069878efd99ebd4
+sourceHash: 310639f718ca1a6a1735c74a87243e943e4e17632d0f6f25cfe582e1f3484b9c
 ---
 
 Project truth needs freshness governance. Freshness is the degree of consistency between the project truth recorded in the repository and what the project actually follows. Records do not track reality on their own; governance assigns them fixed checkpoints: change points handle internal drift triggered by changes inside the repository, and inspection points handle external drift that produces no version events.
@@ -34,7 +34,7 @@ Governance is therefore the precondition for the project truth architecture to h
 
 **Signals of internal drift live within the version boundary and should be handled at change points.**
 
-Once truth records share a version boundary with the implementation, what a change touched can be answered mechanically. A change that touches a domain's implementation without touching that domain's records constitutes a check signal; changing only records without touching the implementation works the same way. Domain organization lets signals be attributed by scope, so checks need not scan the whole repository.
+Once truth records share a version boundary with the implementation, what a change touched can be answered mechanically. A change that touches a domain's implementation without touching that domain's records constitutes a check signal; changing only records without touching the implementation works the same way. This signal is cheap only at the moment of change: people and AI performing a task consume records within the task's scope and do not reconcile them along the way; when the change point is absent, a divergence can pass through iteration after iteration unnoticed, until a dedicated review finally recovers it at a far higher cost. Domain organization lets signals be attributed by scope, so checks need not scan the whole repository.
 
 The scope of checking should also extend along domain relationships. Domains form hierarchies and dependencies: a lower-level domain holds within the background of its upper-level domain, and one domain's implementation and records may reference another domain's terms, rules, or interfaces. When a domain's records change, related domains' records may be invalidated even though nothing in them changed in this commit. Change points should include the domains that depend on or reference the changed domain in the scope of checking; relationships are derived from existing structures first, such as dependencies in the implementation, references between records, and the scope containment expressed by directory hierarchy.
 
