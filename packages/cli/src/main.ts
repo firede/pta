@@ -43,7 +43,6 @@ import {
   type InspectionView,
 } from './inspection.ts';
 import { runCron } from './cron.ts';
-import { runHook } from './hooks.ts';
 import { audit, runAgent, runDaemon, runDashboard, runDoctor, runLogs } from './management.ts';
 
 export type CliIO = Readonly<{
@@ -815,34 +814,6 @@ async function classifyRepository(
   return classifyChanges(discovery, changes, pendingEntries);
 }
 
-async function runRemind(staged: boolean, io: CliIO, cwd: string): Promise<number> {
-  const repositoryRoot = resolve(cwd);
-  try {
-    const result = await classifyRepository(repositoryRoot, undefined, staged);
-    const drifting = result.touchedDomains.filter((domain) => domain.surface === 'implementation');
-    if (drifting.length === 0) return 0;
-    const lines = ['PTA 提醒（不拦截）：实现被触及，真相记录与收件箱未动——'];
-    for (const domain of drifting) {
-      const backlog = domain.pendingContext.reduce(
-        (sum, context) => sum + context.entries.length,
-        0,
-      );
-      lines.push(
-        `  领域 ${label(domain.domainIdentifier)}：${domain.implementationChanges.length} 个文件${backlog > 0 ? `（该域及祖先已有 ${backlog} 条待裁决）` : ''}`,
-      );
-    }
-    lines.push(
-      '  变更含新判断或未裁决选择时：pnpm run pta pending add <领域> "<问题？>"',
-      '  确认真相中立可直接继续；详情：pnpm run pta changes' + (staged ? ' --staged' : ''),
-    );
-    io.stdout(`${lines.join('\n')}\n`);
-    return 0;
-  } catch {
-    // 提醒是合作式辅助，任何失败都不打扰提交
-    return 0;
-  }
-}
-
 export async function runCli(
   args: readonly string[],
   io: CliIO = processIO,
@@ -862,16 +833,6 @@ export async function runCli(
     }
     return runChanges(args[1], io, cwd);
   }
-
-  if (args[0] === 'remind') {
-    if (args.length > 2 || (args[1] !== undefined && args[1] !== '--staged')) {
-      io.stderr('用法：pta remind [--staged]\n');
-      return 2;
-    }
-    return runRemind(args[1] === '--staged', io, cwd);
-  }
-
-  if (args[0] === 'hook') return runHook(args.slice(1), io, cwd);
 
   if (args[0] === 'pending') {
     if (args[1] === 'remove') {
@@ -961,7 +922,7 @@ export async function runCli(
 
   if (args[0] !== 'check' || args.length > 2) {
     io.stderr(
-      '用法：pta check [仓库根]\n       pta changes [base|--staged]\n       pta remind [--staged]\n       pta pending [仓库根]\n       pta context <路径>...\n       pta inspect [仓库根]\n       pta agent <list|run>\n       pta cron <list|create|update|delete|run>\n       pta hook <install|uninstall|status>\n       pta daemon <install|uninstall|status|start|stop|restart>\n       pta dashboard\n       pta doctor\n       pta logs [数量]\n',
+      '用法：pta check [仓库根]\n       pta changes [base|--staged]\n       pta pending [仓库根]\n       pta context <路径>...\n       pta inspect [仓库根]\n       pta agent <list|run>\n       pta cron <list|create|update|delete|run>\n       pta daemon <install|uninstall|status|start|stop|restart>\n       pta dashboard\n       pta doctor\n       pta logs [数量]\n',
     );
     return 2;
   }

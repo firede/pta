@@ -1,6 +1,6 @@
 import { execFile, spawn } from 'node:child_process';
 import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
-import { join, resolve as resolvePath } from 'node:path';
+import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { startServer, type ServerApi } from '@pta/server';
@@ -672,26 +672,6 @@ export async function runDoctor(io: CliIO, cwd: string): Promise<number> {
       checks.push({
         mark: '⚠',
         name: '巡检集合',
-        detail: error instanceof Error ? error.message : String(error),
-      });
-    }
-    try {
-      const gitPath = (
-        await run('git', ['-C', cwd, 'rev-parse', '--git-path', 'hooks/pre-commit'])
-      ).stdout.trim();
-      const hookPath = resolvePath(cwd, gitPath);
-      const hook = await readFile(hookPath, 'utf8').catch(() => '');
-      checks.push({
-        mark: hook.includes('remind') ? '✓' : '⚠',
-        name: '提交前提醒',
-        detail: hook.includes('remind')
-          ? 'pre-commit 已接入 pta remind'
-          : '未接线：pta hook install，或在既有钩子链加入 pta remind --staged',
-      });
-    } catch (error) {
-      checks.push({
-        mark: '⚠',
-        name: '提交前提醒',
         detail: error instanceof Error ? error.message : String(error),
       });
     }
