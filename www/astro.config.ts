@@ -22,6 +22,7 @@ export default defineConfig({
       },
       components: {
         MarkdownContent: './src/components/starlight/MarkdownContent.astro',
+        PageTitle: './src/components/starlight/PageTitle.astro',
         Pagination: './src/components/starlight/Pagination.astro',
         Sidebar: './src/components/starlight/Sidebar.astro',
       },

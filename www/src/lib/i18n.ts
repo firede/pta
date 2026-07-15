@@ -43,6 +43,13 @@ function getLocale(language: Language) {
   return language === rootLanguage ? rootLocale : language.toLowerCase();
 }
 
+/** 根据 Starlight locale 反查语言标识。 */
+export function getLanguageFromLocale(locale: string | undefined): Language {
+  if (!locale || locale === rootLocale) return rootLanguage;
+  const entry = languageEntries.find(([language]) => getLocale(language) === locale);
+  return entry ? entry[0] : rootLanguage;
+}
+
 /** 读取默认语言下的全局文案，用于 Starlight 配置的默认 label。 */
 export function getRootMessage(key: GlobalMessageKey) {
   return getMessage(rootLanguage, key);
