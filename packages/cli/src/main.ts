@@ -27,9 +27,14 @@ import {
   type PendingEntryRef,
 } from '@pta/core';
 
-import { readDerivation, writeDerivation, type ClueDerivation } from './derivations.ts';
+import {
+  readDerivation,
+  resolveGlobalPaths,
+  writeDerivation,
+  type ClueDerivation,
+} from '@pta/runtime';
+
 import { audit, runAgent, runDaemon, runDashboard, runDoctor, runLogs } from './management.ts';
-import { resolveGlobalPaths } from './paths.ts';
 
 function shortId(entry: ExtractedEntry): string {
   return entry.contentHash.slice(0, 8);
@@ -134,6 +139,17 @@ async function gitRepositoryFiles(repositoryRoot: string): Promise<string[]> {
   ]);
   const deletedPaths = new Set(parseRepositoryFiles(deleted));
   return parseRepositoryFiles(listed).filter((path) => !deletedPaths.has(path));
+}
+
+async function repositoryIdentity(repositoryRoot: string): Promise<string> {
+  try {
+    const output = await runGit(['rev-list', '--max-parents=0', 'HEAD'], repositoryRoot);
+    const root = output.trim().split('\n').toSorted().at(0);
+    if (root !== undefined && root !== '') return root;
+  } catch {
+    // 无提交基线的仓库退回根路径标识
+  }
+  return repositoryRoot;
 }
 
 function domainLabel(signal: CheckSignal): string {
@@ -480,10 +496,16 @@ async function collectInspectionViews(repositoryRoot: string): Promise<readonly 
   const today = new Date().toISOString().slice(0, 10);
   const report = inspectContents(contents, today);
   const paths = resolveGlobalPaths();
+  const repository = await repositoryIdentity(repositoryRoot);
   return Promise.all(
     report.members.map(async (member): Promise<InspectionView> => {
       if (member.kind !== 'marked-truth') return { member };
-      const derivation = await readDerivation(paths, member.entry.contentHash);
+      const derivation = await readDerivation(paths, {
+        repository,
+        domainIdentifier: member.domainIdentifier,
+        fileKind: 'truth',
+        contentHash: member.entry.contentHash,
+      });
       if (derivation === undefined) {
         return { member, ...(member.due === undefined ? {} : { effectiveDue: member.due }) };
       }
@@ -550,7 +572,12 @@ async function runInspectRegister(
     }
     const match = selection.matches[0] as PendingEntryRef;
     const derivation: ClueDerivation = {
-      contentHash: match.entry.contentHash,
+      locator: {
+        repository: await repositoryIdentity(repositoryRoot),
+        domainIdentifier: match.domainIdentifier,
+        fileKind: 'truth',
+        contentHash: match.entry.contentHash,
+      },
       kind: 'review-clue',
       type: isDate ? 'date' : 'condition',
       ...(isDate ? { due: valueArg } : {}),

@@ -4,6 +4,7 @@ import { renderIndexHtml } from '@pta/web';
 
 export type ServerOptions = Readonly<{
   version: string;
+  instanceToken?: string;
 }>;
 
 export type RunningServer = Readonly<{
@@ -26,6 +27,7 @@ export function startServer(
           version: options.version,
           pid: process.pid,
           uptimeSeconds: Math.round((Date.now() - startedAt) / 1000),
+          ...(options.instanceToken === undefined ? {} : { instanceToken: options.instanceToken }),
         }),
       );
       return;

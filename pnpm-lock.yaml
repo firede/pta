@@ -29,12 +29,12 @@ importers:
       '@pta/core':
         specifier: workspace:*
         version: link:../core
+      '@pta/runtime':
+        specifier: workspace:*
+        version: link:../runtime
       '@pta/server':
         specifier: workspace:*
         version: link:../server
-      smol-toml:
-        specifier: ^1.7.0
-        version: 1.7.0
     devDependencies:
       '@types/node':
         specifier: ^24.10.1
@@ -51,6 +51,22 @@ importers:
       yaml:
         specifier: ^2.9.0
         version: 2.9.0
+    devDependencies:
+      '@types/node':
+        specifier: ^24.10.1
+        version: 24.13.3
+      typescript:
+        specifier: ^7.0.2
+        version: 7.0.2
+
+  packages/runtime:
+    dependencies:
+      '@pta/core':
+        specifier: workspace:*
+        version: link:../core
+      smol-toml:
+        specifier: ^1.7.0
+        version: 1.7.0
     devDependencies:
       '@types/node':
         specifier: ^24.10.1

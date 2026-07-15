@@ -5,21 +5,26 @@ import { fileURLToPath } from 'node:url';
 
 import { startServer } from '@pta/server';
 
-import { runAgentTask } from './agents.ts';
 import {
-  aliveDaemonState,
+  appendLogRecord,
   clearDaemonState,
+  daemonStateFilePath,
+  installedServiceManager,
   isProcessAlive,
   launchdPlistPath,
+  loadGlobalConfig,
+  newInstanceToken,
   readDaemonState,
+  readLogRecords,
   renderLaunchdPlist,
   renderSystemdUnit,
+  resolveGlobalPaths,
+  runAgentTask,
   systemdUnitPath,
+  verifiedDaemonState,
+  verifyDaemonToken,
   writeDaemonState,
-} from './daemon.ts';
-import { loadGlobalConfig } from './config.ts';
-import { appendLogRecord, readLogRecords } from './log.ts';
-import { resolveGlobalPaths } from './paths.ts';
+} from '@pta/runtime';
 
 export type CliIO = Readonly<{
   stdout: (text: string) => void;
@@ -75,9 +80,10 @@ async function daemonRun(io: CliIO): Promise<number> {
   const paths = resolveGlobalPaths();
   const config = await loadGlobalConfig(paths);
   const version = await cliVersion();
+  const token = newInstanceToken();
   let server;
   try {
-    server = await startServer({ version }, config.daemonPort);
+    server = await startServer({ version, instanceToken: token }, config.daemonPort);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     io.stderr(`守护进程启动失败：${message}\n`);
@@ -86,6 +92,7 @@ async function daemonRun(io: CliIO): Promise<number> {
   await writeDaemonState(paths, {
     pid: process.pid,
     port: server.port,
+    token,
     startedAt: new Date().toISOString(),
   });
   await appendLogRecord(paths, 'daemon', 'daemon-start', { pid: process.pid, port: server.port });
@@ -105,22 +112,30 @@ async function daemonRun(io: CliIO): Promise<number> {
 
 async function daemonStart(io: CliIO): Promise<number> {
   const paths = resolveGlobalPaths();
-  const existing = await aliveDaemonState(paths);
+  const existing = await verifiedDaemonState(paths);
   if (existing !== undefined) {
     io.stdout(`守护进程已在运行：http://127.0.0.1:${existing.port}/（pid ${existing.pid}）\n`);
     return 0;
   }
   await clearDaemonState(paths);
-  const child = spawn(process.execPath, [cliMainPath, 'daemon', 'run'], {
-    detached: true,
-    stdio: 'ignore',
-  });
-  child.unref();
+  const manager = await installedServiceManager(process.env['HOME'] ?? '');
+  if (manager === 'launchd') {
+    await run('launchctl', ['load', '-w', launchdPlistPath(process.env['HOME'] ?? '')]);
+  } else if (manager === 'systemd') {
+    await run('systemctl', ['--user', 'start', 'pta-daemon']);
+  } else {
+    const child = spawn(process.execPath, [cliMainPath, 'daemon', 'run'], {
+      detached: true,
+      stdio: 'ignore',
+    });
+    child.unref();
+  }
   for (let attempt = 0; attempt < 20; attempt += 1) {
     await sleep(100);
-    const state = await aliveDaemonState(paths);
+    const state = await verifiedDaemonState(paths);
     if (state !== undefined) {
-      io.stdout(`守护进程已启动：http://127.0.0.1:${state.port}/（pid ${state.pid}）\n`);
+      const via = manager === undefined ? '' : `（经 ${manager}）`;
+      io.stdout(`守护进程已启动${via}：http://127.0.0.1:${state.port}/（pid ${state.pid}）\n`);
       return 0;
     }
   }
@@ -131,10 +146,34 @@ async function daemonStart(io: CliIO): Promise<number> {
 async function daemonStop(io: CliIO): Promise<number> {
   const paths = resolveGlobalPaths();
   const state = await readDaemonState(paths);
+  const home = process.env['HOME'] ?? '';
+  const manager = await installedServiceManager(home);
+  if (manager !== undefined) {
+    if (manager === 'launchd') await run('launchctl', ['unload', launchdPlistPath(home)]);
+    else await run('systemctl', ['--user', 'stop', 'pta-daemon']);
+    if (state !== undefined && isProcessAlive(state.pid)) {
+      for (let attempt = 0; attempt < 20 && isProcessAlive(state.pid); attempt += 1) {
+        await sleep(100);
+      }
+      if (isProcessAlive(state.pid)) {
+        io.stderr(`已通知 ${manager} 停止，但守护进程仍在运行（pid ${state.pid}）。\n`);
+        return 2;
+      }
+    }
+    await clearDaemonState(paths);
+    io.stdout(`守护进程已停止（经 ${manager}）。\n`);
+    return 0;
+  }
   if (state === undefined || !isProcessAlive(state.pid)) {
     await clearDaemonState(paths);
     io.stdout('守护进程未在运行。\n');
     return 0;
+  }
+  if (!(await verifyDaemonToken(state))) {
+    io.stderr(
+      `pid ${state.pid} 未通过身份核验（进程存活但健康端点未返回匹配令牌，可能是 PID 被系统复用或守护进程无响应），未发送信号。\n确认无守护进程在运行后，可删除状态文件：${daemonStateFilePath(paths)}\n`,
+    );
+    return 2;
   }
   process.kill(state.pid, 'SIGTERM');
   for (let attempt = 0; attempt < 20; attempt += 1) {
@@ -151,14 +190,16 @@ async function daemonStop(io: CliIO): Promise<number> {
 
 async function daemonStatus(io: CliIO): Promise<number> {
   const paths = resolveGlobalPaths();
-  const state = await aliveDaemonState(paths);
+  const manager = await installedServiceManager(process.env['HOME'] ?? '');
+  const managed = manager === undefined ? '' : `（由 ${manager} 管理）`;
+  const state = await verifiedDaemonState(paths);
   if (state !== undefined) {
     io.stdout(
-      `运行中：pid ${state.pid}，端口 ${state.port}，启动于 ${state.startedAt}\n地址：http://127.0.0.1:${state.port}/\n`,
+      `运行中${managed}：pid ${state.pid}，端口 ${state.port}，启动于 ${state.startedAt}\n地址：http://127.0.0.1:${state.port}/\n`,
     );
     return 0;
   }
-  io.stdout('未运行。\n');
+  io.stdout(`未运行${managed}。\n`);
   return 1;
 }
 
@@ -252,7 +293,7 @@ export async function runDaemon(args: readonly string[], io: CliIO): Promise<num
 
 export async function runDashboard(io: CliIO): Promise<number> {
   const paths = resolveGlobalPaths();
-  const state = await aliveDaemonState(paths);
+  const state = await verifiedDaemonState(paths);
   if (state !== undefined) {
     const url = `http://127.0.0.1:${state.port}/`;
     io.stdout(`管理界面：${url}\n`);
@@ -406,7 +447,7 @@ export async function runDoctor(io: CliIO, cwd: string): Promise<number> {
     detail: agentCount > 0 ? `已配置 ${agentCount} 个` : '未配置，语义推导只能手动注册',
   });
 
-  const daemon = await aliveDaemonState(paths);
+  const daemon = await verifiedDaemonState(paths);
   checks.push({
     mark: daemon !== undefined ? '✓' : '⚠',
     name: '守护进程',

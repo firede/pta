@@ -6,7 +6,8 @@ import { test } from 'node:test';
 
 import { buildAgentInvocation, runAgentTask } from '../src/agents.ts';
 import { defaultDaemonPort, loadGlobalConfig } from '../src/config.ts';
-import { readDerivation, writeDerivation } from '../src/derivations.ts';
+import { readDaemonState, writeDaemonState } from '../src/daemon.ts';
+import { readDerivation, writeDerivation, type EntryLocator } from '../src/derivations.ts';
 import { appendLogRecord, readLogRecords } from '../src/log.ts';
 import { resolveGlobalPaths, type GlobalPaths } from '../src/paths.ts';
 
@@ -110,21 +111,65 @@ test('runAgentTask 捕获标准输出与失败', async () => {
   assert.match(failed.error ?? '', /坏了/u);
 });
 
-test('writeDerivation 与 readDerivation 往返，身份不符返回未定义', async (context) => {
+test('writeDerivation 与 readDerivation 按完整条目定位往返', async (context) => {
   const { paths, cleanup } = await temporaryPaths();
   context.after(cleanup);
-  const hash = 'a'.repeat(64);
+  const locator: EntryLocator = {
+    repository: 'r'.repeat(40),
+    domainIdentifier: 'docs',
+    fileKind: 'truth',
+    contentHash: 'a'.repeat(64),
+  };
 
-  assert.equal(await readDerivation(paths, hash), undefined);
+  assert.equal(await readDerivation(paths, locator), undefined);
   await writeDerivation(paths, {
-    contentHash: hash,
+    locator,
     kind: 'review-clue',
     type: 'date',
     due: '2030-01',
     registeredAt: '2026-07-15T00:00:00.000Z',
     registeredBy: 'cli',
   });
-  const loaded = await readDerivation(paths, hash);
+  const loaded = await readDerivation(paths, locator);
   assert.equal(loaded?.type, 'date');
   assert.equal(loaded?.due, '2030-01');
+});
+
+test('推导状态不跨领域、跨仓库串用', async (context) => {
+  const { paths, cleanup } = await temporaryPaths();
+  context.after(cleanup);
+  const locator: EntryLocator = {
+    repository: 'r'.repeat(40),
+    domainIdentifier: 'docs',
+    fileKind: 'truth',
+    contentHash: 'a'.repeat(64),
+  };
+  await writeDerivation(paths, {
+    locator,
+    kind: 'review-clue',
+    type: 'condition',
+    registeredAt: '2026-07-15T00:00:00.000Z',
+    registeredBy: 'cli',
+  });
+
+  assert.notEqual(await readDerivation(paths, locator), undefined);
+  assert.equal(await readDerivation(paths, { ...locator, domainIdentifier: 'ops' }), undefined);
+  assert.equal(await readDerivation(paths, { ...locator, repository: 's'.repeat(40) }), undefined);
+});
+
+test('readDaemonState 往返并拒绝缺少令牌的旧状态', async (context) => {
+  const { paths, cleanup } = await temporaryPaths();
+  context.after(cleanup);
+  const state = {
+    pid: 4321,
+    port: 7823,
+    token: 't'.repeat(32),
+    startedAt: '2026-07-15T00:00:00.000Z',
+  };
+
+  await writeDaemonState(paths, state);
+  assert.deepEqual(await readDaemonState(paths), state);
+
+  await writeDaemonState(paths, { ...state, token: undefined as unknown as string });
+  assert.equal(await readDaemonState(paths), undefined);
 });

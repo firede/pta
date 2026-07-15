@@ -4,14 +4,16 @@ import { test } from 'node:test';
 import { startServer } from '../src/index.ts';
 
 test('startServer 提供首页、健康检查与 404', async () => {
-  const server = await startServer({ version: '9.9.9' }, 0);
+  const server = await startServer({ version: '9.9.9', instanceToken: 'tok-1' }, 0);
   try {
     const health = (await (await fetch(`http://127.0.0.1:${server.port}/api/health`)).json()) as {
       status: string;
       version: string;
+      instanceToken?: string;
     };
     assert.equal(health.status, 'ok');
     assert.equal(health.version, '9.9.9');
+    assert.equal(health.instanceToken, 'tok-1');
 
     const index = await (await fetch(`http://127.0.0.1:${server.port}/`)).text();
     assert.match(index, /PTA Dashboard/u);
