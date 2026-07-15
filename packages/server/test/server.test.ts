@@ -25,3 +25,69 @@ test('startServer 提供首页、健康检查与 404', async () => {
     await server.close();
   }
 });
+
+test('startServer 暴露管理 API 并校验入参', async () => {
+  const calls: unknown[] = [];
+  const server = await startServer(
+    {
+      version: '9.9.9',
+      api: {
+        repositories: async () => [{ root: '/repo/a', identity: 'aaa', report: null }],
+        logs: async (limit) => [{ time: 't', source: 'cli', event: `limit-${limit}` }],
+        cacheStats: async () => ({ entries: 2, bytes: 128 }),
+        cacheGc: async (olderThanDays) => {
+          calls.push(olderThanDays);
+          return { removed: 1, kept: 1 };
+        },
+      },
+    },
+    0,
+  );
+  try {
+    const base = `http://127.0.0.1:${server.port}`;
+    const repositories = (await (await fetch(`${base}/api/repositories`)).json()) as unknown[];
+    assert.equal(repositories.length, 1);
+
+    const logs = (await (await fetch(`${base}/api/logs?limit=5`)).json()) as {
+      event: string;
+    }[];
+    assert.equal(logs[0]?.event, 'limit-5');
+    assert.equal((await fetch(`${base}/api/logs?limit=abc`)).status, 400);
+
+    const cache = (await (await fetch(`${base}/api/cache`)).json()) as { entries: number };
+    assert.equal(cache.entries, 2);
+
+    const gc = await fetch(`${base}/api/cache/gc`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ olderThanDays: 7 }),
+    });
+    assert.equal(gc.status, 200);
+    assert.deepEqual(await gc.json(), { removed: 1, kept: 1 });
+    assert.deepEqual(calls, [7]);
+
+    const invalidGc = await fetch(`${base}/api/cache/gc`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ olderThanDays: -1 }),
+    });
+    assert.equal(invalidGc.status, 400);
+
+    const index = await (await fetch(`${base}/`)).text();
+    assert.match(index, /仓库/u);
+  } finally {
+    await server.close();
+  }
+});
+
+test('未接入 API 时管理端点返回 404，首页提示降级', async () => {
+  const server = await startServer({ version: '9.9.9' }, 0);
+  try {
+    const base = `http://127.0.0.1:${server.port}`;
+    assert.equal((await fetch(`${base}/api/repositories`)).status, 404);
+    const index = await (await fetch(`${base}/`)).text();
+    assert.match(index, /未接入管理数据/u);
+  } finally {
+    await server.close();
+  }
+});

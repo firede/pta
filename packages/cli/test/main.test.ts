@@ -9,6 +9,8 @@ import { test } from 'node:test';
 import { hashEntryContent } from '@pta/core';
 
 import { runCli } from '../src/main.ts';
+import { readInspectionReports, sweepRepositories } from '../src/inspection.ts';
+import { loadGlobalConfig, resolveGlobalPaths } from '@pta/runtime';
 
 const globalDirs = await mkdtemp(join(tmpdir(), 'pta-global-'));
 process.env['XDG_STATE_HOME'] = join(globalDirs, 'state');
@@ -468,4 +470,35 @@ test('inspect derive 经 agent 推导条件线索并评估，报告随之升级'
   const missingAgent = capture();
   assert.equal(await runCli(['inspect', 'derive', 'absent'], missingAgent.io, root), 2);
   assert.match(missingAgent.stderr(), /未找到 agent：absent/u);
+});
+
+test('sweepRepositories 扫描注册仓库并落巡检报告，doctor 展示仓库健康', async (context) => {
+  const root = await repository({
+    'TRUTH.md': '- [?] 风险分级与学会指南一致。2020-01 核对指南是否更新。\n',
+  });
+  context.after(() => rm(root, { recursive: true, force: true }));
+  await git(root, ['init', '-q']);
+
+  const seed = capture();
+  assert.equal(await runCli(['inspect', root], seed.io), 0);
+
+  const paths = resolveGlobalPaths();
+  const config = await loadGlobalConfig(paths);
+  const sweep = await sweepRepositories(paths, config);
+  assert.equal(sweep.errors.length, 0);
+  const report = sweep.reports.find((item) => item.root === root);
+  assert.ok(report);
+  assert.equal(report.counts.expired, 1);
+
+  const listed = await readInspectionReports(paths);
+  assert.equal(
+    listed.some((item) => item.root === root && item.counts.expired === 1),
+    true,
+  );
+
+  const doctor = capture();
+  assert.equal(await runCli(['doctor'], doctor.io, root), 0);
+  assert.match(doctor.stdout(), /仓库注册表/u);
+  assert.match(doctor.stdout(), /核查信号：冲突 0，违例 0，嫌疑 0/u);
+  assert.match(doctor.stdout(), /巡检集合：1 条：到期 1/u);
 });
