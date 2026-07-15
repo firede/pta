@@ -60,6 +60,18 @@ async function defaultRepository(cwd: string): Promise<string | undefined> {
   }
 }
 
+function refuseOnProblems(
+  crontab: { problems: readonly string[]; path: string },
+  io: CliIO,
+): boolean {
+  if (crontab.problems.length === 0) return false;
+  io.stderr(
+    `crontab.toml 存在无法解析或无效的条目，写操作会将其永久丢弃，已拒绝执行。先修复 ${crontab.path}：\n`,
+  );
+  for (const problem of crontab.problems) io.stderr(`  ${problem}\n`);
+  return true;
+}
+
 export async function runCron(args: readonly string[], io: CliIO, cwd: string): Promise<number> {
   const paths = resolveGlobalPaths();
   const action = args[0];
@@ -109,6 +121,7 @@ export async function runCron(args: readonly string[], io: CliIO, cwd: string): 
       return 2;
     }
     const crontab = await readCrontab(paths);
+    if (refuseOnProblems(crontab, io)) return 2;
     const entry: CronEntry = {
       id,
       schedule,
@@ -139,6 +152,7 @@ export async function runCron(args: readonly string[], io: CliIO, cwd: string): 
       return 2;
     }
     const crontab = await readCrontab(paths);
+    if (refuseOnProblems(crontab, io)) return 2;
     const existing = crontab.entries.find((entry) => entry.id === id);
     if (existing === undefined) {
       io.stderr(`未找到 cron 条目：${id}\n`);
@@ -172,6 +186,7 @@ export async function runCron(args: readonly string[], io: CliIO, cwd: string): 
       return 2;
     }
     const crontab = await readCrontab(paths);
+    if (refuseOnProblems(crontab, io)) return 2;
     if (!crontab.entries.some((entry) => entry.id === id)) {
       io.stderr(`未找到 cron 条目：${id}\n`);
       return 2;

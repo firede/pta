@@ -134,9 +134,13 @@ export function renderIndexHtml(options: DashboardPageOptions): string {
         const result = document.getElementById('gc-result');
         result.textContent = '清理中……';
         try {
+          const health = await (await fetch('/api/health')).json();
           const outcome = await (await fetch('/api/cache/gc', {
             method: 'POST',
-            headers: { 'content-type': 'application/json' },
+            headers: {
+              'content-type': 'application/json',
+              ...(health.instanceToken ? { 'x-pta-token': health.instanceToken } : {}),
+            },
             body: JSON.stringify({ olderThanDays: 30 }),
           })).json();
           result.textContent = '已回收 ' + outcome.removed + ' 条，保留 ' + outcome.kept + ' 条。';

@@ -613,3 +613,35 @@ test('remind 只在实现漂移时开口，hook 三动词合作式管理', async
   assert.equal(await runCli(['hook', 'install'], foreign.io, root), 2);
   assert.match(foreign.stderr(), /不代为改写/u);
 });
+
+test('crontab 含无效条目时拒绝写操作，hook 遵循 core.hooksPath', async (context) => {
+  const root = await repository({ 'TRUTH.md': '- 根判断\n' });
+  context.after(() => rm(root, { recursive: true, force: true }));
+  await git(root, ['init', '-q']);
+
+  const configDir = join(globalDirs, 'config', 'pta');
+  await mkdir(configDir, { recursive: true });
+  await writeFile(
+    join(configDir, 'crontab.toml'),
+    '[[cron]]\nid = "half"\nschedule = "0 3 * * *"\naction = "derive"\nrepository = "/repo/a"\n\n[[cron]]\nid = "ok-entry"\nschedule = "0 4 * * *"\naction = "inspect"\nrepository = "/repo/a"\n',
+  );
+  context.after(() => rm(join(configDir, 'crontab.toml'), { force: true }));
+
+  const refused = capture();
+  assert.equal(
+    await runCli(['cron', 'create', 'new-entry', '0 5 * * *', 'inspect'], refused.io, root),
+    2,
+  );
+  assert.match(refused.stderr(), /写操作会将其永久丢弃，已拒绝执行/u);
+  const preserved = await readFile(join(configDir, 'crontab.toml'), 'utf8');
+  assert.match(preserved, /id = "half"/u);
+
+  await git(root, ['config', 'core.hooksPath', '.githooks']);
+  const install = capture();
+  assert.equal(await runCli(['hook', 'install'], install.io, root), 0);
+  const custom = await readFile(join(root, '.githooks', 'pre-commit'), 'utf8');
+  assert.match(custom, /pta-remind/u);
+  const status = capture();
+  assert.equal(await runCli(['hook', 'status'], status.io, root), 0);
+  assert.match(status.stdout(), /已接线/u);
+});

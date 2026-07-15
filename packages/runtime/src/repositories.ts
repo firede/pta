@@ -39,7 +39,8 @@ export async function recordRepository(
   now: string = new Date().toISOString(),
 ): Promise<void> {
   const existing = await readRepositories(paths);
-  const rest = existing.filter((item) => item.identity !== identity && item.root !== root);
+  // 以 root 为主键：同一仓库的多个 worktree 共享首提交身份，是并存的工作副本
+  const rest = existing.filter((item) => item.root !== root);
   const records = [...rest, { identity, root, lastSeenAt: now }].toSorted((left, right) =>
     left.root.localeCompare(right.root),
   );

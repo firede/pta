@@ -26,10 +26,33 @@ function sendJson(response: ServerResponse, status: number, payload: unknown): v
   response.end(JSON.stringify(payload));
 }
 
-async function readBody(request: IncomingMessage): Promise<string> {
+const maxBodyBytes = 64 * 1024;
+
+async function readBody(request: IncomingMessage): Promise<string | undefined> {
   const chunks: Buffer[] = [];
-  for await (const chunk of request) chunks.push(chunk as Buffer);
+  let size = 0;
+  for await (const chunk of request) {
+    size += (chunk as Buffer).length;
+    if (size > maxBodyBytes) return undefined;
+    chunks.push(chunk as Buffer);
+  }
   return Buffer.concat(chunks).toString('utf8');
+}
+
+function crossOriginRejected(request: IncomingMessage, response: ServerResponse): boolean {
+  // 服务只监听 loopback，但浏览器里的第三方页面仍可发起跨站请求：
+  // Origin 在场时必须与 Host 同源；写操作另需实例令牌（跨站页面读不到它）。
+  const origin = request.headers.origin;
+  if (origin === undefined) return false;
+  let sameOrigin = false;
+  try {
+    sameOrigin = new URL(origin).host === (request.headers.host ?? '');
+  } catch {
+    sameOrigin = false;
+  }
+  if (sameOrigin) return false;
+  sendJson(response, 403, { error: '跨站请求被拒绝' });
+  return true;
 }
 
 async function handle(
@@ -76,8 +99,20 @@ async function handle(
       return;
     }
     if (url.pathname === '/api/cache/gc' && method === 'POST') {
+      if (crossOriginRejected(request, response)) return;
+      if (
+        options.instanceToken !== undefined &&
+        request.headers['x-pta-token'] !== options.instanceToken
+      ) {
+        sendJson(response, 403, { error: '缺少或不匹配实例令牌' });
+        return;
+      }
       let olderThanDays = 30;
       const body = await readBody(request);
+      if (body === undefined) {
+        sendJson(response, 413, { error: '请求体过大' });
+        return;
+      }
       if (body.trim() !== '') {
         try {
           const parsed = JSON.parse(body) as { olderThanDays?: unknown };

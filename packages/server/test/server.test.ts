@@ -95,3 +95,39 @@ test('未接入 API 时管理端点返回 404，首页提示降级', async () =>
     await server.close();
   }
 });
+
+test('缓存 GC 校验实例令牌与跨站来源', async () => {
+  const server = await startServer(
+    {
+      version: '9.9.9',
+      instanceToken: 'tok-3',
+      api: {
+        repositories: async () => [],
+        logs: async () => [],
+        cron: async () => [],
+        cacheStats: async () => ({ entries: 0, bytes: 0 }),
+        cacheGc: async () => ({ removed: 0, kept: 0 }),
+      },
+    },
+    0,
+  );
+  try {
+    const base = `http://127.0.0.1:${server.port}`;
+    const missingToken = await fetch(`${base}/api/cache/gc`, { method: 'POST' });
+    assert.equal(missingToken.status, 403);
+
+    const crossOrigin = await fetch(`${base}/api/cache/gc`, {
+      method: 'POST',
+      headers: { origin: 'http://evil.example', 'x-pta-token': 'tok-3' },
+    });
+    assert.equal(crossOrigin.status, 403);
+
+    const authorized = await fetch(`${base}/api/cache/gc`, {
+      method: 'POST',
+      headers: { origin: `http://127.0.0.1:${server.port}`, 'x-pta-token': 'tok-3' },
+    });
+    assert.equal(authorized.status, 200);
+  } finally {
+    await server.close();
+  }
+});

@@ -1,6 +1,6 @@
 import { execFile, spawn } from 'node:child_process';
 import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
-import { join } from 'node:path';
+import { join, resolve as resolvePath } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { startServer, type ServerApi } from '@pta/server';
@@ -102,10 +102,10 @@ function buildServerApi(paths: GlobalPaths, logSource: LogSource): ServerApi {
         readRepositories(paths),
         readInspectionReports(paths),
       ]);
-      const byIdentity = new Map(reports.map((report) => [report.identity, report]));
+      const byRoot = new Map(reports.map((report) => [report.root, report]));
       return repositories.map((repository) => ({
         ...repository,
-        report: byIdentity.get(repository.identity) ?? null,
+        report: byRoot.get(repository.root) ?? null,
       }));
     },
     logs: (limit) => readLogRecords(paths, limit),
@@ -465,11 +465,12 @@ export async function runDashboard(io: CliIO): Promise<number> {
   const config = await loadGlobalConfig(paths);
   const version = await cliVersion();
   const api = buildServerApi(paths, 'cli');
+  const instanceToken = newInstanceToken();
   let server;
   try {
-    server = await startServer({ version, api }, config.daemonPort);
+    server = await startServer({ version, instanceToken, api }, config.daemonPort);
   } catch {
-    server = await startServer({ version, api }, 0);
+    server = await startServer({ version, instanceToken, api }, 0);
   }
   const url = `http://127.0.0.1:${server.port}/`;
   io.stdout(
@@ -675,12 +676,10 @@ export async function runDoctor(io: CliIO, cwd: string): Promise<number> {
       });
     }
     try {
-      const gitDir = (await run('git', ['-C', cwd, 'rev-parse', '--git-dir'])).stdout.trim();
-      const hookPath = join(
-        gitDir.startsWith('/') ? gitDir : join(cwd, gitDir),
-        'hooks',
-        'pre-commit',
-      );
+      const gitPath = (
+        await run('git', ['-C', cwd, 'rev-parse', '--git-path', 'hooks/pre-commit'])
+      ).stdout.trim();
+      const hookPath = resolvePath(cwd, gitPath);
       const hook = await readFile(hookPath, 'utf8').catch(() => '');
       checks.push({
         mark: hook.includes('remind') ? '✓' : '⚠',

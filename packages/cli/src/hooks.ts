@@ -1,5 +1,5 @@
 import { chmod, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
-import { join } from 'node:path';
+import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { runGit } from './inspection.ts';
@@ -9,9 +9,9 @@ const marker = '# pta-remind';
 const cliMainPath = fileURLToPath(new URL('./main.ts', import.meta.url));
 
 async function hookFilePath(cwd: string): Promise<string> {
-  const gitDir = (await runGit(['rev-parse', '--git-dir'], cwd)).trim();
-  const absoluteGitDir = gitDir.startsWith('/') ? gitDir : join(cwd, gitDir);
-  return join(absoluteGitDir, 'hooks', 'pre-commit');
+  // --git-path 会解析 core.hooksPath 与 worktree 布局，得到 Git 真正执行的钩子位置
+  const hookPath = (await runGit(['rev-parse', '--git-path', 'hooks/pre-commit'], cwd)).trim();
+  return resolve(cwd, hookPath);
 }
 
 export function remindHookCommand(): string {

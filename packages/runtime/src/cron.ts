@@ -91,14 +91,43 @@ export function cronMatches(schedule: CronSchedule, date: Date): boolean {
   return domMatch && dowMatch;
 }
 
+function dayMatches(schedule: CronSchedule, date: Date): boolean {
+  if (!fieldMatches(schedule.month, date.getMonth() + 1)) return false;
+  const domMatch = fieldMatches(schedule.dayOfMonth, date.getDate());
+  const dowMatch = dayOfWeekMatches(schedule.dayOfWeek, date.getDay());
+  if (!schedule.dayOfMonth.any && !schedule.dayOfWeek.any) return domMatch || dowMatch;
+  return domMatch && dowMatch;
+}
+
+function fieldValues(field: CronField, range: FieldRange): number[] {
+  if (field.any) {
+    const values: number[] = [];
+    for (let value = range.min; value <= range.max; value += 1) values.push(value);
+    return values;
+  }
+  return [...field.values].toSorted((left, right) => left - right);
+}
+
 export function nextCronOccurrence(schedule: CronSchedule, from: Date): Date | undefined {
-  const cursor = new Date(from.getTime());
-  cursor.setSeconds(0, 0);
-  cursor.setMinutes(cursor.getMinutes() + 1);
-  const bound = from.getTime() + 400 * 24 * 60 * 60 * 1000;
-  while (cursor.getTime() <= bound) {
-    if (cronMatches(schedule, cursor)) return new Date(cursor.getTime());
-    cursor.setMinutes(cursor.getMinutes() + 1);
+  const start = new Date(from.getTime());
+  start.setSeconds(0, 0);
+  start.setMinutes(start.getMinutes() + 1);
+  const hours = fieldValues(schedule.hour, { min: 0, max: 23 });
+  const minutes = fieldValues(schedule.minute, { min: 0, max: 59 });
+  const day = new Date(start.getTime());
+  day.setHours(0, 0, 0, 0);
+  // 按天步进十年：闰日等低频表达式的最大间隔（含世纪非闰年）也在此界内
+  for (let offset = 0; offset < 3660; offset += 1) {
+    if (dayMatches(schedule, day)) {
+      for (const hour of hours) {
+        for (const minute of minutes) {
+          const candidate = new Date(day.getTime());
+          candidate.setHours(hour, minute, 0, 0);
+          if (candidate.getTime() >= start.getTime()) return candidate;
+        }
+      }
+    }
+    day.setDate(day.getDate() + 1);
   }
   return undefined;
 }

@@ -364,15 +364,16 @@ export type InspectionReport = Readonly<{
   derivation?: DerivationPassResult;
 }>;
 
-export function reportFilePath(paths: GlobalPaths, identity: string): string {
-  return join(paths.cacheDir, 'reports', `${sha256(identity)}.json`);
+export function reportFilePath(paths: GlobalPaths, root: string): string {
+  // 以工作副本（root）为键：同一仓库的多 worktree/多分支各有自己的报告
+  return join(paths.cacheDir, 'reports', `${sha256(root)}.json`);
 }
 
 export async function writeInspectionReport(
   paths: GlobalPaths,
   report: InspectionReport,
 ): Promise<void> {
-  const file = reportFilePath(paths, report.identity);
+  const file = reportFilePath(paths, report.root);
   await mkdir(join(file, '..'), { recursive: true });
   await writeFile(file, `${JSON.stringify(report, null, 2)}\n`);
 }
