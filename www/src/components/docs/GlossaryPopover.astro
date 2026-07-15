@@ -1,0 +1,293 @@
+---
+import { glossaryDocId } from '@/lib/glossary';
+import { getDocsEntryHref } from '@/lib/i18n';
+
+const { locale } = Astro.locals.starlightRoute;
+const glossaryHref = getDocsEntryHref(glossaryDocId, locale);
+---
+
+<div
+  class="glossary-popover not-content"
+  id="glossary-popover"
+  data-glossary-href={glossaryHref}
+  hidden
+>
+  <p class="glossary-popover-term"></p>
+  <p class="glossary-popover-definition"></p>
+  <a class="glossary-popover-link" href={glossaryHref}>{Astro.locals.t('glossary.viewEntry')}</a>
+</div>
+
+<script>
+  const OPEN_DELAY = 150;
+  const CLOSE_DELAY = 250;
+
+  interface TermEntry {
+    slug: string;
+    term: string;
+    definition: string;
+  }
+
+  let popover: HTMLElement | null = null;
+  let terms = new Map<string, TermEntry>();
+  let activeButton: HTMLButtonElement | null = null;
+  /** 点按打开的弹层固定显示，不随指针移出关闭。 */
+  let pinned = false;
+  let openTimer = 0;
+  let closeTimer = 0;
+  let listenersBound = false;
+
+  function init() {
+    popover = document.getElementById('glossary-popover');
+    activeButton = null;
+    pinned = false;
+    terms = new Map();
+
+    const data = document.querySelector('script[data-glossary-terms]');
+    if (data?.textContent) {
+      for (const entry of JSON.parse(data.textContent) as TermEntry[]) {
+        terms.set(entry.slug, entry);
+      }
+    }
+
+    for (const button of document.querySelectorAll<HTMLButtonElement>('button.glossary-term')) {
+      button.setAttribute('aria-expanded', 'false');
+      button.setAttribute('aria-controls', 'glossary-popover');
+    }
+
+    if (!listenersBound) {
+      bind();
+      listenersBound = true;
+    }
+  }
+
+  function bind() {
+    document.addEventListener('click', (event) => {
+      const target = event.target as Element | null;
+      const button = target?.closest<HTMLButtonElement>('button.glossary-term');
+      if (!button) return;
+
+      if (activeButton === button) {
+        if (pinned) close();
+        else pinned = true;
+      } else {
+        open(button);
+        pinned = true;
+      }
+    });
+
+    document.addEventListener('pointerdown', (event) => {
+      if (!activeButton) return;
+      const target = event.target as Element | null;
+      if (target?.closest('button.glossary-term')) return;
+      if (popover?.contains(target)) return;
+      close();
+    });
+
+    document.addEventListener('pointerover', (event) => {
+      if (event.pointerType !== 'mouse') return;
+      const target = event.target as Element | null;
+      const button = target?.closest<HTMLButtonElement>('button.glossary-term');
+
+      if (button) {
+        window.clearTimeout(closeTimer);
+        if (button !== activeButton) {
+          window.clearTimeout(openTimer);
+          openTimer = window.setTimeout(() => {
+            open(button);
+            pinned = false;
+          }, OPEN_DELAY);
+        }
+        return;
+      }
+
+      if (popover?.contains(target)) window.clearTimeout(closeTimer);
+    });
+
+    document.addEventListener('pointerout', (event) => {
+      if (event.pointerType !== 'mouse') return;
+      const target = event.target as Element | null;
+      const insideTerm = Boolean(target?.closest('button.glossary-term'));
+      const insidePopover = Boolean(popover?.contains(target));
+
+      if (insideTerm) window.clearTimeout(openTimer);
+      if ((insideTerm || insidePopover) && activeButton && !pinned) {
+        window.clearTimeout(closeTimer);
+        closeTimer = window.setTimeout(close, CLOSE_DELAY);
+      }
+    });
+
+    document.addEventListener('keydown', (event) => {
+      if (event.key !== 'Escape' || !activeButton) return;
+      const button = activeButton;
+      close();
+      button.focus();
+    });
+
+    window.addEventListener('scroll', reposition, { passive: true, capture: true });
+    window.addEventListener('resize', reposition, { passive: true });
+  }
+
+  function open(button: HTMLButtonElement) {
+    if (!popover) return;
+    const entry = terms.get(button.dataset.term ?? '');
+    if (!entry) return;
+
+    window.clearTimeout(openTimer);
+    window.clearTimeout(closeTimer);
+    activeButton?.setAttribute('aria-expanded', 'false');
+    activeButton = button;
+    button.setAttribute('aria-expanded', 'true');
+
+    setText('.glossary-popover-term', entry.term);
+    setText('.glossary-popover-definition', entry.definition);
+    const link = popover.querySelector<HTMLAnchorElement>('.glossary-popover-link');
+    if (link) link.href = `${popover.dataset.glossaryHref ?? ''}#${entry.slug}`;
+
+    // 弹层挪到触发术语之后，键盘焦点与读屏顺序紧跟触发点。
+    button.insertAdjacentElement('afterend', popover);
+    popover.hidden = false;
+    popover.classList.remove('is-open');
+    position(button.getBoundingClientRect());
+    requestAnimationFrame(() => popover?.classList.add('is-open'));
+  }
+
+  function close() {
+    window.clearTimeout(openTimer);
+    window.clearTimeout(closeTimer);
+    activeButton?.setAttribute('aria-expanded', 'false');
+    activeButton = null;
+    pinned = false;
+    if (popover) {
+      popover.hidden = true;
+      popover.classList.remove('is-open');
+    }
+  }
+
+  function reposition() {
+    if (!activeButton || !popover) return;
+    const rect = activeButton.getBoundingClientRect();
+    if (rect.bottom < 0 || rect.top > window.innerHeight) {
+      close();
+      return;
+    }
+    position(rect);
+  }
+
+  function position(rect: DOMRect) {
+    if (!popover) return;
+    const margin = 12;
+    const gap = 10;
+    const width = popover.offsetWidth;
+    const height = popover.offsetHeight;
+
+    const left = Math.min(
+      Math.max(rect.left + rect.width / 2 - width / 2, margin),
+      Math.max(window.innerWidth - margin - width, margin),
+    );
+    let top = rect.bottom + gap;
+    if (top + height > window.innerHeight - margin && rect.top - gap - height >= margin) {
+      top = rect.top - gap - height;
+    }
+
+    popover.style.left = `${Math.round(left)}px`;
+    popover.style.top = `${Math.round(top)}px`;
+  }
+
+  function setText(selector: string, value: string) {
+    const element = popover?.querySelector<HTMLElement>(selector);
+    if (element) element.textContent = value;
+  }
+
+  init();
+  document.addEventListener('astro:page-load', init);
+</script>
+
+<style is:global>
+  /* 术语标注：细点线示意可查，不与正文链接抢注意 */
+  .sl-markdown-content button.glossary-term {
+    background: none;
+    border: 0;
+    padding: 0;
+    margin: 0;
+    font: inherit;
+    letter-spacing: inherit;
+    color: inherit;
+    cursor: help;
+    text-decoration: underline dotted 1px;
+    text-decoration-color: var(--sl-color-gray-3);
+    text-underline-offset: 0.28em;
+    transition: text-decoration-color 0.15s;
+  }
+
+  .sl-markdown-content button.glossary-term:hover,
+  .sl-markdown-content button.glossary-term[aria-expanded='true'] {
+    text-decoration-color: var(--sl-color-gray-1);
+  }
+
+  .sl-markdown-content button.glossary-term:focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 3px;
+    border-radius: 2px;
+  }
+
+  .glossary-popover {
+    position: fixed;
+    z-index: 50;
+    max-width: min(22rem, calc(100vw - 1.5rem));
+    padding: 0.8rem 1rem 0.7rem;
+    background: var(--color-popover);
+    color: var(--color-popover-foreground);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    box-shadow:
+      0 6px 20px oklch(0 0 0 / 0.07),
+      0 1px 3px oklch(0 0 0 / 0.05);
+    text-align: start;
+    opacity: 0;
+    translate: 0 3px;
+    transition:
+      opacity 0.12s ease,
+      translate 0.12s ease;
+  }
+
+  .glossary-popover.is-open {
+    opacity: 1;
+    translate: 0 0;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .glossary-popover {
+      transition: none;
+    }
+  }
+
+  .glossary-popover-term {
+    margin: 0;
+    font-family: var(--font-heading);
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    color: var(--color-muted-foreground);
+  }
+
+  .glossary-popover-definition {
+    margin: 0.4rem 0 0;
+    font-family: var(--font-body);
+    font-size: 0.875rem;
+    line-height: 1.8;
+  }
+
+  .glossary-popover-link {
+    display: inline-block;
+    margin-top: 0.6rem;
+    font-family: var(--font-heading);
+    font-size: 0.78rem;
+    color: var(--sl-color-gray-3);
+    text-decoration: none;
+    transition: color 0.15s;
+  }
+
+  .glossary-popover-link:hover {
+    color: var(--sl-color-accent);
+  }
+</style>
