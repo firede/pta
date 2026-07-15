@@ -55,6 +55,10 @@ export function renderIndexHtml(options: DashboardPageOptions): string {
     <div id="repositories"><p class="muted">加载中……</p></div>
   </section>
   <section>
+    <h2>cron 任务</h2>
+    <div id="cron"><p class="muted">加载中……</p></div>
+  </section>
+  <section>
     <h2>推导缓存</h2>
     <div id="cache"><p class="muted">加载中……</p></div>
   </section>
@@ -94,6 +98,27 @@ export function renderIndexHtml(options: DashboardPageOptions): string {
       box.innerHTML = '<table><thead><tr><th>仓库</th><th>到期</th><th>条件触发</th><th>待推导</th><th>冲突+违例</th><th>嫌疑</th><th>最近巡检</th></tr></thead><tbody>' + rows + '</tbody></table>';
     } catch (error) {
       box.innerHTML = '<p class="warn">仓库数据加载失败：' + esc(error) + '</p>';
+    }
+  }
+
+  async function loadCron() {
+    const box = document.getElementById('cron');
+    try {
+      const items = await (await fetch('/api/cron')).json();
+      if (!Array.isArray(items) || items.length === 0) {
+        box.innerHTML = '<p class="muted">没有 cron 条目。零 LLM 地板扫描内建每小时一次；agent 介入的任务用 <code>pta cron create</code> 显式排期。</p>';
+        return;
+      }
+      const rows = items.map((item) => '<tr>'
+        + '<td><code>' + esc(item.id) + '</code></td>'
+        + '<td><code>' + esc(item.schedule) + '</code></td>'
+        + '<td>' + esc(item.action) + (item.agent ? ' <span class="muted">@' + esc(item.agent) + '</span>' : '') + '</td>'
+        + '<td><code>' + esc(item.repository) + '</code></td>'
+        + '<td class="muted">' + esc(item.nextWakeAt ? String(item.nextWakeAt).slice(0, 16).replace('T', ' ') : '不可达') + '</td>'
+        + '</tr>').join('');
+      box.innerHTML = '<table><thead><tr><th>id</th><th>schedule</th><th>动作</th><th>仓库</th><th>下次唤醒</th></tr></thead><tbody>' + rows + '</tbody></table>';
+    } catch (error) {
+      box.innerHTML = '<p class="warn">cron 数据加载失败：' + esc(error) + '</p>';
     }
   }
 
@@ -143,6 +168,7 @@ export function renderIndexHtml(options: DashboardPageOptions): string {
   }
 
   void loadRepositories();
+  void loadCron();
   void loadCache();
   void loadLogs();
 })();

@@ -8,6 +8,7 @@ import { startServer, type ServerApi } from '@pta/server';
 import {
   appendLogRecord,
   clearDaemonState,
+  cronMatches,
   daemonStateFilePath,
   derivationCacheStats,
   gcDerivations,
@@ -17,6 +18,9 @@ import {
   launchdPlistPath,
   loadGlobalConfig,
   newInstanceToken,
+  nextCronOccurrence,
+  parseCronSchedule,
+  readCrontab,
   readDaemonState,
   readLogRecords,
   readRepositories,
@@ -39,6 +43,7 @@ import {
   readInspectionReports,
   sweepRepositories,
 } from './inspection.ts';
+import { executeCronEntry } from './schedule.ts';
 
 export type CliIO = Readonly<{
   stdout: (text: string) => void;
@@ -104,6 +109,15 @@ function buildServerApi(paths: GlobalPaths, logSource: LogSource): ServerApi {
       }));
     },
     logs: (limit) => readLogRecords(paths, limit),
+    cron: async () => {
+      const crontab = await readCrontab(paths);
+      const now = new Date();
+      return crontab.entries.map((entry) => {
+        const schedule = parseCronSchedule(entry.schedule);
+        const next = schedule === undefined ? undefined : nextCronOccurrence(schedule, now);
+        return { ...entry, nextWakeAt: next?.toISOString() ?? null };
+      });
+    },
     cacheStats: () => derivationCacheStats(paths),
     cacheGc: async (olderThanDays) => {
       const result = await gcDerivations(paths, olderThanDays);
@@ -137,12 +151,13 @@ async function daemonRun(io: CliIO): Promise<number> {
   });
   await appendLogRecord(paths, 'daemon', 'daemon-start', { pid: process.pid, port: server.port });
 
+  // 地板扫描：零 LLM 的机械巡检，免费所以内建；agent 介入的任务一律走显式 cron 条目。
   let sweeping = false;
-  const sweep = async (): Promise<void> => {
+  const floorSweep = async (): Promise<void> => {
     if (sweeping) return;
     sweeping = true;
     try {
-      const result = await sweepRepositories(paths, config);
+      const result = await sweepRepositories(paths);
       await appendLogRecord(paths, 'daemon', 'inspect-sweep', {
         inspected: result.inspected,
         skipped: result.skipped,
@@ -161,24 +176,66 @@ async function daemonRun(io: CliIO): Promise<number> {
       sweeping = false;
     }
   };
-  let warmup: NodeJS.Timeout | undefined;
-  let schedule: NodeJS.Timeout | undefined;
-  if (config.daemonInspectIntervalMinutes > 0) {
-    warmup = setTimeout(() => {
-      void sweep();
-    }, 3000);
-    schedule = setInterval(
-      () => {
-        void sweep();
-      },
-      config.daemonInspectIntervalMinutes * 60 * 1000,
-    );
-  }
+
+  let lastMinute = '';
+  let running = false;
+  const cronTick = async (): Promise<void> => {
+    const stamp = new Date();
+    stamp.setSeconds(0, 0);
+    const key = stamp.toISOString().slice(0, 16);
+    if (key === lastMinute || running) return;
+    lastMinute = key;
+    running = true;
+    try {
+      const [crontab, currentConfig] = await Promise.all([
+        readCrontab(paths),
+        loadGlobalConfig(paths),
+      ]);
+      for (const entry of crontab.entries) {
+        const schedule = parseCronSchedule(entry.schedule);
+        if (schedule === undefined || !cronMatches(schedule, stamp)) continue;
+        try {
+          const outcome = await executeCronEntry(entry, paths, currentConfig, stamp);
+          await appendLogRecord(paths, 'daemon', 'cron-run', {
+            id: outcome.id,
+            action: outcome.action,
+            trigger: 'schedule',
+            ok: outcome.ok,
+            detail: outcome.detail,
+          });
+        } catch (error) {
+          await appendLogRecord(paths, 'daemon', 'cron-run', {
+            id: entry.id,
+            action: entry.action,
+            trigger: 'schedule',
+            ok: false,
+            detail: error instanceof Error ? error.message : String(error),
+          });
+        }
+      }
+    } finally {
+      running = false;
+    }
+  };
+
+  const warmup = setTimeout(() => {
+    void floorSweep();
+  }, 3000);
+  const floorSchedule = setInterval(
+    () => {
+      void floorSweep();
+    },
+    60 * 60 * 1000,
+  );
+  const cronSchedule = setInterval(() => {
+    void cronTick();
+  }, 20 * 1000);
 
   const shutdown = (): void => {
     void (async () => {
-      if (warmup !== undefined) clearTimeout(warmup);
-      if (schedule !== undefined) clearInterval(schedule);
+      clearTimeout(warmup);
+      clearInterval(floorSchedule);
+      clearInterval(cronSchedule);
       await server.close();
       await appendLogRecord(paths, 'daemon', 'daemon-stop', { pid: process.pid });
       await clearDaemonState(paths);
@@ -187,12 +244,8 @@ async function daemonRun(io: CliIO): Promise<number> {
   };
   process.on('SIGTERM', shutdown);
   process.on('SIGINT', shutdown);
-  const scheduleNote =
-    config.daemonInspectIntervalMinutes > 0
-      ? `，巡检调度每 ${config.daemonInspectIntervalMinutes} 分钟`
-      : '，巡检调度已关闭';
   io.stdout(
-    `守护进程运行中：http://127.0.0.1:${server.port}/（pid ${process.pid}${scheduleNote}）\n`,
+    `守护进程运行中：http://127.0.0.1:${server.port}/（pid ${process.pid}，地板扫描每小时，cron 条目分钟级调度）\n`,
   );
   return 0;
 }

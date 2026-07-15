@@ -34,6 +34,7 @@ test('startServer 暴露管理 API 并校验入参', async () => {
       api: {
         repositories: async () => [{ root: '/repo/a', identity: 'aaa', report: null }],
         logs: async (limit) => [{ time: 't', source: 'cli', event: `limit-${limit}` }],
+        cron: async () => [{ id: 'nightly', schedule: '0 3 * * *', nextWakeAt: null }],
         cacheStats: async () => ({ entries: 2, bytes: 128 }),
         cacheGc: async (olderThanDays) => {
           calls.push(olderThanDays);
@@ -56,6 +57,9 @@ test('startServer 暴露管理 API 并校验入参', async () => {
 
     const cache = (await (await fetch(`${base}/api/cache`)).json()) as { entries: number };
     assert.equal(cache.entries, 2);
+
+    const cron = (await (await fetch(`${base}/api/cron`)).json()) as { id: string }[];
+    assert.equal(cron[0]?.id, 'nightly');
 
     const gc = await fetch(`${base}/api/cache/gc`, {
       method: 'POST',

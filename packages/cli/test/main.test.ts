@@ -10,7 +10,7 @@ import { hashEntryContent } from '@pta/core';
 
 import { runCli } from '../src/main.ts';
 import { readInspectionReports, sweepRepositories } from '../src/inspection.ts';
-import { loadGlobalConfig, resolveGlobalPaths } from '@pta/runtime';
+import { resolveGlobalPaths } from '@pta/runtime';
 
 const globalDirs = await mkdtemp(join(tmpdir(), 'pta-global-'));
 process.env['XDG_STATE_HOME'] = join(globalDirs, 'state');
@@ -483,8 +483,7 @@ test('sweepRepositories 扫描注册仓库并落巡检报告，doctor 展示仓�
   assert.equal(await runCli(['inspect', root], seed.io), 0);
 
   const paths = resolveGlobalPaths();
-  const config = await loadGlobalConfig(paths);
-  const sweep = await sweepRepositories(paths, config);
+  const sweep = await sweepRepositories(paths);
   assert.equal(sweep.errors.length, 0);
   const report = sweep.reports.find((item) => item.root === root);
   assert.ok(report);
@@ -501,4 +500,78 @@ test('sweepRepositories 扫描注册仓库并落巡检报告，doctor 展示仓�
   assert.match(doctor.stdout(), /仓库注册表/u);
   assert.match(doctor.stdout(), /核查信号：冲突 0，违例 0，嫌疑 0/u);
   assert.match(doctor.stdout(), /巡检集合：1 条：到期 1/u);
+});
+
+test('cron 条目 CRUD、校验与手动执行', async (context) => {
+  const root = await repository({ 'TRUTH.md': '- 根判断\n' });
+  context.after(() => rm(root, { recursive: true, force: true }));
+  await git(root, ['init', '-q']);
+
+  const scriptPath = join(globalDirs, 'report-agent.mjs');
+  await writeFile(scriptPath, "console.log('日报正文');");
+  const configDir = join(globalDirs, 'config', 'pta');
+  await mkdir(configDir, { recursive: true });
+  await writeFile(
+    join(configDir, 'config.toml'),
+    `[agents.reporter]\ncommand = ["${process.execPath}", "${scriptPath}"]\n`,
+  );
+  context.after(() => rm(join(configDir, 'config.toml'), { force: true }));
+  context.after(() => rm(join(configDir, 'crontab.toml'), { force: true }));
+
+  const bad = capture();
+  assert.equal(
+    await runCli(['cron', 'create', 'bad-entry', '0 3 * * *', 'derive'], bad.io, root),
+    2,
+  );
+  assert.match(bad.stderr(), /derive 动作必须指定 agent/u);
+
+  const create = capture();
+  assert.equal(
+    await runCli(
+      [
+        'cron',
+        'create',
+        'daily-report',
+        '30 8 * * 1-5',
+        'agent',
+        '--agent',
+        'reporter',
+        '--prompt',
+        '编译日报',
+      ],
+      create.io,
+      root,
+    ),
+    0,
+  );
+  assert.match(create.stdout(), /已创建 cron 条目 daily-report/u);
+
+  const list = capture();
+  assert.equal(await runCli(['cron', 'list'], list.io, root), 0);
+  assert.match(list.stdout(), /daily-report：\[30 8 \* \* 1-5\] agent/u);
+  assert.match(list.stdout(), /下次唤醒：\d{4}-\d{2}-\d{2} \d{2}:\d{2}/u);
+
+  const run = capture();
+  assert.equal(await runCli(['cron', 'run', 'daily-report'], run.io, root), 0);
+  assert.match(run.stdout(), /完成/u);
+  const output = await readFile(
+    join(globalDirs, 'cache', 'pta', 'cron-output', 'daily-report.txt'),
+    'utf8',
+  );
+  assert.match(output, /日报正文/u);
+
+  const update = capture();
+  assert.equal(
+    await runCli(['cron', 'update', 'daily-report', '--schedule', '0 9 * * *'], update.io, root),
+    0,
+  );
+  const updated = capture();
+  assert.equal(await runCli(['cron', 'list'], updated.io, root), 0);
+  assert.match(updated.stdout(), /\[0 9 \* \* \*\]/u);
+
+  const remove = capture();
+  assert.equal(await runCli(['cron', 'delete', 'daily-report'], remove.io, root), 0);
+  const empty = capture();
+  assert.equal(await runCli(['cron', 'list'], empty.io, root), 0);
+  assert.match(empty.stdout(), /没有 cron 条目/u);
 });

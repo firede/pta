@@ -22,7 +22,6 @@ import {
   writeDerivation,
   type AgentConfig,
   type ClueDerivation,
-  type GlobalConfig,
   type GlobalPaths,
 } from '@pta/runtime';
 
@@ -465,12 +464,9 @@ export type SweepResult = Readonly<{
 
 export async function sweepRepositories(
   paths: GlobalPaths,
-  config: GlobalConfig,
   now: Date = new Date(),
 ): Promise<SweepResult> {
   const repositories = await readRepositories(paths);
-  const agentName = config.daemonDerivationAgent;
-  const agent = agentName === undefined ? undefined : config.agents[agentName];
   const reports: InspectionReport[] = [];
   const errors: string[] = [];
   let skipped = 0;
@@ -482,13 +478,7 @@ export async function sweepRepositories(
       continue;
     }
     try {
-      reports.push(
-        await inspectRepositoryOnce(repository.root, {
-          paths,
-          now,
-          ...(agentName !== undefined && agent !== undefined ? { agentName, agent } : {}),
-        }),
-      );
+      reports.push(await inspectRepositoryOnce(repository.root, { paths, now }));
     } catch (error) {
       errors.push(`${repository.root}：${error instanceof Error ? error.message : String(error)}`);
     }

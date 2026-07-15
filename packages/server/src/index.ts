@@ -5,6 +5,7 @@ import { renderIndexHtml } from '@pta/web';
 export type ServerApi = Readonly<{
   repositories: () => Promise<unknown>;
   logs: (limit: number) => Promise<unknown>;
+  cron: () => Promise<unknown>;
   cacheStats: () => Promise<unknown>;
   cacheGc: (olderThanDays: number) => Promise<unknown>;
 }>;
@@ -64,6 +65,10 @@ async function handle(
         return;
       }
       sendJson(response, 200, await api.logs(limit));
+      return;
+    }
+    if (url.pathname === '/api/cron' && method === 'GET') {
+      sendJson(response, 200, await api.cron());
       return;
     }
     if (url.pathname === '/api/cache' && method === 'GET') {

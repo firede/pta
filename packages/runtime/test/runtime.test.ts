@@ -17,6 +17,8 @@ import {
 } from '../src/derivations.ts';
 import { readRepositories, recordRepository } from '../src/repositories.ts';
 import { appendLogRecord, readLogRecords } from '../src/log.ts';
+import { cronMatches, nextCronOccurrence, parseCronSchedule } from '../src/cron.ts';
+import { readCrontab, validateCronEntry, writeCrontab } from '../src/crontab.ts';
 import { resolveGlobalPaths, type GlobalPaths } from '../src/paths.ts';
 
 async function temporaryPaths(): Promise<{ paths: GlobalPaths; cleanup: () => Promise<void> }> {
@@ -254,24 +256,86 @@ test('derivationCacheStats 统计条目，gcDerivations 按 mtime 回收', async
   assert.equal((await readDerivation(paths, locator('b'.repeat(64)))) !== undefined, true);
 });
 
-test('loadGlobalConfig 解析 daemon 巡检调度字段', async (context) => {
+test('parseCronSchedule 解析五段表达式，cronMatches 遵循日/星期取或规则', () => {
+  assert.equal(parseCronSchedule('0 3 * *'), undefined);
+  assert.equal(parseCronSchedule('60 * * * *'), undefined);
+  assert.equal(parseCronSchedule('a * * * *'), undefined);
+
+  const nightly = parseCronSchedule('0 3 * * *');
+  assert.ok(nightly);
+  assert.equal(cronMatches(nightly, new Date(2026, 6, 15, 3, 0)), true);
+  assert.equal(cronMatches(nightly, new Date(2026, 6, 15, 3, 1)), false);
+
+  const weekdays = parseCronSchedule('*/15 9-17 * * 1-5');
+  assert.ok(weekdays);
+  assert.equal(cronMatches(weekdays, new Date(2026, 6, 15, 9, 30)), true);
+  assert.equal(cronMatches(weekdays, new Date(2026, 6, 15, 9, 20)), false);
+  assert.equal(cronMatches(weekdays, new Date(2026, 6, 19, 9, 30)), false);
+
+  // 日与星期都受限时取或：15 号或周一皆触发
+  const orRule = parseCronSchedule('0 0 15 * 1');
+  assert.ok(orRule);
+  assert.equal(cronMatches(orRule, new Date(2026, 6, 15, 0, 0)), true);
+  assert.equal(cronMatches(orRule, new Date(2026, 6, 13, 0, 0)), true);
+  assert.equal(cronMatches(orRule, new Date(2026, 6, 14, 0, 0)), false);
+
+  const sunday = parseCronSchedule('0 0 * * 7');
+  assert.ok(sunday);
+  assert.equal(cronMatches(sunday, new Date(2026, 6, 19, 0, 0)), true);
+
+  const next = nextCronOccurrence(nightly, new Date(2026, 6, 15, 3, 30));
+  assert.deepEqual(next, new Date(2026, 6, 16, 3, 0));
+});
+
+test('crontab 读写往返、校验动作字段并容忍坏条目', async (context) => {
   const { paths, cleanup } = await temporaryPaths();
   context.after(cleanup);
-  await mkdir(paths.configDir, { recursive: true });
-  await writeFile(
-    join(paths.configDir, 'config.toml'),
-    '[daemon]\ninspectIntervalMinutes = 30\nderivationAgent = "codex"\n',
+
+  assert.deepEqual((await readCrontab(paths)).entries, []);
+  const entries = [
+    {
+      id: 'nightly-derive',
+      schedule: '0 3 * * *',
+      action: 'derive' as const,
+      repository: '/repo/a',
+      agent: 'codex',
+    },
+    {
+      id: 'daily-report',
+      schedule: '30 8 * * 1-5',
+      action: 'agent' as const,
+      repository: '/repo/a',
+      agent: 'codex',
+      prompt: '编译日报',
+    },
+  ];
+  await writeCrontab(paths, entries);
+  const loaded = await readCrontab(paths);
+  assert.deepEqual(loaded.entries, entries);
+  assert.deepEqual(loaded.problems, []);
+
+  assert.deepEqual(
+    validateCronEntry({
+      id: 'ok-floor',
+      schedule: '0 * * * *',
+      action: 'inspect',
+      repository: 'all',
+    }),
+    [],
   );
-  const loaded = await loadGlobalConfig(paths);
-  assert.equal(loaded.daemonInspectIntervalMinutes, 30);
-  assert.equal(loaded.daemonDerivationAgent, 'codex');
+  const invalid = validateCronEntry({
+    id: 'Bad_Id',
+    schedule: '99 * * * *',
+    action: 'agent',
+    repository: 'all',
+  });
+  assert.equal(invalid.length >= 4, true);
 
   await writeFile(
-    join(paths.configDir, 'config.toml'),
-    '[daemon]\ninspectIntervalMinutes = -1\nderivationAgent = ""\n',
+    join(paths.configDir, 'crontab.toml'),
+    '[[cron]]\nid = "half"\nschedule = "0 3 * * *"\naction = "derive"\nrepository = "/repo/a"\n',
   );
-  const invalid = await loadGlobalConfig(paths);
-  assert.equal(invalid.daemonInspectIntervalMinutes, 60);
-  assert.equal(invalid.daemonDerivationAgent, undefined);
-  assert.equal(invalid.problems.length, 2);
+  const tolerated = await readCrontab(paths);
+  assert.deepEqual(tolerated.entries, []);
+  assert.match(tolerated.problems.join(''), /derive 动作必须指定 agent/u);
 });

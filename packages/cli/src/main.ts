@@ -42,6 +42,7 @@ import {
   touchRepository,
   type InspectionView,
 } from './inspection.ts';
+import { runCron } from './cron.ts';
 import { audit, runAgent, runDaemon, runDashboard, runDoctor, runLogs } from './management.ts';
 
 export type CliIO = Readonly<{
@@ -474,12 +475,9 @@ async function runInspectDerive(
   const repositoryRoot = resolve(cwd);
   const config = await loadGlobalConfig(resolveGlobalPaths());
   const names = Object.keys(config.agents);
-  const name =
-    agentArg ?? config.daemonDerivationAgent ?? (names.length === 1 ? names[0] : undefined);
+  const name = agentArg ?? (names.length === 1 ? names[0] : undefined);
   if (name === undefined) {
-    io.stderr(
-      '未指定 agent：pta inspect derive <agent 名称>，或在 config.toml 中设置 daemon.derivationAgent。\n',
-    );
+    io.stderr('未指定 agent：pta inspect derive <agent 名称>（配置多个 agent 时必须点名）。\n');
     return 2;
   }
   const agent = config.agents[name];
@@ -838,6 +836,8 @@ export async function runCli(
     return runInspect(args[1], io, cwd);
   }
 
+  if (args[0] === 'cron') return runCron(args.slice(1), io, cwd);
+
   if (args[0] === 'daemon') return runDaemon(args.slice(1), io);
 
   if (args[0] === 'dashboard') {
@@ -871,7 +871,7 @@ export async function runCli(
 
   if (args[0] !== 'check' || args.length > 2) {
     io.stderr(
-      '用法：pta check [仓库根]\n       pta changes [base]\n       pta pending [仓库根]\n       pta context <路径>...\n       pta inspect [仓库根]\n       pta agent <list|run>\n       pta daemon <install|uninstall|status|start|stop|restart>\n       pta dashboard\n       pta doctor\n       pta logs [数量]\n',
+      '用法：pta check [仓库根]\n       pta changes [base]\n       pta pending [仓库根]\n       pta context <路径>...\n       pta inspect [仓库根]\n       pta agent <list|run>\n       pta cron <list|create|update|delete|run>\n       pta daemon <install|uninstall|status|start|stop|restart>\n       pta dashboard\n       pta doctor\n       pta logs [数量]\n',
     );
     return 2;
   }
