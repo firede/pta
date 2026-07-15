@@ -6,19 +6,51 @@ editUrl: false
 head:
   - tag: title
     content: 项目真相架构
-hero:
-  tagline: Project Truth Architecture
-  actions:
-    - text: 阅读规范
-      link: /specification/
-      icon: right-arrow
-    - text: GitHub
-      link: https://github.com/firede/pta
-      icon: external
-      variant: minimal
 ---
 
-- [指南](/guide/)：实践的方法与建议。
-- [规范](/specification/)：核心定义与约束。
-- [立论](/argument/)：成立所依赖的基本判断。
-- [议题](/topic/)：综合问题的探讨。
+import Landing from '@/components/home/Landing.astro';
+
+<Landing
+  vertical
+  title="项目真相架构"
+  epigraph="名定而实辨，道行而志通"
+  epigraphSource="《荀子·正名》"
+  intro={[
+    '项目真相，是当前项目实际遵循的判断：项目做出的决策，以及项目采用的前提。它回答的是，这个项目为什么是现在这个样子，而不是别的合格样子。',
+    '长期项目中，这些判断散落在文件、工具与对话里，靠人反复讲述来维持；而人的判断带宽是稀缺资源，讲述消耗它，转述偏离它。项目真相架构把判断显式记录、持续生效，让人与 AI 在同一语义空间里协作。',
+  ]}
+  ctas={[
+    { label: '从立论开始', href: '/argument/', primary: true },
+    { label: '阅读规范', href: '/specification/' },
+  ]}
+  mapLabel="阅读地图"
+  entries={[
+    {
+      ord: '一',
+      name: '立论',
+      question: '为什么成立？',
+      blurb: '架构依赖的基本判断，一切结论的推导起点。',
+      href: '/argument/',
+    },
+    {
+      ord: '二',
+      name: '规范',
+      question: '必须遵守什么？',
+      blurb: '核心定义与约束，每条要求可追溯到立论。',
+      href: '/specification/',
+    },
+    {
+      ord: '三',
+      name: '指南',
+      question: '如何实践？',
+      blurb: '面向日常协作的方法与建议。',
+      href: '/guide/',
+    },
+  ]}
+  lineage={{
+    title: '《人类带宽设计》',
+    href: 'https://bandwidth.ren/',
+    after: '为人机协作立总纲，项目真相架构是它的一次实践。',
+  }}
+  footnote="简体中文是本站的事实来源，其他语言版本由它翻译而来。"
+/>

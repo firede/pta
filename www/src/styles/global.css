@@ -8,22 +8,26 @@
 @import 'tailwindcss/utilities.css' layer(utilities);
 @import '@fontsource-variable/noto-serif';
 @import '@fontsource-variable/noto-sans';
+@import '@fontsource-variable/noto-serif-sc';
+@import '@fontsource-variable/noto-sans-sc';
 
 @custom-variant dark (&:is(.dark *, :root[data-theme='dark'] *));
 
 /* 自定义 token */
 @theme inline {
-  --color-brand-50: var(--color-teal-50);
-  --color-brand-100: var(--color-teal-100);
-  --color-brand-200: var(--color-teal-200);
-  --color-brand-300: var(--color-teal-300);
-  --color-brand-400: var(--color-teal-400);
-  --color-brand-500: var(--color-teal-500);
-  --color-brand-600: var(--color-teal-600);
-  --color-brand-700: var(--color-teal-700);
-  --color-brand-800: var(--color-teal-800);
-  --color-brand-900: var(--color-teal-900);
-  --color-brand-950: var(--color-teal-950);
+  /* 黛青：压暗去饱和的青，作全站唯一功能色；强调靠字重与留白，不靠颜色 */
+  --color-brand-50: oklch(0.972 0.008 220);
+  --color-brand-100: oklch(0.943 0.014 220);
+  --color-brand-200: oklch(0.885 0.026 220);
+  --color-brand-300: oklch(0.802 0.04 221);
+  --color-brand-400: oklch(0.66 0.055 221);
+  --color-brand-500: oklch(0.55 0.062 221);
+  --color-brand-600: oklch(0.465 0.062 222);
+  --color-brand-700: oklch(0.4 0.056 223);
+  --color-brand-800: oklch(0.33 0.046 224);
+  --color-brand-900: oklch(0.28 0.036 224);
+  --color-brand-950: oklch(0.21 0.026 226);
+  /* 暖灰（封泥色系）作中性色 */
   --color-neutral-50: var(--color-olive-50);
   --color-neutral-100: var(--color-olive-100);
   --color-neutral-200: var(--color-olive-200);
@@ -35,14 +39,17 @@
   --color-neutral-800: var(--color-olive-800);
   --color-neutral-900: var(--color-olive-900);
   --color-neutral-950: var(--color-olive-950);
+  /* 纸与墨：页面底色与正文色不用纯白纯黑 */
+  --color-paper: oklch(0.977 0.005 100);
+  --color-ink: oklch(0.255 0.013 102);
 
   --font-sans:
-    'Noto Sans Variable', 'Noto Sans CJK SC', 'Noto Sans SC', 'Source Han Sans SC',
-    'Source Han Sans CN', 'Source Han Sans', 'PingFang SC', 'Hiragino Sans GB', 'Heiti SC',
-    'Microsoft YaHei', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI',
-    sans-serif;
+    'Noto Sans Variable', 'Noto Sans SC Variable', 'Noto Sans CJK SC', 'Noto Sans SC',
+    'Source Han Sans SC', 'Source Han Sans CN', 'Source Han Sans', 'PingFang SC',
+    'Hiragino Sans GB', 'Heiti SC', 'Microsoft YaHei', ui-sans-serif, system-ui, -apple-system,
+    BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --font-serif:
-    'Noto Serif Variable', 'LXGW WenKai', 'Noto Serif CJK SC', 'Noto Serif SC',
+    'Noto Serif Variable', 'Noto Serif SC Variable', 'Noto Serif CJK SC', 'Noto Serif SC',
     'Source Han Serif SC', 'Source Han Serif CN', 'Source Han Serif', 'Songti SC', STSong, SimSun,
     ui-serif, Georgia, Cambria, 'Times New Roman', Times, serif;
   --font-body: var(--font-serif);
@@ -54,16 +61,16 @@
 
 /* shadcn/ui 定义 */
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.153 0.006 107.1);
+  --background: oklch(0.977 0.005 100);
+  --foreground: oklch(0.255 0.013 102);
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.153 0.006 107.1);
+  --card-foreground: oklch(0.255 0.013 102);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.153 0.006 107.1);
-  --primary: oklch(0.511 0.096 186.391);
-  --primary-foreground: oklch(0.984 0.014 180.72);
-  --secondary: oklch(0.967 0.001 286.375);
-  --secondary-foreground: oklch(0.21 0.006 285.885);
+  --popover-foreground: oklch(0.255 0.013 102);
+  --primary: oklch(0.465 0.062 222);
+  --primary-foreground: oklch(0.972 0.008 220);
+  --secondary: oklch(0.966 0.005 106.5);
+  --secondary-foreground: oklch(0.286 0.016 107.4);
   --muted: oklch(0.966 0.005 106.5);
   --muted-foreground: oklch(0.58 0.031 107.3);
   --accent: oklch(0.966 0.005 106.5);
@@ -71,17 +78,17 @@
   --destructive: oklch(0.577 0.245 27.325);
   --border: oklch(0.93 0.007 106.5);
   --input: oklch(0.93 0.007 106.5);
-  --ring: oklch(0.737 0.021 106.9);
-  --chart-1: oklch(0.855 0.138 181.071);
-  --chart-2: oklch(0.704 0.14 182.503);
-  --chart-3: oklch(0.6 0.118 184.704);
-  --chart-4: oklch(0.511 0.096 186.391);
-  --chart-5: oklch(0.437 0.078 188.216);
-  --radius: 0.875rem;
+  --ring: oklch(0.66 0.055 221);
+  --chart-1: oklch(0.802 0.04 221);
+  --chart-2: oklch(0.66 0.055 221);
+  --chart-3: oklch(0.55 0.062 221);
+  --chart-4: oklch(0.465 0.062 222);
+  --chart-5: oklch(0.4 0.056 223);
+  --radius: 0.5rem;
   --sidebar: oklch(0.988 0.003 106.5);
-  --sidebar-foreground: oklch(0.153 0.006 107.1);
-  --sidebar-primary: oklch(0.6 0.118 184.704);
-  --sidebar-primary-foreground: oklch(0.984 0.014 180.72);
+  --sidebar-foreground: oklch(0.255 0.013 102);
+  --sidebar-primary: oklch(0.55 0.062 221);
+  --sidebar-primary-foreground: oklch(0.972 0.008 220);
   --sidebar-accent: oklch(0.966 0.005 106.5);
   --sidebar-accent-foreground: oklch(0.228 0.013 107.4);
   --sidebar-border: oklch(0.93 0.007 106.5);
@@ -90,35 +97,35 @@
 
 .dark,
 :root[data-theme='dark'] {
-  --background: oklch(0.153 0.006 107.1);
-  --foreground: oklch(0.988 0.003 106.5);
-  --card: oklch(0.228 0.013 107.4);
-  --card-foreground: oklch(0.988 0.003 106.5);
-  --popover: oklch(0.228 0.013 107.4);
-  --popover-foreground: oklch(0.988 0.003 106.5);
-  --primary: oklch(0.437 0.078 188.216);
-  --primary-foreground: oklch(0.984 0.014 180.72);
+  --background: oklch(0.205 0.01 107);
+  --foreground: oklch(0.9 0.005 103);
+  --card: oklch(0.248 0.013 107.4);
+  --card-foreground: oklch(0.9 0.005 103);
+  --popover: oklch(0.248 0.013 107.4);
+  --popover-foreground: oklch(0.9 0.005 103);
+  --primary: oklch(0.66 0.055 221);
+  --primary-foreground: oklch(0.21 0.026 226);
   --secondary: oklch(0.274 0.006 286.033);
-  --secondary-foreground: oklch(0.985 0 0);
+  --secondary-foreground: oklch(0.9 0.005 103);
   --muted: oklch(0.286 0.016 107.4);
   --muted-foreground: oklch(0.737 0.021 106.9);
   --accent: oklch(0.286 0.016 107.4);
-  --accent-foreground: oklch(0.988 0.003 106.5);
+  --accent-foreground: oklch(0.9 0.005 103);
   --destructive: oklch(0.704 0.191 22.216);
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
   --ring: oklch(0.58 0.031 107.3);
-  --chart-1: oklch(0.855 0.138 181.071);
-  --chart-2: oklch(0.704 0.14 182.503);
-  --chart-3: oklch(0.6 0.118 184.704);
-  --chart-4: oklch(0.511 0.096 186.391);
-  --chart-5: oklch(0.437 0.078 188.216);
+  --chart-1: oklch(0.802 0.04 221);
+  --chart-2: oklch(0.66 0.055 221);
+  --chart-3: oklch(0.55 0.062 221);
+  --chart-4: oklch(0.465 0.062 222);
+  --chart-5: oklch(0.4 0.056 223);
   --sidebar: oklch(0.228 0.013 107.4);
-  --sidebar-foreground: oklch(0.988 0.003 106.5);
-  --sidebar-primary: oklch(0.704 0.14 182.503);
-  --sidebar-primary-foreground: oklch(0.277 0.046 192.524);
+  --sidebar-foreground: oklch(0.9 0.005 103);
+  --sidebar-primary: oklch(0.66 0.055 221);
+  --sidebar-primary-foreground: oklch(0.21 0.026 226);
   --sidebar-accent: oklch(0.286 0.016 107.4);
-  --sidebar-accent-foreground: oklch(0.988 0.003 106.5);
+  --sidebar-accent-foreground: oklch(0.9 0.005 103);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.58 0.031 107.3);
 }
@@ -189,7 +196,7 @@
     font-family: var(--font-heading);
   }
 
-  :where(.sl-markdown-content p:has(> strong:only-child)) {
+  :where(.sl-markdown-content p[data-subheading]) {
     font-family: var(--font-heading);
   }
 
@@ -212,22 +219,22 @@
   --sl-font: var(--font-body);
   --sl-font-mono: var(--font-mono);
 
-  --sl-color-white: var(--color-white);
-  --sl-color-gray-1: var(--color-neutral-200);
-  --sl-color-gray-2: var(--color-neutral-300);
+  --sl-color-white: oklch(0.918 0.005 103);
+  --sl-color-gray-1: oklch(0.862 0.007 103);
+  --sl-color-gray-2: oklch(0.79 0.012 105);
   --sl-color-gray-3: var(--color-neutral-400);
   --sl-color-gray-4: var(--color-neutral-600);
   --sl-color-gray-5: var(--color-neutral-700);
   --sl-color-gray-6: var(--color-neutral-800);
-  --sl-color-black: var(--color-neutral-900);
+  --sl-color-black: oklch(0.205 0.01 107);
   --sl-color-accent-low: var(--color-brand-950);
-  --sl-color-accent: var(--color-brand-600);
+  --sl-color-accent: var(--color-brand-500);
   --sl-color-accent-high: var(--color-brand-200);
 }
 
 :root[data-theme='light'],
 [data-theme='light'] ::backdrop {
-  --sl-color-white: var(--color-neutral-900);
+  --sl-color-white: var(--color-ink);
   --sl-color-gray-1: var(--color-neutral-800);
   --sl-color-gray-2: var(--color-neutral-700);
   --sl-color-gray-3: var(--color-neutral-500);
@@ -235,8 +242,112 @@
   --sl-color-gray-5: var(--color-neutral-300);
   --sl-color-gray-6: var(--color-neutral-200);
   --sl-color-gray-7: var(--color-neutral-100);
-  --sl-color-black: var(--color-white);
+  --sl-color-black: var(--color-paper);
   --sl-color-accent-low: var(--color-brand-200);
   --sl-color-accent: var(--color-brand-600);
   --sl-color-accent-high: var(--color-brand-900);
+}
+
+/* 阅读参数：中文长文的行长、行距与标点 */
+:root {
+  --sl-content-width: 39.5rem;
+}
+
+.sl-markdown-content {
+  font-size: 1.0625rem;
+  line-height: 1.8;
+  text-spacing-trim: trim-start;
+}
+
+:root[lang^='zh'] .sl-markdown-content {
+  line-height: 1.95;
+  letter-spacing: 0.012em;
+  text-align: justify;
+}
+
+.sl-markdown-content :is(h1, h2, h3, h4, h5, h6),
+.sl-markdown-content pre,
+.sl-markdown-content figcaption {
+  text-align: start;
+  letter-spacing: 0;
+}
+
+main [data-page-title] {
+  font-size: clamp(1.75rem, 1.45rem + 1.1vw, 2.125rem);
+  font-weight: 650;
+}
+
+.sl-markdown-content h2:not(:where(.not-content *)) {
+  font-size: 1.375rem;
+  font-weight: 600;
+  margin-block-start: 2.6em;
+}
+
+.sl-markdown-content h3:not(:where(.not-content *)) {
+  font-size: 1.155rem;
+  font-weight: 600;
+  margin-block-start: 2.1em;
+}
+
+.sl-markdown-content p[data-subheading]:not(:where(.not-content *)) {
+  margin-block-start: 2em;
+}
+
+.sl-markdown-content p[data-subheading] strong {
+  font-weight: 600;
+}
+
+/* 周边件：引用、脚注、分隔线、列表记号与链接卡收进同一语言 */
+.sl-markdown-content blockquote:not(:where(.not-content *)) {
+  border-inline-start: 2px solid var(--sl-color-gray-5);
+  padding-inline-start: 1.1em;
+  color: var(--sl-color-gray-2);
+  font-size: 0.98em;
+}
+
+.sl-markdown-content [data-footnotes] {
+  margin-block-start: 3.5rem;
+  border-block-start: 1px solid var(--sl-color-gray-5);
+  padding-block-start: 1.2rem;
+  font-size: 0.88rem;
+  line-height: 1.85;
+  color: var(--sl-color-gray-2);
+}
+
+.sl-markdown-content hr:not(:where(.not-content *)) {
+  border: 0;
+  border-block-start: 1px solid var(--sl-color-gray-5);
+  margin-block: 3rem;
+}
+
+.sl-markdown-content li::marker {
+  color: var(--sl-color-gray-4);
+}
+
+.sl-link-card {
+  border-radius: 0.5rem;
+  box-shadow: none;
+}
+
+.sl-link-card:hover {
+  background-color: var(--sl-color-gray-7, var(--sl-color-gray-6));
+}
+
+.sl-link-card .description {
+  font-size: 0.9rem;
+  line-height: 1.75;
+}
+
+/* 导航安静化：侧栏与页内目录用黑体、去大色块，正文是唯一主角 */
+.sidebar-content,
+.right-sidebar {
+  font-family: var(--font-heading);
+}
+
+.sidebar-content a[aria-current='page'],
+.sidebar-content a[aria-current='page']:hover,
+.sidebar-content a[aria-current='page']:focus {
+  background-color: var(--sl-color-gray-6);
+  color: var(--sl-color-white);
+  font-weight: 600;
 }

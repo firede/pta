@@ -7,10 +7,15 @@ import tailwindcss from '@tailwindcss/vite';
 import { argumentIds } from './src/data/arguments';
 import { specificationIds } from './src/data/specifications';
 import { getRootMessage, getStarlightTranslations, starlightI18n } from './src/lib/i18n';
+import { rehypeStrongSubheading } from './src/lib/markdown/strong-subheading';
 
 // https://astro.build/config
 export default defineConfig({
   site: 'https://pta.pub',
+
+  markdown: {
+    rehypePlugins: [rehypeStrongSubheading],
+  },
 
   integrations: [
     starlight({
@@ -22,30 +27,15 @@ export default defineConfig({
       },
       components: {
         MarkdownContent: './src/components/starlight/MarkdownContent.astro',
+        PageTitle: './src/components/starlight/PageTitle.astro',
         Pagination: './src/components/starlight/Pagination.astro',
+        Sidebar: './src/components/starlight/Sidebar.astro',
       },
       routeMiddleware: ['./src/lib/starlight/toc.ts'],
       social: [{ icon: 'github', label: 'GitHub', href: 'https://github.com/firede/pta' }],
       defaultLocale: starlightI18n.defaultLocale,
       locales: starlightI18n.locales,
       sidebar: [
-        {
-          label: getRootMessage('guide'),
-          translations: getStarlightTranslations('guide'),
-          slug: 'guide',
-        },
-        {
-          label: getRootMessage('specification'),
-          translations: getStarlightTranslations('specification'),
-          items: [
-            {
-              slug: 'specification',
-              label: getRootMessage('overview'),
-              translations: getStarlightTranslations('overview'),
-            },
-            ...specificationIds,
-          ],
-        },
         {
           label: getRootMessage('arguments'),
           translations: getStarlightTranslations('arguments'),
@@ -60,16 +50,21 @@ export default defineConfig({
           ],
         },
         {
-          label: getRootMessage('topics'),
-          translations: getStarlightTranslations('topics'),
+          label: getRootMessage('specification'),
+          translations: getStarlightTranslations('specification'),
           items: [
             {
-              slug: 'topic',
+              slug: 'specification',
               label: getRootMessage('overview'),
               translations: getStarlightTranslations('overview'),
             },
-            { autogenerate: { directory: 'topic' } },
+            ...specificationIds,
           ],
+        },
+        {
+          label: getRootMessage('guide'),
+          translations: getStarlightTranslations('guide'),
+          slug: 'guide',
         },
       ],
     }),

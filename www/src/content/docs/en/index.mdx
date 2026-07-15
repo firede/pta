@@ -6,19 +6,54 @@ editUrl: false
 head:
   - tag: title
     content: Project Truth Architecture
-hero:
-  actions:
-    - text: Read the Specification
-      link: /en/specification/
-      icon: right-arrow
-    - text: GitHub
-      link: https://github.com/firede/pta
-      icon: external
-      variant: minimal
-sourceHash: 3c4076b41bc5fe96ed3e6db5632bde5b71fa5046cb00d64c176f5709b43a23a0
+sourceHash: 919240cbe420c09641a8b501f22e3c28b4e521b3a2756b1a9c10ea504593cee6
 ---
 
-- [Guide](/en/guide/): Practical methods and recommendations.
-- [Specification](/en/specification/): Core definitions and constraints.
-- [Arguments](/en/argument/): Fundamental judgments that the architecture depends on.
-- [Topics](/en/topic/): Explorations of complex questions.
+import Landing from '@/components/home/Landing.astro';
+
+<Landing
+  title="Project Truth Architecture"
+  epigraph="名定而实辨，道行而志通"
+  epigraphSource="Xunzi, On the Rectification of Names"
+  epigraphNote="When names are fixed, realities are distinguished; when the way is practiced, intent is understood."
+  intro={[
+    'Project truth is the set of judgments a project actually operates by: the decisions it has made and the premises it has adopted. It answers why the project is the way it is, rather than any other acceptable way.',
+    'In a long-lived project these judgments scatter across files, tools, and conversations, kept alive only by people retelling them; yet human judgment bandwidth is a scarce resource — retelling consumes it, and relaying distorts it. Project Truth Architecture records judgments explicitly and keeps them in force, so that humans and AI collaborate in the same semantic space.',
+  ]}
+  ctas={[
+    { label: 'Start with the Arguments', href: '/en/argument/', primary: true },
+    { label: 'Read the Specification', href: '/en/specification/' },
+  ]}
+  mapLabel="Reading map"
+  entries={[
+    {
+      ord: '01',
+      name: 'Arguments',
+      question: 'Why does it hold?',
+      blurb:
+        'The fundamental judgments the architecture depends on — where every conclusion starts.',
+      href: '/en/argument/',
+    },
+    {
+      ord: '02',
+      name: 'Specification',
+      question: 'What must be followed?',
+      blurb: 'Core definitions and constraints, every requirement traceable to an argument.',
+      href: '/en/specification/',
+    },
+    {
+      ord: '03',
+      name: 'Guide',
+      question: 'How to practice it?',
+      blurb: 'Methods and recommendations for day-to-day collaboration.',
+      href: '/en/guide/',
+    },
+  ]}
+  lineage={{
+    title: 'Human Bandwidth Design',
+    href: 'https://bandwidth.ren/en/',
+    after:
+      ' sets out the program for human–machine collaboration; Project Truth Architecture is one practice of it.',
+  }}
+  footnote="Simplified Chinese is the source of truth for this site; other language editions are translated from it."
+/>

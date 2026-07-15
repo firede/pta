@@ -117,9 +117,15 @@ importers:
       '@fontsource-variable/noto-sans':
         specifier: ^5.2.10
         version: 5.2.10
+      '@fontsource-variable/noto-sans-sc':
+        specifier: ^5.2.10
+        version: 5.2.10
       '@fontsource-variable/noto-serif':
         specifier: ^5.2.9
         version: 5.2.9
+      '@fontsource-variable/noto-serif-sc':
+        specifier: ^5.2.10
+        version: 5.2.10
       '@remixicon/react':
         specifier: ^4.9.0
         version: 4.9.0(react@19.2.7)
@@ -822,8 +828,14 @@ packages:
   '@floating-ui/utils@0.2.11':
     resolution: {integrity: sha512-RiB/yIh78pcIxl6lLMG0CgBXAZ2Y0eVHqMPYugu+9U0AeT6YBeiJpf7lbdJNIugFP5SIjwNRgo4DhR1Qxi26Gg==}
 
+  '@fontsource-variable/noto-sans-sc@5.2.10':
+    resolution: {integrity: sha512-zdk10i5HrDQTXI7ldD61zToX1fsgig8vDTsu7zB48SXOitWfuX0e5viZAwnkHuhwh096PU6X6i1AyAsbBCISpA==}
+
   '@fontsource-variable/noto-sans@5.2.10':
     resolution: {integrity: sha512-wyFgKkFu7jki5kEL8qv7avjQ8rxHX0J/nhLWvbR9T0hOH1HRKZEvb9EW9lMjZfWHHfEzKkYf5J+NadwgCS7TXA==}
+
+  '@fontsource-variable/noto-serif-sc@5.2.10':
+    resolution: {integrity: sha512-TRhuDxWAnqUUtRZFCy8aoJB3/7HsuCaW/4B3wBTE0hzE8QVapklTjE2aY7s/wXWFXHLdflYNroloZoXekoKClw==}
 
   '@fontsource-variable/noto-serif@5.2.9':
     resolution: {integrity: sha512-9McZzWeOjD/Gsko+w6A2lpGlHXZw5J2JmxaSMgopiIHoMYI1m6DAyFrzG9QQ0WjdWxj5jZfKM0EGSBVZHC6+nw==}
@@ -5202,7 +5214,11 @@ snapshots:
 
   '@floating-ui/utils@0.2.11': {}
 
+  '@fontsource-variable/noto-sans-sc@5.2.10': {}
+
   '@fontsource-variable/noto-sans@5.2.10': {}
+
+  '@fontsource-variable/noto-serif-sc@5.2.10': {}
 
   '@fontsource-variable/noto-serif@5.2.9': {}
 
