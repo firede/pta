@@ -201,3 +201,43 @@ test('下级同名术语定义不同只产生嫌疑，相同定义不产生', ()
     false,
   );
 });
+
+test('dependsOn 指向存在领域不产生信号，悬空目标产生嫌疑', () => {
+  const provider = directoryDomain('provider');
+  const valid = directoryDomain(
+    'consumer',
+    '---\ndependsOn:\n  - path: provider\n    reason: 引用对方口径\n---\n- 判断',
+  );
+  assert.deepEqual(
+    lintDomainContents([valid, provider]).filter((item) => item.category === 'missing dependency'),
+    [],
+  );
+
+  const dangling = directoryDomain(
+    'consumer',
+    '---\ndependsOn:\n  - path: ghost\n    reason: 目标已不存在\n---\n- 判断',
+  );
+  const signals = lintDomainContents([dangling, provider]).filter(
+    (item) => item.category === 'missing dependency',
+  );
+  assert.equal(signals.length, 1);
+  const found = signals[0] as CheckSignal;
+  assert.equal(found.status, 'suspicion');
+  assert.match(found.evidence.message, /「ghost」不是任何领域的标识/u);
+  assert.equal(found.evidence.file, 'consumer/TRUTH.md');
+  assert.equal(found.evidence.line, 2);
+});
+
+test('未定义的状态字符构成违例，巡检标记不构成', () => {
+  const undefinedMarker = directoryDomain('src', '- [x] 判断');
+  const bad = lintDomainContents([undefinedMarker]).filter((item) => item.category === 'violation');
+  assert.equal(bad.length, 1);
+  assert.match(bad[0]?.evidence.message ?? '', /「x」未被内容结构规范定义/u);
+  assert.equal(bad[0]?.evidence.file, 'src/TRUTH.md');
+
+  const marked = directoryDomain('src', '- [?] 判断。2027-01 复查。');
+  assert.deepEqual(
+    lintDomainContents([marked]).filter((item) => item.category === 'violation'),
+    [],
+  );
+});

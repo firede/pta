@@ -2,8 +2,16 @@
 title: Glossary
 description: Core terms used in the Arguments section.
 tableOfContents: false
-sourceHash: 04814533faac9d85ab02708112ddbae808b7127e759e61d40bfe99060eef2cf6
+sourceHash: cee34595d1f9291c900334a07d4fea8dec33181261fffdf509f424a0a3faac33
 ---
+
+**Judgment Bandwidth**
+
+Judgment bandwidth is the channel for what a person can explicitly express, continuously judge, and take responsibility for. Set by human cognitive architecture, it stays nearly constant and does not grow with machine capability; once collaborative output exceeds what a person can read in full, it becomes the scarce resource of the collaborative system.
+
+**Constitutive Judgment**
+
+A constitutive judgment is one that defines the goal of the collaboration itself, such as what is wanted, what is cared about, what risk is acceptable, and in whose name commitments are made; it needs a person to provide it at any level of capability. Its counterpart, stopgap contribution, is people covering what machines cannot yet do, and it is continually replaced as machine capability grows.
 
 **Project Truth**
 

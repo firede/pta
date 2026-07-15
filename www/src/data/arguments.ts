@@ -1,4 +1,5 @@
 export const argumentIds = [
+  'argument/judgment-bandwidth-scarcity',
   'argument/what-is-project-truth',
   'argument/truth-record-versioned-with-implementation',
   'argument/project-truth-by-domain',

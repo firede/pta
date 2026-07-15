@@ -4,7 +4,12 @@ import type { DiscoveryResult, Domain, DomainContent } from './domains.ts';
 import type { ExtractedContent, ExtractedEntry, FileKind } from './entries.ts';
 import { normalizeEntryContent } from './identity.ts';
 
-export type CheckSignalCategory = 'conflict' | 'violation' | 'term inconsistency';
+export type CheckSignalCategory =
+  | 'conflict'
+  | 'violation'
+  | 'term inconsistency'
+  | 'missing dependency'
+  | 'expiry';
 export type CheckSignalStatus = 'machine-decidable' | 'suspicion';
 export type CheckSignalSource = 'structural-check';
 
@@ -365,6 +370,54 @@ function termInconsistencies(contents: readonly DomainContent[]): CheckSignal[] 
   return signals;
 }
 
+const definedStatusCharacters = new Set(['?']);
+
+function undefinedStatusCharacters(contents: readonly DomainContent[]): CheckSignal[] {
+  const signals: CheckSignal[] = [];
+  for (const content of contents) {
+    const { domain } = content;
+    const truth = content.files['TRUTH.md'];
+    if (truth === undefined) continue;
+    for (const entry of truth.entries) {
+      if (entry.marker === undefined || definedStatusCharacters.has(entry.marker)) continue;
+      signals.push(
+        signal({
+          category: 'violation',
+          anchor: entryAnchor(domain, truth, entry),
+          message: `状态字符「${entry.marker}」未被内容结构规范定义。`,
+          file: domain.containerPath === '' ? 'TRUTH.md' : `${domain.containerPath}/TRUTH.md`,
+          line: entry.line,
+        }),
+      );
+    }
+  }
+  return signals;
+}
+
+function missingDependencyTargets(contents: readonly DomainContent[]): CheckSignal[] {
+  const identifiers = new Set(
+    contents.flatMap(({ domain }) => (domain.identifier === undefined ? [] : [domain.identifier])),
+  );
+  const signals: CheckSignal[] = [];
+  for (const { domain } of contents) {
+    if (domain.identifier === undefined) continue;
+    for (const dependency of domain.dependsOn) {
+      if (identifiers.has(dependency.path)) continue;
+      signals.push(
+        signal({
+          category: 'missing dependency',
+          status: 'suspicion',
+          anchor: declarationAnchor(domain),
+          message: `dependsOn 指向的「${dependency.path}」不是任何领域的标识；目标可能已迁移、更名或声明有误。`,
+          file: domain.declarationPath,
+          line: frontmatterKeyLine(domain, 'dependsOn'),
+        }),
+      );
+    }
+  }
+  return signals;
+}
+
 export function lintDomainContents(contents: readonly DomainContent[]): readonly CheckSignal[] {
   return [
     ...contentViolations(contents),
@@ -373,6 +426,8 @@ export function lintDomainContents(contents: readonly DomainContent[]): readonly
     ...fileBoundaryConflicts(contents),
     ...entryConflicts(contents),
     ...termInconsistencies(contents),
+    ...missingDependencyTargets(contents),
+    ...undefinedStatusCharacters(contents),
   ];
 }
 

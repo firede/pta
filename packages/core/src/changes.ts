@@ -93,7 +93,7 @@ function coversDirectory(domain: Domain, path: string): boolean {
   );
 }
 
-function ownerFor(path: string, domains: readonly Domain[]): Domain | undefined {
+export function ownerFor(path: string, domains: readonly Domain[]): Domain | undefined {
   const recordOwner = contentOwner(path, domains);
   if (recordOwner !== undefined) return recordOwner;
 
@@ -117,7 +117,7 @@ function recordKind(domain: Domain, path: string): 'truth' | 'pending' | 'implem
   return 'implementation';
 }
 
-function ancestors(identifier: string, domains: ReadonlyMap<string, Domain>): string[] {
+export function ancestors(identifier: string, domains: ReadonlyMap<string, Domain>): string[] {
   const result: string[] = [];
   let current: string | undefined = identifier;
   const seen = new Set<string>();

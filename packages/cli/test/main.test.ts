@@ -1,11 +1,19 @@
 import assert from 'node:assert/strict';
 import { execFile } from 'node:child_process';
-import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { existsSync } from 'node:fs';
+import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
 
+import { hashEntryContent } from '@pta/core';
+
 import { runCli } from '../src/main.ts';
+
+const globalDirs = await mkdtemp(join(tmpdir(), 'pta-global-'));
+process.env['XDG_STATE_HOME'] = join(globalDirs, 'state');
+process.env['XDG_CACHE_HOME'] = join(globalDirs, 'cache');
+process.env['XDG_CONFIG_HOME'] = join(globalDirs, 'config');
 
 function git(root: string, args: readonly string[]): Promise<void> {
   return new Promise((resolve, reject) => {
@@ -130,6 +138,201 @@ test('changes 从工作树收集变更，输出漂移候选与待裁决背景并
   assert.equal(based.stderr(), '');
 });
 
+test('pending 按领域汇总待裁决条目并返回 0', async (context) => {
+  const root = await repository({
+    'TRUTH.md': '- 根判断\n',
+    'PENDING.md': '- 根问题如何处理？（暂按最保守方式处理）\n',
+    'packages/core/TRUTH.md': '- 核心判断\n',
+    'packages/core/PENDING.md': '- 核心问题一如何裁决？（暂缓）\n- 核心问题二如何裁决？（暂缓）\n',
+  });
+  context.after(() => rm(root, { recursive: true, force: true }));
+  await git(root, ['init', '-q']);
+  const output = capture();
+
+  assert.equal(await runCli(['pending', root], output.io), 0);
+  assert.match(output.stdout(), /领域 \./u);
+  assert.match(output.stdout(), /^ {2}[0-9a-f]{8} PENDING\.md:1 根问题如何处理/mu);
+  assert.match(output.stdout(), /领域 packages\/core/u);
+  assert.match(
+    output.stdout(),
+    /^ {2}[0-9a-f]{8} packages\/core\/PENDING\.md:2 核心问题二如何裁决/mu,
+  );
+  assert.match(output.stdout(), /共 3 条待裁决条目，分布于 2 个领域。/u);
+  assert.equal(output.stderr(), '');
+});
+
+test('pending remove 按 id 处置条目，歧义需领域限定，清空即删', async (context) => {
+  const shared = '共同问题如何处理？（暂缓）';
+  const root = await repository({
+    'TRUTH.md': '- 根判断\n',
+    'PENDING.md': `- 根问题如何处理？（暂缓）\n- ${shared}\n`,
+    'src/TRUTH.md': '- 源判断\n',
+    'src/PENDING.md': `- ${shared}\n`,
+  });
+  context.after(() => rm(root, { recursive: true, force: true }));
+  await git(root, ['init', '-q']);
+  const rootId = hashEntryContent('根问题如何处理？（暂缓）').slice(0, 8);
+  const sharedId = hashEntryContent(shared).slice(0, 8);
+
+  const ambiguous = capture();
+  assert.equal(await runCli(['pending', 'remove', sharedId], ambiguous.io, root), 2);
+  assert.match(ambiguous.stderr(), /id 有歧义/u);
+  assert.match(ambiguous.stderr(), /src:[0-9a-f]{8}/u);
+  assert.match(ambiguous.stderr(), /未做任何改动/u);
+
+  const removed = capture();
+  assert.equal(await runCli(['pending', 'remove', rootId, `src:${sharedId}`], removed.io, root), 0);
+  assert.match(removed.stdout(), /已处置 2 条待裁决条目：/u);
+  assert.match(removed.stdout(), /^ {2}\. [0-9a-f]{8} 根问题如何处理/mu);
+  assert.match(removed.stdout(), /src\/PENDING\.md 清空即删。/u);
+  assert.equal(await readFile(join(root, 'PENDING.md'), 'utf8'), `- ${shared}\n`);
+  assert.equal(existsSync(join(root, 'src/PENDING.md')), false);
+
+  const missing = capture();
+  assert.equal(await runCli(['pending', 'remove', 'ffffffff'], missing.io, root), 2);
+  assert.match(missing.stderr(), /未匹配任何待裁决条目/u);
+});
+
+test('pending add 登记条目、幂等判重并惰性创建文件', async (context) => {
+  const root = await repository({
+    'TRUTH.md': '- 根判断\n',
+    'src/TRUTH.md': '- 源判断\n',
+  });
+  context.after(() => rm(root, { recursive: true, force: true }));
+  await git(root, ['init', '-q']);
+
+  const added = capture();
+  assert.equal(
+    await runCli(['pending', 'add', 'src', '新问题如何处理？（暂缓）'], added.io, root),
+    0,
+  );
+  assert.match(added.stdout(), /已登记待裁决条目：src [0-9a-f]{8} src\/PENDING\.md:1/u);
+  assert.equal(added.stderr(), '');
+  assert.equal(
+    await readFile(join(root, 'src/PENDING.md'), 'utf8'),
+    '- 新问题如何处理？（暂缓）\n',
+  );
+
+  const duplicate = capture();
+  assert.equal(
+    await runCli(['pending', 'add', 'src', '新问题如何处理？（暂缓）'], duplicate.io, root),
+    0,
+  );
+  assert.match(duplicate.stdout(), /已存在同内容条目：src [0-9a-f]{8}/u);
+
+  const statement = capture();
+  assert.equal(await runCli(['pending', 'add', '.', '这是陈述句'], statement.io, root), 0);
+  assert.match(statement.stderr(), /应当以问句表述/u);
+  assert.equal(await readFile(join(root, 'PENDING.md'), 'utf8'), '- 这是陈述句\n');
+
+  const unknown = capture();
+  assert.equal(await runCli(['pending', 'add', 'nowhere', '问题？'], unknown.io, root), 2);
+  assert.match(unknown.stderr(), /未找到领域：nowhere/u);
+
+  const usage = capture();
+  assert.equal(await runCli(['pending', 'add', 'src'], usage.io, root), 2);
+  assert.match(usage.stderr(), /用法：pta pending add/u);
+});
+
+test('context 透出涉及领域的核查提示且不阻断', async (context) => {
+  const root = await repository({
+    'TRUTH.md': '- 根判断\n',
+    'src/TRUTH.md': '- **加粗领起** 判断\n',
+    'src/index.ts': 'export const value = 1;\n',
+  });
+  context.after(() => rm(root, { recursive: true, force: true }));
+  await git(root, ['init', '-q']);
+  const output = capture();
+
+  assert.equal(await runCli(['context', 'src/index.ts'], output.io, root), 0);
+  assert.match(output.stdout(), /核查提示（读取时叠加，不入产物）：/u);
+  assert.match(output.stdout(), /\[violation \| machine-decidable\] src\/TRUTH\.md:1/u);
+});
+
+test('pending 收件箱为空时输出空提示，用法错误返回 2', async (context) => {
+  const root = await repository({ 'TRUTH.md': '- 根判断\n' });
+  context.after(() => rm(root, { recursive: true, force: true }));
+  await git(root, ['init', '-q']);
+
+  const empty = capture();
+  assert.equal(await runCli(['pending', root], empty.io), 0);
+  assert.equal(empty.stdout(), '收件箱为空：没有待裁决条目。\n');
+  assert.equal(empty.stderr(), '');
+
+  const usage = capture();
+  assert.equal(await runCli(['pending', root, 'extra'], usage.io), 2);
+  assert.match(usage.stderr(), /用法：pta pending/u);
+});
+
+test('inspect 圈定巡检集合并报告到期', async (context) => {
+  const root = await repository({
+    'TRUTH.md':
+      '- 普通判断，不入巡检集合。\n- [?] 风险分级与学会指南一致。2020-01 核对指南是否更新。\n- [?] 服务部署在单台服务器上。部署拓扑变化时复查。\n',
+    'RESIDUE.md': '- 2024-03 之前的数据无法区分邻面龋。\n',
+  });
+  context.after(() => rm(root, { recursive: true, force: true }));
+  await git(root, ['init', '-q']);
+  const output = capture();
+
+  assert.equal(await runCli(['inspect', root], output.io), 0);
+  assert.match(output.stdout(), /巡检集合：3 条（1 个领域）/u);
+  assert.match(
+    output.stdout(),
+    /到期：\n {2}\[expiry \| machine-decidable\] TRUTH\.md:2 复查线索 2020-01 已到期/u,
+  );
+  assert.match(output.stdout(), /未盘存（待推导或注册）：/u);
+  assert.match(output.stdout(), /^ {2}[0-9a-f]{8} TRUTH\.md:3 \[\?\] 服务部署在单台服务器上/mu);
+  assert.match(output.stdout(), /残留（整类巡检）：/u);
+  assert.match(output.stdout(), /^ {2}[0-9a-f]{8} RESIDUE\.md:1 2024-03 之前的数据/mu);
+  assert.equal(output.stderr(), '');
+
+  const usage = capture();
+  assert.equal(await runCli(['inspect', root, 'extra'], usage.io), 2);
+  assert.match(usage.stderr(), /用法：pta inspect/u);
+});
+
+test('context 输出领域链与来源标识并返回 0', async (context) => {
+  const root = await repository({
+    'TRUTH.md': '- 根判断\n',
+    'PENDING.md': '- 根问题如何处理？（暂缓）\n',
+    'src/TRUTH.md': '- 源判断\n',
+    'src/GLOSSARY.md': '- **术语**：定义\n',
+    'src/index.ts': 'export const value = 1;\n',
+  });
+  context.after(() => rm(root, { recursive: true, force: true }));
+  await git(root, ['init', '-q']);
+
+  const uncommitted = capture();
+  assert.equal(await runCli(['context', 'src/index.ts'], uncommitted.io, root), 0);
+  assert.match(uncommitted.stdout(), /# 项目真相背景/u);
+  assert.match(uncommitted.stdout(), /来源：无提交基线/u);
+  assert.match(uncommitted.stdout(), /^ {2}src\/TRUTH\.md [0-9a-f]{64}$/mu);
+  assert.match(uncommitted.stdout(), /路径归属：\n {2}src\/index\.ts → 领域 src/u);
+  assert.match(uncommitted.stdout(), /## 领域 \.\n\n### 真相记录\n\n- 根判断/u);
+  assert.match(uncommitted.stdout(), /### 待裁决背景\n\n- [0-9a-f]{8} 根问题如何处理/u);
+  assert.match(uncommitted.stdout(), /## 领域 src[\s\S]*### 术语表\n\n- \*\*术语\*\*：定义/u);
+  assert.equal(uncommitted.stderr(), '');
+
+  await git(root, ['add', '.']);
+  await git(root, [
+    '-c',
+    'user.name=PTA Test',
+    '-c',
+    'user.email=pta@example.invalid',
+    'commit',
+    '-qm',
+    'fixture',
+  ]);
+  const committed = capture();
+  assert.equal(await runCli(['context', 'src/index.ts'], committed.io, root), 0);
+  assert.match(committed.stdout(), /来源：[0-9a-f]{40}\n/u);
+  assert.doesNotMatch(committed.stdout(), /所涉内容哈希/u);
+
+  const usage = capture();
+  assert.equal(await runCli(['context'], usage.io, root), 2);
+  assert.match(usage.stderr(), /用法：pta context/u);
+});
+
 test('命令用法与 git 错误返回 2', async (context) => {
   const root = await repository({ 'TRUTH.md': '- 根判断\n' });
   context.after(() => rm(root, { recursive: true, force: true }));
@@ -174,4 +377,38 @@ test('check 从清单扣除工作树中已删除的跟踪文件', async (context
 
   assert.equal(await runCli(['check', root], output.io), 0);
   assert.equal(output.stdout(), '通过：未发现核查信号。\n');
+});
+
+test('inspect register 注册推导叠加进报告，logs 记录关键行为', async (context) => {
+  const entry = '[?] 服务仅五名员工使用，权限按人对人授权。人数变化时复查。';
+  const root = await repository({ 'TRUTH.md': `- ${entry}\n` });
+  context.after(() => rm(root, { recursive: true, force: true }));
+  await git(root, ['init', '-q']);
+  const id = hashEntryContent(entry).slice(0, 8);
+
+  const before = capture();
+  assert.equal(await runCli(['inspect', root], before.io), 0);
+  assert.match(before.stdout(), /未盘存（待推导或注册）：/u);
+
+  const condition = capture();
+  assert.equal(await runCli(['inspect', 'register', id, '条件'], condition.io, root), 0);
+  assert.match(condition.stdout(), /已注册推导：\. [0-9a-f]{8} → 条件型/u);
+
+  const confirmed = capture();
+  assert.equal(await runCli(['inspect', root], confirmed.io), 0);
+  assert.match(confirmed.stdout(), /条件型（已盘存）：/u);
+
+  const dated = capture();
+  assert.equal(await runCli(['inspect', 'register', id, '2030-06'], dated.io, root), 0);
+  const upcoming = capture();
+  assert.equal(await runCli(['inspect', root], upcoming.io), 0);
+  assert.match(upcoming.stdout(), /日期型（未到期）：\n {2}2030-06 /u);
+
+  const badValue = capture();
+  assert.equal(await runCli(['inspect', 'register', id, '随便'], badValue.io, root), 2);
+  assert.match(badValue.stderr(), /用法：pta inspect register/u);
+
+  const logs = capture();
+  assert.equal(await runCli(['logs', '10'], logs.io, root), 0);
+  assert.match(logs.stdout(), /\[cli\] derivation-register/u);
 });

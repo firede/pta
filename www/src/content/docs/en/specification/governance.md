@@ -5,7 +5,7 @@ dependsOn:
   - argument/project-truth-freshness-governance
   - argument/project-truth-by-domain
   - argument/derivable-content-in-tool-layer
-sourceHash: 7a4eda1d37fe6dfb8aaf776e540c211b24e7c7b0598a6eaba7a03ca2853f23b8
+sourceHash: 5506f10c3f54dac69e54557a8804a837acba232c1b7a39176602f2b8465186e2
 ---
 
 Governance defines the operating loop of freshness checks: how deviation becomes a signal, at which points signals are consumed, and how adjudication lands back on the records.
@@ -46,7 +46,7 @@ The category list is open: as machine detection expands, new categories join und
 - **Drift suspicion**: a change touches a domain's implementation without touching its truth records, or changes only records without touching the implementation; also suspected contradictions between records and what is actually followed, found by inspection. Whether it holds requires human adjudication.
 - **Omission suspicion**: a choice hit in the course of work that the truth records have not pinned, that reasonable practice cannot settle uniquely, and that the project may care about. It points to a gap in the records rather than a deviation of an existing record; its evidence lives at the site of discovery and cannot be re-derived outside the loop, so it is carried by pending entries in `PENDING.md`, persisted with the repository — the entry is the signal, and also the anchor for adjudication and the cache. Whether the judgment is admitted into truth requires human adjudication.
 - **Propagation**: when a domain's truth records change, the domains related to it through `dependsOn`, hierarchy, or references enter check candidacy. Propagation produces candidates; whether a candidate holds requires human adjudication.
-- **Expiry**: a review clue attached to an entry expires. Clues are extracted from the entry text, and the extraction is tool-layer derivation; expiry is machine-decidable, while whether the entry still holds requires human adjudication.
+- **Expiry**: a review clue attached to an entry in the inspection set expires. Clues are extracted from the entry text, and the extraction is tool-layer derivation; expiry is machine-decidable, while whether the entry still holds requires human adjudication.
 
 ## Checkpoints
 
@@ -58,7 +58,7 @@ The consumption semantics of a point: starting from the domain of the signal's a
 
 A signal anchored to a domain declaration is a candidate awaiting expansion: the point screens the domain's entries against the evidence, escalating them as entry-level signals or drafting revisions directly; when screening finds no affected entries, the signal concludes with the screening. Screening answers whether a change touches the records; it does not stand in for adjudicating whether a record holds. Human adjudication and the adjudication cache always anchor to entries.
 
-Inspection points carry what structure cannot delimit: consuming the review clues of entries, and reading across domains to find contradictions beyond structural relationships. The input of external change events depends on people — the system has no sensor for external drift that carries no clue and that no one notices; inspection narrows this blind spot, and eliminating it depends on review clues and human submissions.
+Inspection points carry what structure cannot delimit: consuming the review clues of the inspection set, and reading across domains to find contradictions beyond structural relationships. The inspection set consists of the entries declared with the inspection marker in `TRUTH.md`, plus all entries of `RESIDUE.md` — membership is delimited mechanically by the marker and the file kind, without recognizing any wording in the text; suspected clues in unmarked entries are caught by the semantic read-through, and adding the marker goes through the normal change flow. The input of external change events depends on people — the system has no sensor for external drift that carries no clue and that no one notices; inspection narrows this blind spot, and eliminating it depends on review clues and human submissions.
 
 ## Adjudication
 
@@ -86,4 +86,4 @@ Enforcement levels **should** match check cost: expensive enforcement gets bypas
 
 ## Out of Scope
 
-The hook forms of points, inspection frequency, the submission entry for signals and the presentation interface for candidates, and the sharing mechanics of the cache belong to the integration specification. The expression of review clues inside entries belongs to the content structure specification. Consistency between projection views and records is guaranteed by on-demand compilation and belongs to the compilation specification.
+The hook forms of points, inspection frequency, the submission entry for signals and the presentation interface for candidates, and the sharing mechanics of the cache belong to the integration specification. The expression of review clues inside entries and the form of the inspection marker belong to the content structure specification. Consistency between projection views and records is guaranteed by on-demand compilation and belongs to the compilation specification.
