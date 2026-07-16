@@ -262,7 +262,6 @@
 :root[lang^='zh'] .sl-markdown-content {
   line-height: 1.95;
   letter-spacing: 0.012em;
-  text-align: justify;
 }
 
 .sl-markdown-content :is(h1, h2, h3, h4, h5, h6),
