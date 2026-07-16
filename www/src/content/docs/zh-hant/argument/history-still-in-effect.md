@@ -5,7 +5,7 @@ dependsOn:
   - argument/what-is-project-truth
   - argument/project-truth-freshness-governance
   - argument/derivable-content-in-tool-layer
-sourceHash: 145c0ab7b28bb569308ba58cfdb06b97b110919597a4ae85844a49931f3bf352
+sourceHash: 3f9d3200924b455ce33334879f42bad8d565e4cb216b44959f335da12453ffb2
 ---
 
 仍在生效的歷史屬於專案真相。專案真相強調當前有效，但當前有效的內容並不全部來自當前版本：有些當前判斷的原因錨在過去的變化裡；過去版本作用於真實世界留下的後果，也可能延續到現在。這兩類內容都仍在影響後續迭代，也都無法從當前版本的快照中讀出。

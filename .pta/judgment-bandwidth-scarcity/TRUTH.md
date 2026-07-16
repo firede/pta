@@ -1,9 +1,7 @@
 ---
-path: www/src/content/docs
+path: www/src/content/docs/argument
 files:
-  - argument/judgment-bandwidth-scarcity.md
-  - en/argument/judgment-bandwidth-scarcity.md
-  - zh-hant/argument/judgment-bandwidth-scarcity.md
+  - judgment-bandwidth-scarcity.md
 ---
 
 - [?] 本篇的观点与术语跟随迷你书《人类带宽设计》（bandwidth.ren）的口径：迷你书是总纲，本篇是它在立论层的收敛，两处表述出现分歧时，以迷你书为准修订本篇。原因：同一论证从两个入口发布，口径分裂会让引用者各自漂移；单一上游让分歧有明确的修订方向。复查线索：迷你书随版本发布于 DOI 10.5281/zenodo.21197400，本篇当前同步至 2.0 版；该 DOI 出现更新版本时核对本篇。

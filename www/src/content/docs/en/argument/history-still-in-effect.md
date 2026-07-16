@@ -5,7 +5,7 @@ dependsOn:
   - argument/what-is-project-truth
   - argument/project-truth-freshness-governance
   - argument/derivable-content-in-tool-layer
-sourceHash: 145c0ab7b28bb569308ba58cfdb06b97b110919597a4ae85844a49931f3bf352
+sourceHash: 3f9d3200924b455ce33334879f42bad8d565e4cb216b44959f335da12453ffb2
 ---
 
 History still in effect belongs to project truth. Project truth emphasizes what is currently in effect, but not everything currently in effect originates from the current version: the reasons for some present judgments are anchored in past changes, and the consequences left by past versions acting on the real world may persist into the present. Both kinds of content still influence later iterations, and neither can be read out of the current version's snapshot.

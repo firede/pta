@@ -1,7 +1,7 @@
 ---
 title: What Is Project Truth
 description: Project truth is the set of judgments the current project actually follows — decisions and premises that reasonable practice cannot derive and the project does not accept deviating from. The implementation conforms to truth without carrying it, and truth grounds continuous iteration and projection view generation.
-sourceHash: 4f52c78fbf0219d22c4ed415b5b74b3508a97da0b2789c631c41ddc78293164d
+sourceHash: 13cd6ea82f0e3c7a31331454966f9298523629aeca33e675f76530b532a78c9f
 ---
 
 Project truth is the judgments the current project actually follows: the decisions the project has made, and the premises the project has adopted. It answers why this project is the way it is now, rather than some other qualified way.
