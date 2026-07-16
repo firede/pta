@@ -10,7 +10,7 @@ const glossaryHref = getDocsEntryHref(glossaryDocId, locale);
   class="glossary-popover not-content"
   id="glossary-popover"
   data-glossary-href={glossaryHref}
-  hidden
+  popover="manual"
 >
   <p class="glossary-popover-term"></p>
   <p class="glossary-popover-definition"></p>
@@ -147,7 +147,9 @@ const glossaryHref = getDocsEntryHref(glossaryDocId, locale);
 
     // 弹层挪到触发术语之后，键盘焦点与读屏顺序紧跟触发点。
     button.insertAdjacentElement('afterend', popover);
-    popover.hidden = false;
+    // popover=manual 将弹层渲染进顶层（top layer）：正文栏 .main-pane 的
+    // isolation: isolate 会形成独立层叠上下文，靠 z-index 无法越过左侧栏。
+    if (!popover.matches(':popover-open')) popover.showPopover();
     popover.classList.remove('is-open');
     position(button);
     requestAnimationFrame(() => popover?.classList.add('is-open'));
@@ -160,7 +162,7 @@ const glossaryHref = getDocsEntryHref(glossaryDocId, locale);
     activeButton = null;
     pinned = false;
     if (popover) {
-      popover.hidden = true;
+      if (popover.matches(':popover-open')) popover.hidePopover();
       popover.classList.remove('is-open');
     }
   }
@@ -271,6 +273,8 @@ const glossaryHref = getDocsEntryHref(glossaryDocId, locale);
   .glossary-popover {
     position: fixed;
     z-index: 50;
+    /* 覆盖 UA 的 [popover] 默认 inset: 0，位置由 JS 写入的 left/top 决定。 */
+    inset: auto;
     /* 归零外边距：挪入 .sl-markdown-content 后会命中 Starlight 的兄弟元素 margin 规则，
        fixed 定位下 margin-top 会叠加到 top 上，导致两个展开方向的间距不对称。 */
     margin: 0;
