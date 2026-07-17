@@ -156,7 +156,7 @@ const pendingRoutes = buildRouteMap({
         positional: {
           kind: 'tuple',
           parameters: [
-            { brief: '领域标识，仓库根用 .', parse: String, placeholder: '领域' },
+            { brief: '领域标识，根领域用 .', parse: String, placeholder: '领域' },
             { brief: '待裁决的问题，以问句表述', parse: String, placeholder: '问题' },
           ],
         },
