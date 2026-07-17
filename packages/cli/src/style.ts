@@ -10,6 +10,7 @@ export type Style = Readonly<{
   yellow: (text: string) => string;
   green: (text: string) => string;
   cyan: (text: string) => string;
+  magenta: (text: string) => string;
 }>;
 
 const identity = (text: string): string => text;
@@ -21,6 +22,7 @@ export const plainStyle: Style = {
   yellow: identity,
   green: identity,
   cyan: identity,
+  magenta: identity,
 };
 
 export function terminalStyle(enabled: boolean): Style {
@@ -33,6 +35,7 @@ export function terminalStyle(enabled: boolean): Style {
     yellow: colors.yellow,
     green: colors.green,
     cyan: colors.cyan,
+    magenta: colors.magenta,
   };
 }
 

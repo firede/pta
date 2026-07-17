@@ -10,10 +10,13 @@ export function domainValue(identifier: string): string {
   return identifier === '' ? '.' : identifier;
 }
 
-/** 领域引用：反引号给值以可见边界（markdown 免费渲染），根领域补注免漏视。 */
-export function domainRef(identifier: string): string {
+/** 领域引用：反引号给值以可见边界（markdown 免费渲染），根领域补注免漏视。着色时反引号退灰，领域名用紫（边界概念，不承载状态语义）。 */
+export function domainRef(identifier: string, s: Style = plainStyle): string {
   const value = domainValue(identifier);
-  return value === '.' ? '`.` (根)' : `\`${value}\``;
+  const tick = s.dim('`');
+  return value === '.'
+    ? `${tick}${s.magenta('.')}${tick}${s.dim(' (根)')}`
+    : `${tick}${s.magenta(value)}${tick}`;
 }
 
 /** 引用性 id 一律 8 位短形；完整性哈希（来源基线、内容哈希清单）保留全长，不经此函数。 */

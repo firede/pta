@@ -203,6 +203,7 @@ test('changes 从工作树收集变更，输出漂移候选与待裁决背景并
     'TRUTH.md': '- 根判断\n',
     'PENDING.md': '- 根问题如何处理？当前按最保守方式处理。\n',
     'src/TRUTH.md': '- 源码判断\n',
+    'src/PENDING.md': '- 源问题如何解决？（暂缓）\n',
     'src/index.ts': 'export const value = 1;\n',
   });
   context.after(() => rm(root, { recursive: true, force: true }));
@@ -224,7 +225,8 @@ test('changes 从工作树收集变更，输出漂移候选与待裁决背景并
   assert.match(output.stdout(), /领域 `src`/u);
   assert.match(output.stdout(), /触面: 实现文件被触/u);
   assert.match(output.stdout(), /\[漂移嫌疑 \| 嫌疑\]/u);
-  assert.match(output.stdout(), /待裁决背景:[\s\S]*根问题如何处理/u);
+  assert.match(output.stdout(), /^ {4}- [0-9a-f]{8} src\/PENDING\.md:1 源问题如何解决/mu);
+  assert.match(output.stdout(), /^ {4}- \.:[0-9a-f]{8} PENDING\.md:1 根问题如何处理/mu);
   assert.equal(output.stderr(), '');
 
   await git(root, ['add', 'src/index.ts']);

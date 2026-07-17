@@ -190,7 +190,7 @@ function formatSignals(signals: readonly CheckSignal[], s: Style = plainStyle): 
           left.category.localeCompare(right.category),
       )
       .map((signal) => `  ${checkSignalLine(signal, s)}`);
-    sections.push(`${s.bold(`领域 ${domainRef(domain)}`)}\n${lines.join('\n')}`);
+    sections.push(`${s.bold(`领域 ${domainRef(domain, s)}`)}\n${lines.join('\n')}`);
   }
   return `${sections.join('\n\n')}\n`;
 }
@@ -202,7 +202,11 @@ const surfaceLabels: Readonly<Record<string, string>> = {
   'inbox-only': '仅收件箱活动',
 };
 
-function formatChanges(result: ChangeClassification, s: Style = plainStyle): string {
+function formatChanges(
+  result: ChangeClassification,
+  containers: ReadonlyMap<string, string>,
+  s: Style = plainStyle,
+): string {
   if (result.ownership.length === 0) return '未发现变更。\n';
   const touched = new Map(result.touchedDomains.map((domain) => [domain.domainIdentifier, domain]));
   const suspicions = new Map(
@@ -214,7 +218,7 @@ function formatChanges(result: ChangeClassification, s: Style = plainStyle): str
   const identifiers = new Set([...touched.keys(), ...candidates.keys()]);
   const sections: string[] = [];
   for (const identifier of [...identifiers].sort((left, right) => left.localeCompare(right))) {
-    const lines = [s.bold(`领域 ${domainRef(identifier)}`)];
+    const lines = [s.bold(`领域 ${domainRef(identifier, s)}`)];
     const domain = touched.get(identifier);
     if (domain !== undefined) {
       lines.push(`  触面: ${surfaceLabels[domain.surface]}`);
@@ -239,15 +243,15 @@ function formatChanges(result: ChangeClassification, s: Style = plainStyle): str
       lines.push('  待裁决背景:');
       if (domain.pendingContext.length === 0) lines.push('    无');
       for (const context of domain.pendingContext) {
+        const container = containers.get(context.domainIdentifier) ?? '';
+        const file = container === '' ? 'PENDING.md' : `${container}/PENDING.md`;
         for (const entry of context.entries) {
-          lines.push(
-            `    ${entryLine(
-              entryRef(context.domainIdentifier, entry.contentHash),
-              `PENDING.md:${entry.line}`,
-              entry.content,
-              s,
-            )}`,
-          );
+          // 与 pending list 同一形制：定位一律仓库相对路径；所属领域即本节领域时 id 用裸形，跨领域升选择器形。
+          const id =
+            context.domainIdentifier === identifier
+              ? shortHash(entry.contentHash)
+              : entryRef(context.domainIdentifier, entry.contentHash);
+          lines.push(`    ${entryLine(id, `${file}:${entry.line}`, entry.content, s)}`);
         }
       }
     }
@@ -455,7 +459,7 @@ function formatPending(groups: readonly PendingGroup[], s: Style = plainStyle): 
     const lines = group.entries.map(
       (entry) => `  ${entryLine(shortId(entry), `${file}:${entry.line}`, entry.content, s)}`,
     );
-    return `${s.bold(`领域 ${domainRef(group.identifier)}`)}\n${lines.join('\n')}`;
+    return `${s.bold(`领域 ${domainRef(group.identifier, s)}`)}\n${lines.join('\n')}`;
   });
   const total = groups.reduce((sum, group) => sum + group.entries.length, 0);
   return `${sections.join('\n\n')}\n\n共 ${total} 条待裁决条目，分布于 ${groups.length} 个领域；处置用 pta pending resolve <id>。\n`;
@@ -652,7 +656,7 @@ export async function runInspectRegister(
       ...(derivation.due === undefined ? {} : { due: derivation.due }),
     });
     io.stdout(
-      `已注册推导: 领域 ${domainRef(match.domainIdentifier)} ${shortId(match.entry)} → ${isDate ? `日期型 (${valueArg})` : '条件型'}\n`,
+      `已注册推导: 领域 ${domainRef(match.domainIdentifier, io.style ?? plainStyle)} ${shortId(match.entry)} → ${isDate ? `日期型 (${valueArg})` : '条件型'}\n`,
     );
     return 0;
   } catch (error) {
@@ -689,7 +693,7 @@ export async function runPendingAdd(
     }
     if (plan.kind === 'duplicate') {
       io.stdout(
-        `已存在同内容条目: 领域 ${domainRef(identifier)} ${shortHash(plan.contentHash)} ${filePath}:${plan.line}\n`,
+        `已存在同内容条目: 领域 ${domainRef(identifier, io.style ?? plainStyle)} ${shortHash(plan.contentHash)} ${filePath}:${plan.line}\n`,
       );
       return 0;
     }
@@ -703,7 +707,7 @@ export async function runPendingAdd(
       file: filePath,
     });
     io.stdout(
-      `已登记待裁决条目: 领域 ${domainRef(identifier)} ${shortHash(plan.contentHash)} ${filePath}:${plan.line}\n`,
+      `已登记待裁决条目: 领域 ${domainRef(identifier, io.style ?? plainStyle)} ${shortHash(plan.contentHash)} ${filePath}:${plan.line}\n`,
     );
     return 0;
   } catch (error) {
@@ -848,9 +852,9 @@ export async function runChanges(
   }
   const repositoryRoot = resolve(cwd);
   try {
-    const result = await classifyRepository(repositoryRoot, base, staged);
+    const { classification, containers } = await classifyRepository(repositoryRoot, base, staged);
     await touchRepository(repositoryRoot);
-    io.stdout(formatChanges(result, io.style ?? plainStyle));
+    io.stdout(formatChanges(classification, containers, io.style ?? plainStyle));
     return 0;
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
@@ -863,7 +867,7 @@ async function classifyRepository(
   repositoryRoot: string,
   base: string | undefined,
   staged: boolean,
-): Promise<ChangeClassification> {
+): Promise<{ classification: ChangeClassification; containers: ReadonlyMap<string, string> }> {
   const [changes, repositoryFiles] = await Promise.all([
     gitChanges(repositoryRoot, base, staged),
     gitRepositoryFiles(repositoryRoot),
@@ -881,7 +885,12 @@ async function classifyRepository(
         : [[domain.identifier, files['PENDING.md']?.entries ?? []] as const],
     ),
   );
-  return classifyChanges(discovery, changes, pendingEntries);
+  const containers = new Map(
+    discovery.domains.flatMap((domain) =>
+      domain.identifier === undefined ? [] : [[domain.identifier, domain.containerPath] as const],
+    ),
+  );
+  return { classification: classifyChanges(discovery, changes, pendingEntries), containers };
 }
 
 export async function runCheck(io: CliIO, cwd: string): Promise<number> {
@@ -957,10 +966,10 @@ export async function runDomains(io: CliIO, cwd: string): Promise<number> {
         const depends =
           domain.dependsOn.length === 0
             ? ''
-            : `依赖 → ${listValues(domain.dependsOn.map((item) => domainRef(item.domain)))}`;
+            : `依赖 → ${listValues(domain.dependsOn.map((item) => domainRef(item.domain, s)))}`;
         return {
           identifier,
-          cells: [s.bold(`领域 ${domainRef(identifier)}`), records, scope, depends],
+          cells: [s.bold(`领域 ${domainRef(identifier, s)}`), records, scope, depends],
         };
       })
       .toSorted((left, right) => left.identifier.localeCompare(right.identifier));
