@@ -18,6 +18,7 @@ import {
   type ChangeClassification,
   type CheckSignal,
   type ContextAssembly,
+  type Domain,
   type ExtractedEntry,
   type PendingEntryRef,
 } from '@pta/core';
@@ -325,6 +326,29 @@ function normalizeContextPath(input: string): string {
   return trimmed === '.' ? '' : trimmed;
 }
 
+/** 领域的主张范围在版本库树中的代表路径；外置声明的标识本身不落在范围内，需经此展开。 */
+function domainScopePaths(domain: Domain): string[] {
+  if (domain.claimedPath === undefined) return [];
+  if (domain.filesPresent) {
+    return (domain.files ?? []).map((file) => posix.join(domain.claimedPath as string, file));
+  }
+  return [domain.claimedPath];
+}
+
+function expandDomainIdentifiers(inputs: readonly string[], domains: readonly Domain[]): string[] {
+  const byIdentifier = new Map(
+    domains.flatMap((domain) =>
+      domain.identifier === undefined ? [] : [[domain.identifier, domain] as const],
+    ),
+  );
+  return inputs.flatMap((input) => {
+    const domain = byIdentifier.get(input);
+    if (domain === undefined) return [input];
+    const scope = domainScopePaths(domain);
+    return scope.length === 0 ? [input] : scope;
+  });
+}
+
 export async function runContext(
   paths: readonly string[],
   io: CliIO,
@@ -339,7 +363,11 @@ export async function runContext(
         extractDomainContent(repositoryRoot, repositoryFiles, domain),
       ),
     );
-    const assembly = assembleContext(discovery, contents, paths.map(normalizeContextPath));
+    const assembly = assembleContext(
+      discovery,
+      contents,
+      expandDomainIdentifiers(paths.map(normalizeContextPath), discovery.domains),
+    );
     const consumed = assembly.domains.flatMap((domain) => domain.consumedFiles);
     const baseVersion = await runGit(['rev-parse', 'HEAD'], repositoryRoot)
       .then((output) => output.trim())
@@ -869,6 +897,13 @@ export async function runDomains(io: CliIO, cwd: string): Promise<number> {
         const parts = counts
           .filter(([name, count]) => name === '真相' || count > 0)
           .map(([name, count]) => `${name} ${count}`);
+        if (domain.claimedPath !== undefined && domain.claimedPath !== identifier) {
+          parts.push(
+            domain.filesPresent
+              ? `范围 ${label(domain.claimedPath)} 的 ${(domain.files ?? []).join('、')}`
+              : `范围 ${label(domain.claimedPath)}`,
+          );
+        }
         if (domain.dependsOn.length > 0) {
           parts.push(`依赖 → ${domain.dependsOn.map((item) => label(item.domain)).join('、')}`);
         }

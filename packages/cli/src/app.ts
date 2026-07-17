@@ -58,7 +58,7 @@ const domainsCommand = buildCommand({
   docs: {
     brief: '列出全部领域及其记录计数与依赖',
     fullDescription:
-      '列出仓库的全部领域，附真相、术语、残留与待裁决四类条目计数，以及领域间的依赖关系。先看有哪些领域，再用 context 取具体背景。',
+      '列出仓库的全部领域，附真相、术语、残留与待裁决四类条目计数，以及领域间的依赖关系；外置领域另附其主张范围。先看有哪些领域，再用 context 取具体背景。',
   },
 });
 
@@ -70,7 +70,7 @@ const contextCommand = buildCommand({
     positional: {
       kind: 'array',
       parameter: {
-        brief: '仓库内的文件或目录路径',
+        brief: '仓库内的路径，或领域标识',
         parse: String,
         placeholder: '路径',
       },
@@ -80,8 +80,8 @@ const contextCommand = buildCommand({
   docs: {
     brief: '汇集路径所属领域的真相记录与待裁决背景',
     fullDescription:
-      '汇集路径所属领域及其祖先的真相记录、术语表、残留与待裁决背景，开工前先跑它。输出附来源标识：已入库状态为版本号，含未入库变更时附内容哈希。',
-    customUsage: ['packages/cli src/index.ts', 'docs/argument'],
+      '汇集路径所属领域及其祖先的真相记录、术语表、残留与待裁决背景，开工前先跑它。参数也接受领域标识，指向外置领域时用 pta domains 列出的标识。输出附来源标识：已入库状态为版本号，含未入库变更时附内容哈希。',
+    customUsage: ['packages/cli src/index.ts', '.pta/docs-argument'],
   },
 });
 
@@ -404,7 +404,7 @@ const daemonRoutes = buildRouteMap({
   routes: {
     install: daemonAction('安装为登录时自启的守护进程', daemonInstall),
     uninstall: daemonAction('卸载守护进程', daemonUninstall),
-    status: daemonAction('查看守护进程状态，未运行时退出码 1', daemonStatus),
+    status: daemonAction('查看守护进程状态', daemonStatus),
     start: daemonAction('启动守护进程', daemonStart),
     stop: daemonAction('停止守护进程', daemonStop),
     restart: daemonAction('重启守护进程', daemonRestart),
@@ -429,7 +429,7 @@ const doctorCommand = buildCommand({
     this.process.exitCode = await runDoctor(this.io, this.cwd);
   },
   parameters: {},
-  docs: { brief: '检查环境健康状况，有故障时退出码 1' },
+  docs: { brief: '检查环境健康状况' },
 });
 
 const logsCommand = buildCommand({

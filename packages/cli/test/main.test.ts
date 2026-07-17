@@ -152,12 +152,16 @@ test('check 仅有术语不一致嫌疑时返回 0，无信号时输出通过', 
   assert.equal(clean.stdout(), '通过：未发现核查信号。\n');
 });
 
-test('domains 列出领域、条目计数与依赖', async (context) => {
+test('domains 列出领域、条目计数、依赖与外置范围', async (context) => {
   const root = await repository({
     'TRUTH.md': '- 根判断\n',
     'PENDING.md': '- 根问题如何处理？（暂缓）\n',
     'src/TRUTH.md': '- 源判断一\n- 源判断二\n',
     'src/GLOSSARY.md': '- **术语**：定义\n',
+    'lib/index.ts': 'export const value = 1;\n',
+    'lib/extra.ts': 'export const extra = 2;\n',
+    '.pta/ext/TRUTH.md': '---\npath: lib\n---\n\n- 外置判断\n',
+    '.pta/onefile/TRUTH.md': '---\npath: lib\nfiles:\n  - index.ts\n---\n\n- 单文件判断\n',
   });
   context.after(() => rm(root, { recursive: true, force: true }));
   await git(root, ['init', '-q']);
@@ -166,8 +170,32 @@ test('domains 列出领域、条目计数与依赖', async (context) => {
   assert.equal(await runCli(['domains'], output.io, root), 0);
   assert.match(output.stdout(), /^领域 \.：真相 1，待裁决 1$/mu);
   assert.match(output.stdout(), /^领域 src：真相 2，术语 1$/mu);
-  assert.match(output.stdout(), /共 2 个领域。/u);
+  assert.match(output.stdout(), /^领域 \.pta\/ext：真相 1，范围 lib$/mu);
+  assert.match(output.stdout(), /^领域 \.pta\/onefile：真相 1，范围 lib 的 index\.ts$/mu);
+  assert.match(output.stdout(), /共 4 个领域。/u);
   assert.equal(output.stderr(), '');
+});
+
+test('context 接受领域标识，外置领域经标识定位', async (context) => {
+  const root = await repository({
+    'TRUTH.md': '- 根判断\n',
+    'lib/index.ts': 'export const value = 1;\n',
+    'lib/extra.ts': 'export const extra = 2;\n',
+    '.pta/ext/TRUTH.md': '---\npath: lib\n---\n\n- 外置判断\n',
+    '.pta/onefile/TRUTH.md': '---\npath: lib\nfiles:\n  - index.ts\n---\n\n- 单文件判断\n',
+  });
+  context.after(() => rm(root, { recursive: true, force: true }));
+  await git(root, ['init', '-q']);
+
+  const wholeDirectory = capture();
+  assert.equal(await runCli(['context', '.pta/ext'], wholeDirectory.io, root), 0);
+  assert.match(wholeDirectory.stdout(), /范围：[^\n]*领域 \.pta\/ext/u);
+  assert.match(wholeDirectory.stdout(), /- 外置判断/u);
+
+  const fileScoped = capture();
+  assert.equal(await runCli(['context', '.pta/onefile'], fileScoped.io, root), 0);
+  assert.match(fileScoped.stdout(), /范围：[^\n]*领域 \.pta\/onefile/u);
+  assert.match(fileScoped.stdout(), /- 单文件判断/u);
 });
 
 test('changes 从工作树收集变更，输出漂移候选与待裁决背景并返回 0', async (context) => {
