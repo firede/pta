@@ -7,10 +7,12 @@ dependsOn:
   - argument/project-truth-freshness-governance
   - argument/history-still-in-effect
   - argument/material-temporal-claim
-sourceHash: 3ce7391559e29afb7c75681dfede475cb65682d40dde033e8678f05a35140a8c
+sourceHash: 39b068f777384f7288afeafed035f281b66f6a9de0b67dd26a15a74175ff3da9
 ---
 
 Domain declaration defines how domains are delimited, marked, and connected in the repository.
+
+The project truth architecture operates on one directory tree in a repository, and the root of that tree is called the repository root. Domains are delimited within the tree, paths take the repository root as their origin, and one tree carries one project's architecture.
 
 > This specification implements the organizing principles of [Project Truth Should Be Organized by Domain](/en/argument/project-truth-by-domain/), and provides machine-decidable domain boundaries for the checks of [Freshness Governance](/en/argument/project-truth-freshness-governance/). Arguments answer why; this specification answers how.
 
@@ -111,3 +113,5 @@ Domain declarations and their companion files are records of project truth and *
 ## Out of Scope
 
 The content structure of the `TRUTH.md` and companion file bodies (entry form, writing conventions) belongs to the content structure specification; how checkpoints consume domain declarations and `dependsOn` relationships, and how pending entries enter the loop as signals, belong to the governance specification; the relationship between domain declarations and existing engineering files such as AGENTS.md belongs to the integration specification.
+
+How the repository root is determined is implementation-defined, and this specification does not bind to a specific repository form; how multiple projects residing in one repository are accommodated is not prescribed by this specification.
