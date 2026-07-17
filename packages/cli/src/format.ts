@@ -24,7 +24,7 @@ export function shortHash(hash: string): string {
   return hash.slice(0, 8);
 }
 
-/** 跨领域条目引用：与 pending resolve 的选择器输入同形，输出可直接回填。 */
+/** 条目选择器：pending resolve 的输入语法。仅用于歧义候选清单（形制＝输入回显）与机器记录；常规显示行 id 一律裸形，领域归属由定位路径自明。 */
 export function entryRef(domainIdentifier: string, contentHash: string): string {
   return `${domainValue(domainIdentifier)}:${shortHash(contentHash)}`;
 }

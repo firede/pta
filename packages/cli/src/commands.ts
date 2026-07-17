@@ -246,12 +246,10 @@ function formatChanges(
         const container = containers.get(context.domainIdentifier) ?? '';
         const file = container === '' ? 'PENDING.md' : `${container}/PENDING.md`;
         for (const entry of context.entries) {
-          // 与 pending list 同一形制：定位一律仓库相对路径；所属领域即本节领域时 id 用裸形，跨领域升选择器形。
-          const id =
-            context.domainIdentifier === identifier
-              ? shortHash(entry.contentHash)
-              : entryRef(context.domainIdentifier, entry.contentHash);
-          lines.push(`    ${entryLine(id, `${file}:${entry.line}`, entry.content, s)}`);
+          // 与 pending list 同一形制：id 一律裸形，领域归属由完整路径定位自明。
+          lines.push(
+            `    ${entryLine(shortHash(entry.contentHash), `${file}:${entry.line}`, entry.content, s)}`,
+          );
         }
       }
     }
@@ -794,15 +792,12 @@ export async function runPendingResolve(
         entryRef(match.domainIdentifier, match.entry.contentHash),
       ),
     });
+    const s = io.style ?? plainStyle;
     io.stdout(`已处置 ${selection.matches.length} 条待裁决条目:\n`);
     for (const match of selection.matches) {
+      const domain = ` (领域 ${domainRef(match.domainIdentifier, s)})`;
       io.stdout(
-        `  ${entryLine(
-          entryRef(match.domainIdentifier, match.entry.contentHash),
-          undefined,
-          match.entry.content,
-          io.style ?? plainStyle,
-        )}\n`,
+        `  ${entryLine(shortId(match.entry), undefined, match.entry.content, s)}${s.dim(domain)}\n`,
       );
     }
     for (const filePath of emptied) io.stdout(`${filePath} 清空即删。\n`);

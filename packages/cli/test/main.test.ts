@@ -226,7 +226,7 @@ test('changes 从工作树收集变更，输出漂移候选与待裁决背景并
   assert.match(output.stdout(), /触面: 实现文件被触/u);
   assert.match(output.stdout(), /\[漂移嫌疑 \| 嫌疑\]/u);
   assert.match(output.stdout(), /^ {4}- [0-9a-f]{8} src\/PENDING\.md:1 源问题如何解决/mu);
-  assert.match(output.stdout(), /^ {4}- \.:[0-9a-f]{8} PENDING\.md:1 根问题如何处理/mu);
+  assert.match(output.stdout(), /^ {4}- [0-9a-f]{8} PENDING\.md:1 根问题如何处理/mu);
   assert.equal(output.stderr(), '');
 
   await git(root, ['add', 'src/index.ts']);
@@ -300,7 +300,8 @@ test('pending resolve 按 id 处置条目，歧义需领域限定，清空即删
     0,
   );
   assert.match(resolved.stdout(), /已处置 2 条待裁决条目:/u);
-  assert.match(resolved.stdout(), /^ {2}- \.:[0-9a-f]{8} 根问题如何处理/mu);
+  assert.match(resolved.stdout(), /^ {2}- [0-9a-f]{8} 根问题如何处理.* \(领域 `\.` \(根\)\)$/mu);
+  assert.match(resolved.stdout(), /^ {2}- [0-9a-f]{8} 共同问题如何处理.* \(领域 `src`\)$/mu);
   assert.match(resolved.stdout(), /src\/PENDING\.md 清空即删。/u);
   assert.equal(await readFile(join(root, 'PENDING.md'), 'utf8'), `- ${shared}\n`);
   assert.equal(existsSync(join(root, 'src/PENDING.md')), false);
