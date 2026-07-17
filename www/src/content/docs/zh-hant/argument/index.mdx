@@ -2,14 +2,16 @@
 title: 立論概覽
 description: 立論記錄專案真相架構成立所依賴的核心判斷，說明這些判斷解決什麼問題、為什麼成立、邊界在哪裡。
 tableOfContents: false
-sourceHash: 634944135ad1d4971ee54af33cc3bc452e0a0244d00f73d3bd2f99c244729e04
+sourceHash: 5968933f21991a1f15d62621596884ab4534f9a72ba6d56ac7e24e4d96548859
 ---
 
-import DocumentList from '@/components/docs/DocumentList.astro';
-import { argumentIds } from '@/data/arguments';
+import ArgumentMap from '@/components/docs/ArgumentMap.astro';
+import CanonEntries from '@/components/docs/CanonEntries.astro';
 
 立論記錄專案真相架構成立所依賴的核心判斷。
 
 它說明這些判斷解決什麼問題、為什麼成立、邊界在哪裡。使用者可以定期核查這些判斷目前是否仍然成立，並基於仍然成立的判斷推導出適合自身場景的專案真相架構。
 
-<DocumentList ids={argumentIds} />
+<ArgumentMap />
+
+<CanonEntries volume="argument" headed />

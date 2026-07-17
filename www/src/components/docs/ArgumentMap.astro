@@ -1,0 +1,343 @@
+---
+import { formatPlateNumber, getCanon, type CanonEntry } from '@/lib/canon';
+import { getLanguageFromLocale } from '@/lib/i18n';
+
+const { locale } = Astro.locals.starlightRoute;
+const language = getLanguageFromLocale(locale);
+
+const canon = await getCanon(locale);
+const argumentVolume = canon.find((volume) => volume.key === 'argument');
+if (!argumentVolume) throw new Error('ArgumentMap: 缺少立论卷。');
+
+// 星图只画正名编号的论，术语表是附录，不入图。
+const entries = argumentVolume.entries.filter((entry) => entry.index !== null);
+const byId = new Map(entries.map((entry) => [entry.id, entry]));
+
+/* 依赖分层：层深 = 依赖链最长路径。 */
+const layerCache = new Map<string, number>();
+function layerOf(id: string): number {
+  const cached = layerCache.get(id);
+  if (cached !== undefined) return cached;
+  const entry = byId.get(id);
+  if (!entry) return 0;
+  const deps = entry.dependsOn.filter((dep) => byId.has(dep));
+  const layer = deps.length === 0 ? 0 : 1 + Math.max(...deps.map(layerOf));
+  layerCache.set(id, layer);
+  return layer;
+}
+
+const columns = new Map<number, CanonEntry[]>();
+for (const entry of entries) {
+  const layer = layerOf(entry.id);
+  columns.set(layer, [...(columns.get(layer) ?? []), entry]);
+}
+const columnCount = Math.max(...columns.keys()) + 1;
+
+/* 版面常量（viewBox 坐标）；左右留白按拉丁题名半宽预留 */
+const PAD_X = 56;
+const COL_W = 148;
+const PLATE = 34;
+const HEIGHT = 420;
+const WIDTH = PAD_X * 2 + (columnCount - 1) * COL_W + PLATE + 48;
+
+interface MapNode {
+  entry: CanonEntry;
+  plateNumber: string;
+  x: number;
+  y: number;
+  lines: string[];
+}
+
+function titleLines(title: string): string[] {
+  if (language !== 'en') {
+    // 中文按 9 字断行，最长题名 18 字，两行尽收。
+    const lines: string[] = [];
+    for (let at = 0; at < title.length && lines.length < 2; at += 9) {
+      lines.push(title.slice(at, at + 9));
+    }
+    return lines;
+  }
+  // 英文按词贪心换行，超三行截断。
+  const words = title.split(' ');
+  const lines: string[] = [];
+  let current = '';
+  for (const word of words) {
+    const candidate = current ? `${current} ${word}` : word;
+    if (candidate.length > 16 && current) {
+      lines.push(current);
+      current = word;
+    } else {
+      current = candidate;
+    }
+  }
+  if (current) lines.push(current);
+  if (lines.length > 3) {
+    lines.length = 3;
+    lines[2] = `${lines[2].replace(/[.,;:]*$/, '')}…`;
+  }
+  return lines;
+}
+
+const nodes: MapNode[] = [];
+for (const [layer, columnEntries] of columns) {
+  columnEntries.forEach((entry, row) => {
+    const x = PAD_X + layer * COL_W;
+    const y = (HEIGHT * (row + 1)) / (columnEntries.length + 1);
+    nodes.push({
+      entry,
+      plateNumber: formatPlateNumber(language, entry.index ?? 0),
+      x,
+      y,
+      lines: titleLines(entry.title),
+    });
+  });
+}
+
+const nodeById = new Map(nodes.map((node) => [node.entry.id, node]));
+
+interface MapEdge {
+  from: string;
+  to: string;
+  path: string;
+}
+
+const edges: MapEdge[] = [];
+for (const node of nodes) {
+  for (const dep of node.entry.dependsOn) {
+    const source = nodeById.get(dep);
+    if (!source) continue;
+    const x1 = source.x + PLATE;
+    const y1 = source.y;
+    const x2 = node.x;
+    const y2 = node.y;
+    const bend = Math.max(28, (x2 - x1) * 0.42);
+    edges.push({
+      from: dep,
+      to: node.entry.id,
+      path: `M ${x1} ${y1} C ${x1 + bend} ${y1}, ${x2 - bend} ${y2}, ${x2} ${y2}`,
+    });
+  }
+}
+
+const mapLabel = Astro.locals.t('canon.map');
+---
+
+<figure class="argument-map not-content">
+  <header class="canon-section-head">
+    <span class="canon-marker" aria-hidden="true"></span>
+    <h2 class="canon-section-title">{mapLabel}</h2>
+  </header>
+  <div class="map-scroll">
+    <svg
+      viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
+      role="img"
+      aria-label={mapLabel}
+      class="map-svg"
+    >
+      {
+        edges.map((edge) => (
+          <path class="map-edge" data-from={edge.from} data-to={edge.to} d={edge.path} />
+        ))
+      }
+      {
+        nodes.map((node) => (
+          <a href={node.entry.href} class="map-node-link" data-id={node.entry.id}>
+            <g class="map-node">
+              <rect
+                class="map-plate"
+                x={node.x}
+                y={node.y - PLATE / 2}
+                width={PLATE}
+                height={PLATE}
+                rx="3"
+              />
+              <text class="map-num" x={node.x + PLATE / 2} y={node.y + 5.5} text-anchor="middle">
+                {node.plateNumber}
+              </text>
+              <text
+                class="map-title"
+                x={node.x + PLATE / 2}
+                y={node.y + PLATE / 2 + 16}
+                text-anchor="middle"
+              >
+                {node.lines.map((line, index) => (
+                  <tspan x={node.x + PLATE / 2} dy={index === 0 ? 0 : 13}>
+                    {line}
+                  </tspan>
+                ))}
+              </text>
+            </g>
+          </a>
+        ))
+      }
+    </svg>
+  </div>
+</figure>
+
+<script>
+  function initArgumentMap() {
+    const svg = document.querySelector<SVGSVGElement>('.argument-map .map-svg');
+    if (!svg || svg.dataset.bound) return;
+    svg.dataset.bound = 'true';
+
+    const links = [...svg.querySelectorAll<SVGAElement>('.map-node-link')];
+    const edges = [...svg.querySelectorAll<SVGPathElement>('.map-edge')];
+
+    function activate(id: string) {
+      const related = new Set([id]);
+      for (const edge of edges) {
+        const incident = edge.dataset.from === id || edge.dataset.to === id;
+        edge.classList.toggle('active', incident);
+        if (incident) {
+          related.add(edge.dataset.from ?? '');
+          related.add(edge.dataset.to ?? '');
+        }
+      }
+      for (const link of links) {
+        link.classList.toggle('related', related.has(link.dataset.id ?? ''));
+      }
+      svg!.classList.add('is-active');
+    }
+
+    function clear() {
+      svg!.classList.remove('is-active');
+      for (const edge of edges) edge.classList.remove('active');
+      for (const link of links) link.classList.remove('related');
+    }
+
+    for (const link of links) {
+      const id = link.dataset.id ?? '';
+      link.addEventListener('pointerenter', () => activate(id));
+      link.addEventListener('pointerleave', clear);
+      link.addEventListener('focusin', () => activate(id));
+      link.addEventListener('focusout', clear);
+    }
+  }
+
+  initArgumentMap();
+</script>
+
+<style>
+  .argument-map {
+    margin: 2.5rem 0 0;
+  }
+
+  .canon-section-head {
+    display: flex;
+    align-items: center;
+    gap: 0.8em;
+    padding-block-end: 0.9rem;
+    border-block-end: 1px solid var(--sl-color-gray-5);
+  }
+
+  .canon-marker {
+    inline-size: 0.55em;
+    block-size: 0.55em;
+    background: var(--color-cinnabar-500);
+  }
+
+  :root[data-theme='dark'] .canon-marker {
+    background: var(--color-cinnabar-400);
+  }
+
+  .canon-section-title {
+    margin: 0;
+    font-family: var(--font-ui);
+    font-size: 0.82rem;
+    font-weight: 500;
+    letter-spacing: 0.28em;
+    color: var(--sl-color-gray-3);
+  }
+
+  .map-scroll {
+    overflow-x: auto;
+    padding-block: 0.5rem 0.25rem;
+    /* 星图出血：越出正文栏，借页边余白展宽 */
+    width: min(58rem, calc(100vw - 3rem));
+    margin-inline-start: calc((100% - min(58rem, 100vw - 3rem)) / 2);
+  }
+
+  .map-svg {
+    display: block;
+    width: 100%;
+    min-width: 620px;
+    height: auto;
+  }
+
+  .map-edge {
+    fill: none;
+    stroke: var(--sl-color-gray-4);
+    stroke-width: 1;
+    opacity: 0.5;
+    transition:
+      opacity 0.2s ease,
+      stroke 0.2s ease;
+  }
+
+  .map-svg.is-active .map-edge {
+    opacity: 0.08;
+  }
+
+  .map-svg.is-active .map-edge.active {
+    stroke: var(--color-cinnabar-500);
+    stroke-width: 1.4;
+    opacity: 1;
+  }
+
+  :root[data-theme='dark'] .map-svg.is-active .map-edge.active {
+    stroke: var(--color-cinnabar-400);
+  }
+
+  .map-node-link {
+    outline: none;
+    transition: opacity 0.2s ease;
+  }
+
+  .map-svg.is-active .map-node-link {
+    opacity: 0.3;
+  }
+
+  .map-svg.is-active .map-node-link.related {
+    opacity: 1;
+  }
+
+  .map-plate {
+    fill: var(--color-paper-raised);
+    stroke: var(--sl-color-gray-4);
+    stroke-width: 1;
+    transition: stroke 0.2s ease;
+  }
+
+  .map-node-link:hover .map-plate,
+  .map-node-link:focus-visible .map-plate,
+  .map-svg.is-active .map-node-link.related .map-plate {
+    stroke: var(--color-cinnabar-500);
+  }
+
+  :root[data-theme='dark'] .map-node-link:hover .map-plate,
+  :root[data-theme='dark'] .map-node-link:focus-visible .map-plate,
+  :root[data-theme='dark'] .map-svg.is-active .map-node-link.related .map-plate {
+    stroke: var(--color-cinnabar-400);
+  }
+
+  .map-num {
+    font-family: var(--font-serif);
+    font-size: 15px;
+    font-weight: 600;
+    fill: var(--sl-color-white);
+  }
+
+  .map-title {
+    font-family: var(--font-serif);
+    font-size: 12px;
+    fill: var(--sl-color-gray-2);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .map-edge,
+    .map-node-link,
+    .map-plate {
+      transition: none;
+    }
+  }
+</style>

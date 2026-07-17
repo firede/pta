@@ -90,24 +90,53 @@ function isGlossaryPage(docPath: string) {
   return /^(?:en\/|zh-hant\/)?argument\/glossary\.mdx?$/.test(docPath);
 }
 
-/** 给术语表页的加粗条目段落补充锚点，作为弹层「查看术语表」链接的落点。 */
+/**
+ * 术语表页的结构加工：加粗术语段与其定义段配成对，包进辞典条目容器；
+ * 条目锚点落在容器上，作为弹层「查看术语表」链接的落点。
+ */
 function addGlossaryAnchors(node: HastNode) {
-  for (const child of node.children ?? []) {
-    if (child.type === 'element' && child.tagName === 'p') {
-      const [only] = (child.children ?? []).filter(
-        (grandchild) => !(grandchild.type === 'text' && (grandchild.value ?? '').trim() === ''),
-      );
+  if (!node.children) return;
 
-      if (only?.type === 'element' && only.tagName === 'strong') {
-        const term = textContent(only).trim();
-        if (term) {
-          child.properties = { ...child.properties, id: getTermSlug(term) };
-        }
+  const grouped: HastNode[] = [];
+  for (let index = 0; index < node.children.length; index += 1) {
+    const child = node.children[index];
+    const term = glossaryTermText(child);
+
+    if (term) {
+      const siblings: HastNode[] = [child];
+      while (
+        index + 1 < node.children.length &&
+        glossaryTermText(node.children[index + 1]) === null &&
+        node.children[index + 1].type === 'element'
+      ) {
+        siblings.push(node.children[index + 1]);
+        index += 1;
       }
+      grouped.push({
+        type: 'element',
+        tagName: 'div',
+        properties: { className: ['glossary-entry'], id: getTermSlug(term) },
+        children: siblings,
+      });
+      continue;
     }
 
+    grouped.push(child);
     addGlossaryAnchors(child);
   }
+
+  node.children = grouped;
+}
+
+/** 加粗独占段落的术语原文；非术语段落返回 null。 */
+function glossaryTermText(node: HastNode): string | null {
+  if (node.type !== 'element' || node.tagName !== 'p') return null;
+  const [only] = (node.children ?? []).filter(
+    (child) => !(child.type === 'text' && (child.value ?? '').trim() === ''),
+  );
+  if (only?.type !== 'element' || only.tagName !== 'strong') return null;
+  const term = textContent(only).trim();
+  return term || null;
 }
 
 function textContent(node: HastNode): string {

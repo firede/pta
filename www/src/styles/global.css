@@ -10,23 +10,26 @@
 @import '@fontsource-variable/noto-sans';
 @import '@fontsource-variable/noto-serif-sc';
 @import '@fontsource-variable/noto-sans-sc';
+@import '@fontsource-variable/source-serif-4/opsz.css';
+@import '@fontsource/ibm-plex-mono/400.css';
+@import '@fontsource/ibm-plex-mono/500.css';
 
 @custom-variant dark (&:is(.dark *, :root[data-theme='dark'] *));
 
 /* 自定义 token */
 @theme inline {
-  /* 黛青：压暗去饱和的青，作全站唯一功能色；强调靠字重与留白，不靠颜色 */
-  --color-brand-50: oklch(0.972 0.008 220);
-  --color-brand-100: oklch(0.943 0.014 220);
-  --color-brand-200: oklch(0.885 0.026 220);
-  --color-brand-300: oklch(0.802 0.04 221);
-  --color-brand-400: oklch(0.66 0.055 221);
-  --color-brand-500: oklch(0.55 0.062 221);
-  --color-brand-600: oklch(0.465 0.062 222);
-  --color-brand-700: oklch(0.4 0.056 223);
-  --color-brand-800: oklch(0.33 0.046 224);
-  --color-brand-900: oklch(0.28 0.036 224);
-  --color-brand-950: oklch(0.21 0.026 226);
+  /* 朱砂：印泥之朱，全站唯一强调色；钤记、编号、当前位置专用，正文强调靠字重 */
+  --color-cinnabar-50: oklch(0.958 0.02 45);
+  --color-cinnabar-100: oklch(0.918 0.036 42);
+  --color-cinnabar-200: oklch(0.838 0.062 40);
+  --color-cinnabar-300: oklch(0.738 0.1 38);
+  --color-cinnabar-400: oklch(0.63 0.132 35);
+  --color-cinnabar-500: oklch(0.532 0.148 33);
+  --color-cinnabar-600: oklch(0.455 0.133 32);
+  --color-cinnabar-700: oklch(0.385 0.113 31);
+  --color-cinnabar-800: oklch(0.322 0.09 30);
+  --color-cinnabar-900: oklch(0.27 0.068 30);
+  --color-cinnabar-950: oklch(0.215 0.05 30);
   /* 暖灰（封泥色系）作中性色 */
   --color-neutral-50: var(--color-olive-50);
   --color-neutral-100: var(--color-olive-100);
@@ -40,8 +43,9 @@
   --color-neutral-900: var(--color-olive-900);
   --color-neutral-950: var(--color-olive-950);
   /* 纸与墨：页面底色与正文色不用纯白纯黑 */
-  --color-paper: oklch(0.977 0.005 100);
-  --color-ink: oklch(0.255 0.013 102);
+  --color-paper: oklch(0.968 0.008 97);
+  --color-paper-raised: oklch(0.984 0.006 98);
+  --color-ink: oklch(0.245 0.012 96);
 
   --font-sans:
     'Noto Sans Variable', 'Noto Sans SC Variable', 'Noto Sans CJK SC', 'Noto Sans SC',
@@ -49,85 +53,91 @@
     'Hiragino Sans GB', 'Heiti SC', 'Microsoft YaHei', ui-sans-serif, system-ui, -apple-system,
     BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --font-serif:
-    'Noto Serif Variable', 'Noto Serif SC Variable', 'Noto Serif CJK SC', 'Noto Serif SC',
-    'Source Han Serif SC', 'Source Han Serif CN', 'Source Han Serif', 'Songti SC', STSong, SimSun,
-    ui-serif, Georgia, Cambria, 'Times New Roman', Times, serif;
+    'Source Serif 4 Variable', 'Noto Serif Variable', 'Noto Serif SC Variable', 'Noto Serif CJK SC',
+    'Noto Serif SC', 'Source Han Serif SC', 'Source Han Serif CN', 'Source Han Serif', 'Songti SC',
+    STSong, SimSun, ui-serif, Georgia, Cambria, 'Times New Roman', Times, serif;
   --font-body: var(--font-serif);
-  --font-heading: var(--font-sans);
+  /* 典籍排版：标题亦用宋，界面件退回黑体 */
+  --font-heading: var(--font-serif);
+  --font-ui: var(--font-sans);
   --font-mono:
-    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New',
-    monospace;
+    'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono',
+    'Courier New', monospace;
 }
 
 /* shadcn/ui 定义 */
 :root {
-  --background: oklch(0.977 0.005 100);
-  --foreground: oklch(0.255 0.013 102);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.255 0.013 102);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.255 0.013 102);
-  --primary: oklch(0.465 0.062 222);
-  --primary-foreground: oklch(0.972 0.008 220);
-  --secondary: oklch(0.966 0.005 106.5);
+  --background: oklch(0.968 0.008 97);
+  --foreground: oklch(0.245 0.012 96);
+  --card: oklch(0.984 0.006 98);
+  --card-foreground: oklch(0.245 0.012 96);
+  --popover: oklch(0.984 0.006 98);
+  --popover-foreground: oklch(0.245 0.012 96);
+  --primary: oklch(0.532 0.148 33);
+  --primary-foreground: oklch(0.968 0.008 97);
+  --secondary: oklch(0.945 0.007 100);
   --secondary-foreground: oklch(0.286 0.016 107.4);
-  --muted: oklch(0.966 0.005 106.5);
-  --muted-foreground: oklch(0.58 0.031 107.3);
-  --accent: oklch(0.966 0.005 106.5);
+  --muted: oklch(0.945 0.007 100);
+  --muted-foreground: oklch(0.535 0.02 100);
+  --accent: oklch(0.945 0.007 100);
   --accent-foreground: oklch(0.228 0.013 107.4);
   --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.93 0.007 106.5);
-  --input: oklch(0.93 0.007 106.5);
-  --ring: oklch(0.66 0.055 221);
-  --chart-1: oklch(0.802 0.04 221);
-  --chart-2: oklch(0.66 0.055 221);
-  --chart-3: oklch(0.55 0.062 221);
-  --chart-4: oklch(0.465 0.062 222);
-  --chart-5: oklch(0.4 0.056 223);
+  --border: oklch(0.905 0.008 100);
+  --input: oklch(0.905 0.008 100);
+  --ring: oklch(0.63 0.132 35);
+  --chart-1: oklch(0.738 0.1 38);
+  --chart-2: oklch(0.63 0.132 35);
+  --chart-3: oklch(0.532 0.148 33);
+  --chart-4: oklch(0.455 0.133 32);
+  --chart-5: oklch(0.385 0.113 31);
   --radius: 0.5rem;
-  --sidebar: oklch(0.988 0.003 106.5);
-  --sidebar-foreground: oklch(0.255 0.013 102);
-  --sidebar-primary: oklch(0.55 0.062 221);
-  --sidebar-primary-foreground: oklch(0.972 0.008 220);
-  --sidebar-accent: oklch(0.966 0.005 106.5);
+  --sidebar: oklch(0.984 0.006 98);
+  --sidebar-foreground: oklch(0.245 0.012 96);
+  --sidebar-primary: oklch(0.532 0.148 33);
+  --sidebar-primary-foreground: oklch(0.968 0.008 97);
+  --sidebar-accent: oklch(0.945 0.007 100);
   --sidebar-accent-foreground: oklch(0.228 0.013 107.4);
-  --sidebar-border: oklch(0.93 0.007 106.5);
+  --sidebar-border: oklch(0.905 0.008 100);
   --sidebar-ring: oklch(0.737 0.021 106.9);
 }
 
 .dark,
 :root[data-theme='dark'] {
-  --background: oklch(0.205 0.01 107);
-  --foreground: oklch(0.9 0.005 103);
-  --card: oklch(0.248 0.013 107.4);
-  --card-foreground: oklch(0.9 0.005 103);
-  --popover: oklch(0.248 0.013 107.4);
-  --popover-foreground: oklch(0.9 0.005 103);
-  --primary: oklch(0.66 0.055 221);
-  --primary-foreground: oklch(0.21 0.026 226);
-  --secondary: oklch(0.274 0.006 286.033);
-  --secondary-foreground: oklch(0.9 0.005 103);
-  --muted: oklch(0.286 0.016 107.4);
-  --muted-foreground: oklch(0.737 0.021 106.9);
-  --accent: oklch(0.286 0.016 107.4);
-  --accent-foreground: oklch(0.9 0.005 103);
+  /* 墨夜：墨绿近黑为底，纸色为字，朱砂提亮 */
+  --color-paper: oklch(0.215 0.013 168);
+  --color-paper-raised: oklch(0.252 0.014 168);
+  --color-ink: oklch(0.903 0.007 98);
+  --background: oklch(0.215 0.013 168);
+  --foreground: oklch(0.903 0.007 98);
+  --card: oklch(0.252 0.014 168);
+  --card-foreground: oklch(0.903 0.007 98);
+  --popover: oklch(0.252 0.014 168);
+  --popover-foreground: oklch(0.903 0.007 98);
+  --primary: oklch(0.63 0.132 35);
+  --primary-foreground: oklch(0.215 0.013 168);
+  --secondary: oklch(0.286 0.014 168);
+  --secondary-foreground: oklch(0.903 0.007 98);
+  --muted: oklch(0.286 0.014 168);
+  --muted-foreground: oklch(0.71 0.014 110);
+  --accent: oklch(0.286 0.014 168);
+  --accent-foreground: oklch(0.903 0.007 98);
   --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.58 0.031 107.3);
-  --chart-1: oklch(0.802 0.04 221);
-  --chart-2: oklch(0.66 0.055 221);
-  --chart-3: oklch(0.55 0.062 221);
-  --chart-4: oklch(0.465 0.062 222);
-  --chart-5: oklch(0.4 0.056 223);
-  --sidebar: oklch(0.228 0.013 107.4);
-  --sidebar-foreground: oklch(0.9 0.005 103);
-  --sidebar-primary: oklch(0.66 0.055 221);
-  --sidebar-primary-foreground: oklch(0.21 0.026 226);
-  --sidebar-accent: oklch(0.286 0.016 107.4);
-  --sidebar-accent-foreground: oklch(0.9 0.005 103);
+  --border: oklch(1 0 0 / 12%);
+  --input: oklch(1 0 0 / 16%);
+  --ring: oklch(0.63 0.132 35);
+  --chart-1: oklch(0.738 0.1 38);
+  --chart-2: oklch(0.63 0.132 35);
+  --chart-3: oklch(0.532 0.148 33);
+  --chart-4: oklch(0.455 0.133 32);
+  --chart-5: oklch(0.385 0.113 31);
+  --sidebar: oklch(0.24 0.013 168);
+  --sidebar-foreground: oklch(0.903 0.007 98);
+  --sidebar-primary: oklch(0.63 0.132 35);
+  --sidebar-primary-foreground: oklch(0.215 0.013 168);
+  --sidebar-accent: oklch(0.286 0.014 168);
+  --sidebar-accent-foreground: oklch(0.903 0.007 98);
   --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.58 0.031 107.3);
+  --sidebar-ring: oklch(0.63 0.132 35);
 }
 
 @theme inline {
@@ -176,8 +186,20 @@
     @apply border-border outline-ring/50;
   }
 
+  html {
+    font-optical-sizing: auto;
+  }
+
   body {
     @apply bg-background text-foreground font-body;
+  }
+
+  ::selection {
+    background: var(--color-cinnabar-100);
+  }
+
+  :root[data-theme='dark'] ::selection {
+    background: var(--color-cinnabar-900);
   }
 
   :where(button, input, select, textarea, [data-slot]) {
@@ -197,7 +219,7 @@
   }
 
   :where(.sl-markdown-content p[data-subheading]) {
-    font-family: var(--font-heading);
+    font-family: var(--font-ui);
   }
 
   :where(.sl-markdown-content [data-footnotes] > .sl-heading-wrapper) {
@@ -219,17 +241,20 @@
   --sl-font: var(--font-body);
   --sl-font-mono: var(--font-mono);
 
-  --sl-color-white: oklch(0.918 0.005 103);
-  --sl-color-gray-1: oklch(0.862 0.007 103);
-  --sl-color-gray-2: oklch(0.79 0.012 105);
+  --sl-color-white: oklch(0.903 0.007 98);
+  --sl-color-gray-1: oklch(0.845 0.009 100);
+  --sl-color-gray-2: oklch(0.775 0.012 103);
   --sl-color-gray-3: var(--color-neutral-400);
   --sl-color-gray-4: var(--color-neutral-600);
   --sl-color-gray-5: var(--color-neutral-700);
   --sl-color-gray-6: var(--color-neutral-800);
-  --sl-color-black: oklch(0.205 0.01 107);
-  --sl-color-accent-low: var(--color-brand-950);
-  --sl-color-accent: var(--color-brand-500);
-  --sl-color-accent-high: var(--color-brand-200);
+  --sl-color-black: oklch(0.215 0.013 168);
+  --sl-color-accent-low: var(--color-cinnabar-950);
+  --sl-color-accent: var(--color-cinnabar-400);
+  --sl-color-accent-high: var(--color-cinnabar-200);
+  /* 去侧栏的书页布局：内容栏始终居中 */
+  --sl-content-margin-inline: auto;
+  --sl-text-accent: var(--color-cinnabar-400);
 }
 
 :root[data-theme='light'],
@@ -243,13 +268,15 @@
   --sl-color-gray-6: var(--color-neutral-200);
   --sl-color-gray-7: var(--color-neutral-100);
   --sl-color-black: var(--color-paper);
-  --sl-color-accent-low: var(--color-brand-200);
-  --sl-color-accent: var(--color-brand-600);
-  --sl-color-accent-high: var(--color-brand-900);
+  --sl-color-accent-low: var(--color-cinnabar-100);
+  --sl-color-accent: var(--color-cinnabar-500);
+  --sl-color-accent-high: var(--color-cinnabar-800);
+  --sl-text-accent: var(--color-cinnabar-500);
 }
 
-/* 阅读参数：中文长文的行长、行距与标点 */
-:root {
+/* 阅读参数：中文长文的行长、行距与标点；无侧栏布局下压住 Page 内联的宽栏变量 */
+:root,
+:root:not([data-has-sidebar]) {
   --sl-content-width: 39.5rem;
 }
 
@@ -272,19 +299,20 @@
 }
 
 main [data-page-title] {
-  font-size: clamp(1.75rem, 1.45rem + 1.1vw, 2.125rem);
-  font-weight: 650;
+  font-size: clamp(2rem, 1.6rem + 1.4vw, 2.5rem);
+  font-weight: 750;
+  line-height: 1.25;
 }
 
 .sl-markdown-content h2:not(:where(.not-content *)) {
   font-size: 1.375rem;
-  font-weight: 600;
+  font-weight: 650;
   margin-block-start: 2.6em;
 }
 
 .sl-markdown-content h3:not(:where(.not-content *)) {
   font-size: 1.155rem;
-  font-weight: 600;
+  font-weight: 650;
   margin-block-start: 2.1em;
 }
 
@@ -296,12 +324,29 @@ main [data-page-title] {
   font-weight: 600;
 }
 
+/* 正文链接：墨色下划，朱砂示意可及 */
+.sl-markdown-content a:not(:where(.not-content *)) {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: var(--color-cinnabar-300);
+  text-underline-offset: 0.22em;
+  transition: text-decoration-color 0.15s;
+}
+
+.sl-markdown-content a:not(:where(.not-content *)):hover {
+  text-decoration-color: var(--sl-color-accent);
+}
+
 /* 周边件：引用、脚注、分隔线、列表记号与链接卡收进同一语言 */
 .sl-markdown-content blockquote:not(:where(.not-content *)) {
-  border-inline-start: 2px solid var(--sl-color-gray-5);
+  border-inline-start: 2px solid var(--color-cinnabar-200);
   padding-inline-start: 1.1em;
   color: var(--sl-color-gray-2);
   font-size: 0.98em;
+}
+
+:root[data-theme='dark'] .sl-markdown-content blockquote:not(:where(.not-content *)) {
+  border-inline-start-color: var(--color-cinnabar-800);
 }
 
 .sl-markdown-content [data-footnotes] {
@@ -320,7 +365,7 @@ main [data-page-title] {
 }
 
 .sl-markdown-content li::marker {
-  color: var(--sl-color-gray-4);
+  color: var(--color-cinnabar-400);
 }
 
 .sl-link-card {
@@ -337,16 +382,102 @@ main [data-page-title] {
   line-height: 1.75;
 }
 
-/* 导航安静化：侧栏与页内目录用黑体、去大色块，正文是唯一主角 */
-.sidebar-content,
+/* 导航安静化：页内目录用黑体、去大色块，正文是唯一主角 */
 .right-sidebar {
-  font-family: var(--font-heading);
+  font-family: var(--font-ui);
 }
 
-.sidebar-content a[aria-current='page'],
-.sidebar-content a[aria-current='page']:hover,
-.sidebar-content a[aria-current='page']:focus {
-  background-color: var(--sl-color-gray-6);
-  color: var(--sl-color-white);
-  font-weight: 600;
+.right-sidebar :where(a[aria-current='true']) {
+  color: var(--color-cinnabar-600);
+  font-weight: 500;
+}
+
+:root[data-theme='dark'] .right-sidebar :where(a[aria-current='true']) {
+  color: var(--color-cinnabar-300);
+}
+
+/* 术语表：辞典式条目，词头带朱砂记，宽屏双栏 */
+.glossary-entry {
+  position: relative;
+  margin-block-end: 1.6rem;
+  padding-inline-start: 1.15rem;
+  break-inside: avoid;
+  scroll-margin-top: calc(var(--sl-nav-height) + 1.5rem);
+}
+
+.sl-markdown-content > .glossary-entry + .glossary-entry {
+  margin-block-start: 0;
+}
+
+.glossary-entry::before {
+  content: '';
+  position: absolute;
+  inset-inline-start: 0;
+  inset-block-start: 0.52em;
+  inline-size: 0.42em;
+  block-size: 0.42em;
+  background: var(--color-cinnabar-500);
+}
+
+:root[data-theme='dark'] .glossary-entry::before {
+  background: var(--color-cinnabar-400);
+}
+
+.glossary-entry p[data-subheading]:not(:where(.not-content *)) {
+  margin-block-start: 0;
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+.glossary-entry p:not([data-subheading]) {
+  margin-block-start: 0.45em;
+  font-size: 0.92rem;
+  line-height: 1.85;
+  color: var(--sl-color-gray-1);
+}
+
+@media (min-width: 50rem) {
+  [data-entry-id='argument/glossary'] .sl-markdown-content {
+    columns: 2;
+    column-gap: 2.75rem;
+  }
+}
+
+/* 旁注：宽屏下脚注浮入页边（天头一侧），窄屏由页尾脚注区呈现 */
+.sidenote {
+  display: none;
+}
+
+@media (min-width: 72rem) {
+  .sl-markdown-content .sidenote {
+    display: block;
+    float: inline-start;
+    clear: both;
+    inline-size: 12.5rem;
+    margin-inline-start: -14.75rem;
+    margin-block: 0.3em 1.2em;
+    font-size: 0.8rem;
+    line-height: 1.75;
+    letter-spacing: 0;
+    color: var(--sl-color-gray-2);
+  }
+
+  .sl-markdown-content .sidenote .sidenote-num {
+    margin-inline-end: 0.5em;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--color-cinnabar-500);
+  }
+
+  :root[data-theme='dark'] .sl-markdown-content .sidenote .sidenote-num {
+    color: var(--color-cinnabar-400);
+  }
+
+  .sl-markdown-content .sidenote a {
+    color: inherit;
+  }
+
+  .sl-markdown-content [data-footnotes] {
+    display: none;
+  }
 }

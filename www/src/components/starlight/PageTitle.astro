@@ -2,34 +2,184 @@
 import Default from '@astrojs/starlight/components/PageTitle.astro';
 
 import { type GlobalMessageKey, globalMessages } from '@/data/i18n';
+import { findCanonEntry, formatVolumeOrdinal } from '@/lib/canon';
 import { getLanguageFromLocale } from '@/lib/i18n';
 
-const { id, locale } = Astro.locals.starlightRoute;
+const { id, locale, entry } = Astro.locals.starlightRoute;
+const language = getLanguageFromLocale(locale);
 
-/** 文体眉标：从条目路径首段识别所属文体 */
+const found = await findCanonEntry(locale, id);
+const description = entry.data.description;
+const isSpecification = found?.volume.key === 'specification' && found.entry.index !== null;
+
+/** 未入典籍的页面（卷概览等）退回文体眉标。 */
 const genreKeys: Record<string, GlobalMessageKey> = {
   argument: 'arguments',
   specification: 'specification',
   guide: 'guide',
   topic: 'topics',
 };
-
+const genreVolumeKeys: Record<string, 'argument' | 'specification' | 'guide'> = {
+  argument: 'argument',
+  specification: 'specification',
+  guide: 'guide',
+};
 const segments = id.split('/');
 const genreSegment = segments[0] === locale ? segments[1] : segments[0];
 const genreKey = genreSegment ? genreKeys[genreSegment] : undefined;
-const genre = genreKey ? globalMessages[getLanguageFromLocale(locale)][genreKey] : undefined;
+const genreVolume = genreSegment ? genreVolumeKeys[genreSegment] : undefined;
+const genre = genreKey
+  ? genreVolume
+    ? `${formatVolumeOrdinal(language, genreVolume)} · ${globalMessages[language][genreKey]}`
+    : globalMessages[language][genreKey]
+  : undefined;
+
+const eyebrow = found
+  ? `${found.volume.ordinal} · ${found.volume.label}`
+  : genre;
+
+/* 规范牌记的约定用语：词表随语言，锚点是各语言「约定用语」小节的 slug。 */
+const specKeywords = {
+  'zh-Hans': { words: ['必须', '应当', '可以', '不得', '不应'], anchor: '#约定用语' },
+  'zh-Hant': { words: ['必須', '應當', '可以', '不得', '不應'], anchor: '#約定用語' },
+  en: { words: ['must', 'should', 'may', 'must not', 'should not'], anchor: '#terminology' },
+}[language];
 ---
 
-{genre && <p class="genre-eyebrow">{genre}</p>}
+{
+  eyebrow && (
+    <p class="chapter-eyebrow">
+      <span>{eyebrow}</span>
+      {found?.entry.number && <span class="chapter-number">{found.entry.number}</span>}
+    </p>
+  )
+}
 <Default><slot /></Default>
+{found && description && <p class="chapter-lede">{description}</p>}
+{
+  isSpecification && (
+    <div class="spec-plate" role="note">
+      <span class="spec-plate-item">
+        <span class="spec-plate-badge">{Astro.locals.t('spec.status')}</span>
+      </span>
+      <span class="spec-plate-item">
+        <span class="spec-plate-key">{Astro.locals.t('spec.keywords')}</span>
+        <span class="spec-plate-words">
+          {specKeywords.words.map((word) => (
+            <a class="spec-plate-word" href={specKeywords.anchor}>
+              {word}
+            </a>
+          ))}
+        </span>
+      </span>
+    </div>
+  )
+}
 
 <style>
-  .genre-eyebrow {
-    margin: 0 0 0.9rem;
-    font-family: var(--font-heading);
-    font-size: 0.78rem;
-    font-weight: 500;
-    letter-spacing: 0.22em;
+  /* 章头：卷次与编号作眉目，描述排为导语 */
+  .chapter-eyebrow {
+    display: flex;
+    align-items: baseline;
+    gap: 1em;
+    margin: 0 0 1.1rem;
+    font-size: 0.82rem;
+    letter-spacing: 0.18em;
     color: var(--sl-color-gray-3);
+  }
+
+  .chapter-number {
+    color: var(--color-cinnabar-500);
+    font-weight: 600;
+    letter-spacing: 0.1em;
+  }
+
+  :root[data-theme='dark'] .chapter-number {
+    color: var(--color-cinnabar-400);
+  }
+
+  .chapter-lede {
+    margin: 1.1rem 0 0;
+    max-width: 34em;
+    font-size: 1.13rem;
+    line-height: 1.85;
+    color: var(--sl-color-gray-1);
+    text-wrap: pretty;
+  }
+
+  :root[lang^='zh'] .chapter-lede {
+    line-height: 1.95;
+  }
+
+  /* 规范牌记：登记册气质的元数据板 */
+  .spec-plate {
+    display: flex;
+    flex-wrap: wrap;
+    width: fit-content;
+    max-width: 100%;
+    gap: 0.6rem 2.25rem;
+    margin-block-start: 1.6rem;
+    padding: 0.85rem 1.1rem;
+    border: 1px solid var(--color-border);
+    border-inline-start: 3px solid var(--color-cinnabar-500);
+    border-radius: 0.3rem;
+    background: var(--color-paper-raised);
+    font-size: 0.88rem;
+  }
+
+  :root[data-theme='dark'] .spec-plate {
+    border-inline-start-color: var(--color-cinnabar-400);
+    background: var(--sl-color-gray-7, var(--card));
+  }
+
+  .spec-plate-item {
+    display: flex;
+    align-items: baseline;
+    gap: 0.8em;
+  }
+
+  .spec-plate-badge {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--color-cinnabar-600);
+    border: 1px solid var(--color-cinnabar-200);
+    border-radius: 2px;
+    padding: 0.15em 0.55em;
+  }
+
+  :root[data-theme='dark'] .spec-plate-badge {
+    color: var(--color-cinnabar-300);
+    border-color: var(--color-cinnabar-800);
+  }
+
+  .spec-plate-key {
+    font-family: var(--font-ui);
+    font-size: 0.75rem;
+    letter-spacing: 0.14em;
+    color: var(--sl-color-gray-3);
+    white-space: nowrap;
+  }
+
+  .spec-plate-words {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.15em 0.9em;
+  }
+
+  .spec-plate-word {
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    color: var(--color-cinnabar-600);
+    text-decoration: none;
+    border-block-end: 1px solid transparent;
+    transition: border-color 0.15s;
+  }
+
+  :root[data-theme='dark'] .spec-plate-word {
+    color: var(--color-cinnabar-300);
+  }
+
+  .spec-plate-word:hover {
+    border-block-end-color: currentColor;
   }
 </style>

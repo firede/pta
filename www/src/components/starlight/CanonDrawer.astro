@@ -1,0 +1,284 @@
+---
+import { getCanon } from '@/lib/canon';
+import { getLocalizedDocsEntryId } from '@/lib/i18n';
+
+const { locale, id } = Astro.locals.starlightRoute;
+
+const canon = await getCanon(locale);
+const drawerLabel = Astro.locals.t('canon.contents');
+const closeLabel = Astro.locals.t('canon.close');
+const guideStatus = Astro.locals.t('canon.guideStatus');
+
+function isCurrent(entryId: string) {
+  return getLocalizedDocsEntryId(entryId, locale) === id;
+}
+---
+
+<div class="canon-drawer" id="canon-drawer" role="dialog" aria-modal="true" aria-label={drawerLabel} hidden>
+  <div class="drawer-backdrop" data-drawer-close></div>
+  <nav class="drawer-panel" aria-label={drawerLabel}>
+    <header class="drawer-head">
+      <span class="drawer-title">{drawerLabel}</span>
+      <button type="button" class="drawer-close" data-drawer-close aria-label={closeLabel}>
+        <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
+          <path d="M1 1l12 12M13 1L1 13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+        </svg>
+      </button>
+    </header>
+    <div class="drawer-body">
+      {
+        canon.map((volume) => (
+          <section class="drawer-volume">
+            <h2 class="drawer-volume-head">
+              <span class="drawer-volume-ordinal">{volume.ordinal}</span>
+              <span class="drawer-volume-label">{volume.label}</span>
+            </h2>
+            <ol class="drawer-entries">
+              {volume.entries.map((entry) => (
+                <li>
+                  <a
+                    href={entry.href}
+                    class:list={['drawer-entry', { current: isCurrent(entry.id) }]}
+                    aria-current={isCurrent(entry.id) ? 'page' : undefined}
+                  >
+                    <span class="drawer-entry-number">{entry.number}</span>
+                    <span class="drawer-entry-title">{entry.title}</span>
+                    {volume.key === 'guide' && <span class="drawer-entry-status">{guideStatus}</span>}
+                  </a>
+                </li>
+              ))}
+            </ol>
+          </section>
+        ))
+      }
+    </div>
+  </nav>
+</div>
+
+<script>
+  function initCanonDrawer() {
+    const root = document.getElementById('canon-drawer');
+    const openButton = document.getElementById('canon-drawer-open');
+    if (!root || !openButton || openButton.dataset.bound) return;
+    openButton.dataset.bound = 'true';
+
+    let lastFocus: HTMLElement | null = null;
+
+    function open() {
+      lastFocus = document.activeElement as HTMLElement | null;
+      root!.hidden = false;
+      document.documentElement.style.overflow = 'hidden';
+      requestAnimationFrame(() => root!.classList.add('is-open'));
+      root!.querySelector<HTMLElement>('.drawer-close')?.focus();
+    }
+
+    function close() {
+      root!.classList.remove('is-open');
+      document.documentElement.style.overflow = '';
+      const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (reduced) root!.hidden = true;
+      else {
+        root!.addEventListener('transitionend', () => { root!.hidden = true; }, { once: true });
+      }
+      lastFocus?.focus();
+    }
+
+    openButton.addEventListener('click', open);
+    root.addEventListener('click', (event) => {
+      if ((event.target as Element).closest('[data-drawer-close]')) close();
+      else if ((event.target as Element).closest('a.drawer-entry')) close();
+    });
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && !root.hidden) close();
+    });
+  }
+
+  initCanonDrawer();
+</script>
+
+<style>
+  .canon-drawer {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    visibility: hidden;
+    transition: visibility 0s 0.25s;
+  }
+
+  .canon-drawer.is-open {
+    visibility: visible;
+    transition-delay: 0s;
+  }
+
+  .drawer-backdrop {
+    position: absolute;
+    inset: 0;
+    background: oklch(0.2 0.01 100 / 0.35);
+    opacity: 0;
+    transition: opacity 0.25s ease;
+  }
+
+  :root[data-theme='dark'] .drawer-backdrop {
+    background: oklch(0.05 0.01 168 / 0.55);
+  }
+
+  .canon-drawer.is-open .drawer-backdrop {
+    opacity: 1;
+  }
+
+  .drawer-panel {
+    position: absolute;
+    inset-block: 0;
+    inset-inline-start: 0;
+    width: min(23rem, 88vw);
+    display: flex;
+    flex-direction: column;
+    background: var(--color-paper-raised);
+    border-inline-end: 1px solid var(--color-border);
+    transform: translateX(-102%);
+    transition: transform 0.25s cubic-bezier(0.32, 0.72, 0.35, 1);
+  }
+
+  :root[dir='rtl'] .drawer-panel {
+    transform: translateX(102%);
+  }
+
+  .canon-drawer.is-open .drawer-panel {
+    transform: translateX(0);
+  }
+
+  .drawer-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.25rem;
+    border-block-end: 1px solid var(--color-border);
+  }
+
+  .drawer-title {
+    font-family: var(--font-ui);
+    font-size: 0.8rem;
+    font-weight: 500;
+    letter-spacing: 0.22em;
+    color: var(--sl-color-gray-3);
+  }
+
+  .drawer-close {
+    display: grid;
+    place-items: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    padding: 0;
+    color: var(--sl-color-gray-3);
+    background: none;
+    border: 0;
+    border-radius: 0.25rem;
+    cursor: pointer;
+    transition: color 0.15s;
+  }
+
+  .drawer-close:hover {
+    color: var(--sl-color-white);
+  }
+
+  .drawer-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1.25rem 1.25rem 2.5rem;
+  }
+
+  .drawer-volume + .drawer-volume {
+    margin-block-start: 1.75rem;
+  }
+
+  .drawer-volume-head {
+    display: flex;
+    align-items: baseline;
+    gap: 0.6em;
+    margin: 0 0 0.6rem;
+    padding-block-end: 0.5rem;
+    border-block-end: 1px solid var(--color-border);
+  }
+
+  .drawer-volume-ordinal {
+    font-size: 0.78rem;
+    color: var(--color-cinnabar-500);
+  }
+
+  :root[data-theme='dark'] .drawer-volume-ordinal {
+    color: var(--color-cinnabar-400);
+  }
+
+  .drawer-volume-label {
+    font-size: 1.02rem;
+    font-weight: 650;
+    color: var(--sl-color-white);
+  }
+
+  .drawer-entries {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .drawer-entry {
+    display: flex;
+    align-items: baseline;
+    gap: 0.7em;
+    padding: 0.34em 0.5em;
+    margin-inline: -0.5em;
+    border-radius: 0.25rem;
+    text-decoration: none;
+    color: var(--sl-color-gray-2);
+    transition: color 0.15s, background-color 0.15s;
+  }
+
+  .drawer-entry:hover {
+    color: var(--sl-color-white);
+    background: var(--sl-color-gray-7, var(--sl-color-gray-6));
+  }
+
+  .drawer-entry-number {
+    flex-shrink: 0;
+    min-width: 2.6em;
+    font-size: 0.8rem;
+    color: var(--sl-color-gray-3);
+  }
+
+  .drawer-entry-title {
+    font-size: 0.95rem;
+    line-height: 1.55;
+  }
+
+  .drawer-entry.current {
+    color: var(--color-cinnabar-600);
+  }
+
+  :root[data-theme='dark'] .drawer-entry.current {
+    color: var(--color-cinnabar-300);
+  }
+
+  .drawer-entry.current .drawer-entry-number {
+    color: inherit;
+  }
+
+  .drawer-entry-status {
+    margin-inline-start: auto;
+    font-family: var(--font-ui);
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    color: var(--sl-color-gray-3);
+    border: 1px solid var(--color-border);
+    border-radius: 999px;
+    padding: 0.1em 0.6em;
+    white-space: nowrap;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .canon-drawer,
+    .drawer-backdrop,
+    .drawer-panel {
+      transition: none;
+    }
+  }
+</style>

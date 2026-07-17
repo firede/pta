@@ -9,6 +9,7 @@ import { argumentIds } from './src/data/arguments';
 import { specificationIds } from './src/data/specifications';
 import { getRootMessage, getStarlightTranslations, starlightI18n } from './src/lib/i18n';
 import { rehypeGlossaryTerms } from './src/lib/markdown/glossary-terms';
+import { rehypeSidenotes } from './src/lib/markdown/sidenotes';
 import { rehypeStrongSubheading } from './src/lib/markdown/strong-subheading';
 
 // https://astro.build/config
@@ -17,7 +18,7 @@ export default defineConfig({
 
   markdown: {
     processor: unified({
-      rehypePlugins: [rehypeStrongSubheading, rehypeGlossaryTerms],
+      rehypePlugins: [rehypeStrongSubheading, rehypeGlossaryTerms, rehypeSidenotes],
     }),
   },
 
@@ -30,10 +31,10 @@ export default defineConfig({
         replacesTitle: true,
       },
       components: {
+        Header: './src/components/starlight/Header.astro',
         MarkdownContent: './src/components/starlight/MarkdownContent.astro',
         PageTitle: './src/components/starlight/PageTitle.astro',
         Pagination: './src/components/starlight/Pagination.astro',
-        Sidebar: './src/components/starlight/Sidebar.astro',
       },
       routeMiddleware: ['./src/lib/starlight/toc.ts'],
       social: [{ icon: 'github', label: 'GitHub', href: 'https://github.com/firede/pta' }],

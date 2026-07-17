@@ -4,11 +4,18 @@ import DefaultMarkdownContent from '@astrojs/starlight/components/MarkdownConten
 import ArgumentDependencies from '@/components/docs/ArgumentDependencies.astro';
 import GlossaryPopover from '@/components/docs/GlossaryPopover.astro';
 
+const { id, locale } = Astro.locals.starlightRoute;
+
 const dependsOn = Astro.locals.starlightRoute.entry.data.dependsOn ?? [];
+
+/** 页面级样式钩子：典籍条目 id（剥除 locale 前缀）。 */
+const entryId = locale && id.startsWith(`${locale}/`) ? id.slice(locale.length + 1) : id;
 ---
 
-<DefaultMarkdownContent>
-  <slot />
-  <ArgumentDependencies ids={dependsOn} />
-  <GlossaryPopover />
-</DefaultMarkdownContent>
+<div class="doc-entry" data-entry-id={entryId}>
+  <DefaultMarkdownContent>
+    <slot />
+    <ArgumentDependencies ids={dependsOn} />
+    <GlossaryPopover />
+  </DefaultMarkdownContent>
+</div>

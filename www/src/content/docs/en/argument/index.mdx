@@ -2,14 +2,16 @@
 title: Arguments Overview
 description: Arguments record the core judgments that the project truth architecture depends on, explaining the problems these judgments solve, why they hold, and what their boundaries are.
 tableOfContents: false
-sourceHash: 634944135ad1d4971ee54af33cc3bc452e0a0244d00f73d3bd2f99c244729e04
+sourceHash: 5968933f21991a1f15d62621596884ab4534f9a72ba6d56ac7e24e4d96548859
 ---
 
-import DocumentList from '@/components/docs/DocumentList.astro';
-import { argumentIds } from '@/data/arguments';
+import ArgumentMap from '@/components/docs/ArgumentMap.astro';
+import CanonEntries from '@/components/docs/CanonEntries.astro';
 
 Arguments record the core judgments that the project truth architecture depends on.
 
 They explain the problems these judgments solve, why they hold, and what their boundaries are. Users can periodically check whether these judgments still hold, and use the judgments that still hold to derive a project truth architecture suited to their own context.
 
-<DocumentList ids={argumentIds} />
+<ArgumentMap />
+
+<CanonEntries volume="argument" headed />

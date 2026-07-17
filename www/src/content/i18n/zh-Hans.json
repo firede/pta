@@ -29,5 +29,13 @@
   "heading.anchorLabel": "Section titled “{{title}}”",
   "argumentDependencies.title": "支撑立论",
   "glossary.viewEntry": "查看术语表",
-  "sectionNav.accessibleLabel": "内容板块"
+  "sectionNav.accessibleLabel": "内容板块",
+  "canon.contents": "目录",
+  "canon.close": "关闭",
+  "canon.total": "总目",
+  "canon.map": "论证脉络",
+  "canon.path": "阅读路径",
+  "canon.guideStatus": "编纂中",
+  "spec.status": "现行",
+  "spec.keywords": "约定用语"
 }

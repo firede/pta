@@ -1,0 +1,164 @@
+---
+import { getCanon } from '@/lib/canon';
+
+interface Props {
+  /** 卷标识 */
+  volume: 'argument' | 'specification' | 'guide';
+  /** 是否渲染小节头（阅读路径） */
+  headed?: boolean;
+}
+
+const { volume: key, headed = false } = Astro.props;
+const { locale } = Astro.locals.starlightRoute;
+
+const canon = await getCanon(locale);
+const volume = canon.find((item) => item.key === key);
+if (!volume) throw new Error(`CanonEntries: 未知卷 "${key}"`);
+
+const guideStatus = Astro.locals.t('canon.guideStatus');
+const pathLabel = Astro.locals.t('canon.path');
+---
+
+<section class="canon-entries-section not-content">
+  {
+    headed && (
+      <header class="canon-section-head">
+        <span class="canon-marker" aria-hidden="true" />
+        <h2 class="canon-section-title">{pathLabel}</h2>
+      </header>
+    )
+  }
+  <ol class="canon-entries">
+    {
+      volume.entries.map((entry) => (
+        <li>
+          <a class="canon-entry" href={entry.href}>
+            <span class="entry-number">{entry.number}</span>
+            <span class="entry-main">
+              <span class="entry-title">{entry.title}</span>
+              <span class="entry-description">{entry.description}</span>
+            </span>
+            {key === 'guide' && <span class="entry-status">{guideStatus}</span>}
+          </a>
+        </li>
+      ))
+    }
+  </ol>
+</section>
+
+<style>
+  .canon-section-head {
+    display: flex;
+    align-items: center;
+    gap: 0.8em;
+    padding-block-end: 0.9rem;
+    margin-block-end: 1rem;
+    border-block-end: 1px solid var(--sl-color-gray-5);
+  }
+
+  .canon-marker {
+    inline-size: 0.55em;
+    block-size: 0.55em;
+    background: var(--color-cinnabar-500);
+  }
+
+  :root[data-theme='dark'] .canon-marker {
+    background: var(--color-cinnabar-400);
+  }
+
+  .canon-section-title {
+    margin: 0;
+    font-family: var(--font-ui);
+    font-size: 0.82rem;
+    font-weight: 500;
+    letter-spacing: 0.28em;
+    color: var(--sl-color-gray-3);
+  }
+
+  .canon-entries {
+    list-style: none;
+    margin: 1rem 0 0;
+    padding: 0;
+    border-block-start: 1px solid var(--sl-color-gray-6);
+  }
+
+  .canon-entries li + li {
+    border-block-start: 1px solid var(--sl-color-gray-6);
+  }
+
+  .canon-entry {
+    display: grid;
+    grid-template-columns: 4.5rem 1fr auto;
+    gap: 1rem;
+    align-items: baseline;
+    padding: 0.8rem 0.6rem;
+    margin-inline: -0.6rem;
+    text-decoration: none;
+    color: inherit;
+    border-radius: 0.3rem;
+    transition: background-color 0.15s;
+  }
+
+  .canon-entry:hover {
+    background: var(--sl-color-gray-7, var(--sl-color-gray-6));
+  }
+
+  .entry-number {
+    font-size: 0.85rem;
+    color: var(--sl-color-gray-3);
+    transition: color 0.15s;
+  }
+
+  .canon-entry:hover .entry-number {
+    color: var(--color-cinnabar-500);
+  }
+
+  :root[data-theme='dark'] .canon-entry:hover .entry-number {
+    color: var(--color-cinnabar-400);
+  }
+
+  .entry-main {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    min-width: 0;
+  }
+
+  .entry-title {
+    font-size: 1.05rem;
+    font-weight: 600;
+    line-height: 1.5;
+    color: var(--sl-color-white);
+  }
+
+  .entry-description {
+    font-size: 0.88rem;
+    line-height: 1.7;
+    color: var(--sl-color-gray-3);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .entry-status {
+    font-family: var(--font-ui);
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    color: var(--sl-color-gray-3);
+    border: 1px solid var(--color-border);
+    border-radius: 999px;
+    padding: 0.15em 0.7em;
+    white-space: nowrap;
+  }
+
+  @media (max-width: 50rem) {
+    .canon-entry {
+      grid-template-columns: 3.5rem 1fr;
+    }
+
+    .entry-status {
+      display: none;
+    }
+  }
+</style>

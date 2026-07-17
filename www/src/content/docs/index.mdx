@@ -23,30 +23,20 @@ import Landing from '@/components/home/Landing.astro';
     { label: '从立论开始', href: '/argument/', primary: true },
     { label: '阅读规范', href: '/specification/' },
   ]}
-  mapLabel="阅读地图"
-  entries={[
-    {
-      ord: '一',
-      name: '立论',
+  volumes={{
+    argument: {
       question: '为什么成立？',
       blurb: '架构依赖的基本判断，一切结论的推导起点。',
-      href: '/argument/',
     },
-    {
-      ord: '二',
-      name: '规范',
+    specification: {
       question: '必须遵守什么？',
       blurb: '核心定义与约束，每条要求可追溯到立论。',
-      href: '/specification/',
     },
-    {
-      ord: '三',
-      name: '指南',
+    guide: {
       question: '如何实践？',
       blurb: '面向日常协作的方法与建议。',
-      href: '/guide/',
     },
-  ]}
+  }}
   lineage={{
     title: '《人类带宽设计》',
     href: 'https://bandwidth.ren/',

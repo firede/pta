@@ -29,5 +29,13 @@
   "heading.anchorLabel": "Section titled “{{title}}”",
   "argumentDependencies.title": "支撐立論",
   "glossary.viewEntry": "查看術語表",
-  "sectionNav.accessibleLabel": "內容板塊"
+  "sectionNav.accessibleLabel": "內容板塊",
+  "canon.contents": "目錄",
+  "canon.close": "關閉",
+  "canon.total": "總目",
+  "canon.map": "論證脈絡",
+  "canon.path": "閱讀路徑",
+  "canon.guideStatus": "編纂中",
+  "spec.status": "現行",
+  "spec.keywords": "約定用語"
 }

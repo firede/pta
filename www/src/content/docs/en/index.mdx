@@ -6,7 +6,7 @@ editUrl: false
 head:
   - tag: title
     content: Project Truth Architecture
-sourceHash: 919240cbe420c09641a8b501f22e3c28b4e521b3a2756b1a9c10ea504593cee6
+sourceHash: ce57c1df143fcd356d4b5a97d8ad47f30c088ec4983d0f851f18febab6f0a2be
 ---
 
 import Landing from '@/components/home/Landing.astro';
@@ -24,31 +24,21 @@ import Landing from '@/components/home/Landing.astro';
     { label: 'Start with the Arguments', href: '/en/argument/', primary: true },
     { label: 'Read the Specification', href: '/en/specification/' },
   ]}
-  mapLabel="Reading map"
-  entries={[
-    {
-      ord: '01',
-      name: 'Arguments',
+  volumes={{
+    argument: {
       question: 'Why does it hold?',
       blurb:
         'The fundamental judgments the architecture depends on — where every conclusion starts.',
-      href: '/en/argument/',
     },
-    {
-      ord: '02',
-      name: 'Specification',
+    specification: {
       question: 'What must be followed?',
       blurb: 'Core definitions and constraints, every requirement traceable to an argument.',
-      href: '/en/specification/',
     },
-    {
-      ord: '03',
-      name: 'Guide',
+    guide: {
       question: 'How to practice it?',
       blurb: 'Methods and recommendations for day-to-day collaboration.',
-      href: '/en/guide/',
     },
-  ]}
+  }}
   lineage={{
     title: 'Human Bandwidth Design',
     href: 'https://bandwidth.ren/en/',

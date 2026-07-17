@@ -6,7 +6,7 @@ editUrl: false
 head:
   - tag: title
     content: 專案真相架構
-sourceHash: 919240cbe420c09641a8b501f22e3c28b4e521b3a2756b1a9c10ea504593cee6
+sourceHash: ce57c1df143fcd356d4b5a97d8ad47f30c088ec4983d0f851f18febab6f0a2be
 ---
 
 import Landing from '@/components/home/Landing.astro';
@@ -24,30 +24,20 @@ import Landing from '@/components/home/Landing.astro';
     { label: '從立論開始', href: '/zh-hant/argument/', primary: true },
     { label: '閱讀規範', href: '/zh-hant/specification/' },
   ]}
-  mapLabel="閱讀地圖"
-  entries={[
-    {
-      ord: '一',
-      name: '立論',
+  volumes={{
+    argument: {
       question: '為什麼成立？',
       blurb: '架構依賴的基本判斷，一切結論的推導起點。',
-      href: '/zh-hant/argument/',
     },
-    {
-      ord: '二',
-      name: '規範',
+    specification: {
       question: '必須遵守什麼？',
       blurb: '核心定義與約束，每條要求可追溯到立論。',
-      href: '/zh-hant/specification/',
     },
-    {
-      ord: '三',
-      name: '指南',
+    guide: {
       question: '如何實踐？',
       blurb: '面向日常協作的方法與建議。',
-      href: '/zh-hant/guide/',
     },
-  ]}
+  }}
   lineage={{
     title: '《人類帶寬設計》',
     href: 'https://bandwidth.ren/',

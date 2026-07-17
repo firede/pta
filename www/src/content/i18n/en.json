@@ -1,5 +1,13 @@
 {
   "argumentDependencies.title": "Supporting Arguments",
   "glossary.viewEntry": "View in glossary",
-  "sectionNav.accessibleLabel": "Content sections"
+  "sectionNav.accessibleLabel": "Content sections",
+  "canon.contents": "Contents",
+  "canon.close": "Close",
+  "canon.total": "Contents",
+  "canon.map": "The argument graph",
+  "canon.path": "Reading order",
+  "canon.guideStatus": "In preparation",
+  "spec.status": "In force",
+  "spec.keywords": "Requirement keywords"
 }
