@@ -604,7 +604,7 @@ export async function runDoctor(io: CliIO, cwd: string): Promise<number> {
     checks.push({
       mark: '✓',
       name: '当前仓库',
-      detail: `${repositoryRoot}${root === undefined ? '（无提交基线）' : `（身份 ${root}）`}`,
+      detail: `${repositoryRoot}${root === undefined ? '（无提交基线）' : `（根提交 ${root}）`}`,
     });
     try {
       const signals = await collectSignalCounts(repositoryRoot);

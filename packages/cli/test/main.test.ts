@@ -266,7 +266,10 @@ test('pending list 按领域汇总待裁决条目并返回 0', async (context) =
     output.stdout(),
     /^ {2}- [0-9a-f]{8} packages\/core\/PENDING\.md:2 核心问题二如何裁决/mu,
   );
-  assert.match(output.stdout(), /共 3 条待裁决条目，分布于 2 个领域。/u);
+  assert.match(
+    output.stdout(),
+    /共 3 条待裁决条目，分布于 2 个领域；处置用 pta pending resolve <id>。/u,
+  );
   assert.equal(output.stderr(), '');
 });
 
@@ -417,7 +420,7 @@ test('context 输出领域链与来源标识并返回 0', async (context) => {
   assert.equal(await runCli(['context', 'src/index.ts'], uncommitted.io, root), 0);
   assert.match(uncommitted.stdout(), /# 项目真相背景/u);
   assert.match(uncommitted.stdout(), /来源：无提交基线/u);
-  assert.match(uncommitted.stdout(), /^ {2}src\/TRUTH\.md [0-9a-f]{64}$/mu);
+  assert.match(uncommitted.stdout(), /^ {2}src\/TRUTH\.md sha256:[0-9a-f]{64}$/mu);
   assert.match(uncommitted.stdout(), /路径归属：\n {2}src\/index\.ts → 领域 `src`/u);
   assert.match(uncommitted.stdout(), /## 领域 `\.`（根）\n\n### 真相记录\n\n- 根判断/u);
   assert.match(uncommitted.stdout(), /### 待裁决背景\n\n- [0-9a-f]{8} 根问题如何处理/u);
@@ -436,7 +439,7 @@ test('context 输出领域链与来源标识并返回 0', async (context) => {
   ]);
   const committed = capture();
   assert.equal(await runCli(['context', 'src/index.ts'], committed.io, root), 0);
-  assert.match(committed.stdout(), /来源：[0-9a-f]{40}\n/u);
+  assert.match(committed.stdout(), /来源：commit [0-9a-f]{40}\n/u);
   assert.doesNotMatch(committed.stdout(), /所涉内容哈希/u);
 
   const usage = capture();

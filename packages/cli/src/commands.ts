@@ -33,6 +33,8 @@ import {
 import {
   alignRows,
   changeMark,
+  commitRef,
+  contentHashRef,
   domainRef,
   domainValue,
   entryLine,
@@ -274,13 +276,15 @@ function formatContext(
   if (source.baseVersion === undefined) {
     lines.push('来源：无提交基线，所涉内容以哈希标识');
   } else if (source.hashedFiles.length > 0) {
-    lines.push(`来源：${source.baseVersion}，含未入库变更`);
+    lines.push(`来源：${commitRef(source.baseVersion)}，含未入库变更`);
   } else {
-    lines.push(`来源：${source.baseVersion}`);
+    lines.push(`来源：${commitRef(source.baseVersion)}`);
   }
   if (source.hashedFiles.length > 0) {
     lines.push('所涉内容哈希：');
-    for (const file of source.hashedFiles) lines.push(`  ${file.path} ${file.hash}`);
+    for (const file of source.hashedFiles) {
+      lines.push(`  ${file.path} ${contentHashRef(file.hash)}`);
+    }
   }
   lines.push(
     `范围：${
@@ -451,7 +455,7 @@ function formatPending(groups: readonly PendingGroup[]): string {
     return `领域 ${domainRef(group.identifier)}\n${lines.join('\n')}`;
   });
   const total = groups.reduce((sum, group) => sum + group.entries.length, 0);
-  return `${sections.join('\n\n')}\n\n共 ${total} 条待裁决条目，分布于 ${groups.length} 个领域。\n`;
+  return `${sections.join('\n\n')}\n\n共 ${total} 条待裁决条目，分布于 ${groups.length} 个领域；处置用 pta pending resolve <id>。\n`;
 }
 
 function formatInspection(views: readonly InspectionView[], today: string): string {

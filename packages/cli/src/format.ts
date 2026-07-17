@@ -24,6 +24,16 @@ export function entryRef(domainIdentifier: string, contentHash: string): string 
   return `${domainValue(domainIdentifier)}:${shortHash(contentHash)}`;
 }
 
+/** git 原生标识用 git 的称谓引导，与 git log 同形，肌肉记忆同 M/A/D 字母。 */
+export function commitRef(hash: string): string {
+  return `commit ${hash}`;
+}
+
+/** 完整性内容哈希用 OCI 摘要形制自述类型，前缀兼作标识方案演进的声明位。 */
+export function contentHashRef(hash: string): string {
+  return `sha256:${hash}`;
+}
+
 /** 条目行：`- ` 前缀与真相记录存储形制同构，id 在前便于 grep 与复制，定位（文件:行）随其后。 */
 export function entryLine(id: string, locator: string | undefined, content: string): string {
   return locator === undefined ? `- ${id} ${content}` : `- ${id} ${locator} ${content}`;
