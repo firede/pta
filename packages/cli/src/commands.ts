@@ -31,6 +31,18 @@ import {
 } from '@pta/runtime';
 
 import {
+  alignRows,
+  changeMark,
+  domainRef,
+  domainValue,
+  entryLine,
+  entryRef,
+  enumeratePhrases,
+  listValues,
+  shortHash,
+  signalLine,
+} from './format.ts';
+import {
   bucketViews,
   collectInspectionViews,
   gitRepositoryFiles,
@@ -145,6 +157,14 @@ function domainLabel(signal: CheckSignal): string {
   return anchor.kind === 'domain-declaration' ? anchor.declarationPath : '.';
 }
 
+function checkSignalLine(signal: CheckSignal): string {
+  return signalLine(
+    signal.category,
+    signal.status,
+    `${signal.evidence.file}:${signal.evidence.line} ${signal.evidence.message}`,
+  );
+}
+
 function formatSignals(signals: readonly CheckSignal[]): string {
   const byDomain = new Map<string, CheckSignal[]>();
   for (const signal of signals) {
@@ -165,17 +185,10 @@ function formatSignals(signals: readonly CheckSignal[]): string {
           left.evidence.line - right.evidence.line ||
           left.category.localeCompare(right.category),
       )
-      .map(
-        (signal) =>
-          `  [${signal.category} | ${signal.status}] ${signal.evidence.file}:${signal.evidence.line} ${signal.evidence.message}`,
-      );
-    sections.push(`领域 ${domain}\n${lines.join('\n')}`);
+      .map((signal) => `  ${checkSignalLine(signal)}`);
+    sections.push(`领域 ${domainRef(domain)}\n${lines.join('\n')}`);
   }
   return `${sections.join('\n\n')}\n`;
-}
-
-function label(identifier: string): string {
-  return identifier === '' ? '.' : identifier;
 }
 
 const surfaceLabels: Readonly<Record<string, string>> = {
@@ -197,23 +210,25 @@ function formatChanges(result: ChangeClassification): string {
   const identifiers = new Set([...touched.keys(), ...candidates.keys()]);
   const sections: string[] = [];
   for (const identifier of [...identifiers].sort((left, right) => left.localeCompare(right))) {
-    const lines = [`领域 ${label(identifier)}`];
+    const lines = [`领域 ${domainRef(identifier)}`];
     const domain = touched.get(identifier);
     if (domain !== undefined) {
       lines.push(`  触面：${surfaceLabels[domain.surface]}`);
-      for (const change of domain.changes) lines.push(`  变更：[${change.type}] ${change.path}`);
+      for (const change of domain.changes) {
+        lines.push(`  ${changeMark(change.type)} ${change.path}`);
+      }
       const suspicion = suspicions.get(identifier);
       if (suspicion !== undefined) {
-        lines.push(`  [drift suspicion | suspicion] ${suspicion.evidence}`);
+        lines.push(`  ${signalLine('drift suspicion', 'suspicion', suspicion.evidence)}`);
       }
       if (domain.inboxChanges.length > 0) {
-        lines.push(`  收件箱活动：${domain.inboxChanges.map((change) => change.path).join('、')}`);
+        lines.push(`  收件箱活动：${listValues(domain.inboxChanges.map((change) => change.path))}`);
       }
     }
     const candidate = candidates.get(identifier);
     if (candidate !== undefined) {
       for (const reason of candidate.reasons) {
-        lines.push(`  [propagation | candidate] ${reason.evidence}`);
+        lines.push(`  ${signalLine('propagation', 'candidate', reason.evidence)}`);
       }
     }
     if (domain !== undefined) {
@@ -222,7 +237,11 @@ function formatChanges(result: ChangeClassification): string {
       for (const context of domain.pendingContext) {
         for (const entry of context.entries) {
           lines.push(
-            `    ${shortId(entry)} ${label(context.domainIdentifier)} PENDING.md:${entry.line} ${entry.content}`,
+            `    ${entryLine(
+              entryRef(context.domainIdentifier, entry.contentHash),
+              `PENDING.md:${entry.line}`,
+              entry.content,
+            )}`,
           );
         }
       }
@@ -234,7 +253,7 @@ function formatChanges(result: ChangeClassification): string {
     sections.push(
       [
         '未覆盖',
-        ...uncovered.map((item) => `  变更：[${item.change.type}] ${item.change.path}`),
+        ...uncovered.map((item) => `  ${changeMark(item.change.type)} ${item.change.path}`),
       ].join('\n'),
     );
   }
@@ -267,7 +286,9 @@ function formatContext(
     `范围：${
       assembly.domains.length === 0
         ? '无'
-        : assembly.domains.map((domain) => `领域 ${label(domain.domainIdentifier)}`).join('、')
+        : enumeratePhrases(
+            assembly.domains.map((domain) => `领域 ${domainRef(domain.domainIdentifier)}`),
+          )
     }`,
   );
   lines.push('路径归属：');
@@ -276,7 +297,7 @@ function formatContext(
       `  ${resolution.path === '' ? '.' : resolution.path} → ${
         resolution.domainIdentifier === undefined
           ? '未覆盖'
-          : `领域 ${label(resolution.domainIdentifier)}`
+          : `领域 ${domainRef(resolution.domainIdentifier)}`
       }`,
     );
   }
@@ -287,13 +308,11 @@ function formatContext(
         left.evidence.file.localeCompare(right.evidence.file) ||
         left.evidence.line - right.evidence.line,
     )) {
-      lines.push(
-        `  [${signal.category} | ${signal.status}] ${signal.evidence.file}:${signal.evidence.line} ${signal.evidence.message}`,
-      );
+      lines.push(`  ${checkSignalLine(signal)}`);
     }
   }
   for (const domain of assembly.domains) {
-    lines.push('', `## 领域 ${label(domain.domainIdentifier)}`);
+    lines.push('', `## 领域 ${domainRef(domain.domainIdentifier)}`);
     const sections: readonly [string, readonly ExtractedEntry[]][] = [
       ['真相记录', domain.truthEntries],
       ['术语表', domain.glossaryEntries],
@@ -307,13 +326,13 @@ function formatContext(
     if (domain.pendingEntries.length > 0) {
       lines.push('', '### 待裁决背景', '');
       for (const entry of domain.pendingEntries) {
-        lines.push(`- ${shortId(entry)} ${entry.content}`);
+        lines.push(entryLine(shortId(entry), undefined, entry.content));
       }
     }
     if (domain.dependsOn.length > 0) {
       lines.push('', '### 依赖领域（未展开，可按标识另行查询）', '');
       for (const dependency of domain.dependsOn) {
-        lines.push(`- ${dependency.domain}：${dependency.reason}`);
+        lines.push(`- ${domainRef(dependency.domain)}：${dependency.reason}`);
       }
     }
   }
@@ -427,9 +446,9 @@ function formatPending(groups: readonly PendingGroup[]): string {
   const sections = groups.map((group) => {
     const file = group.containerPath === '' ? 'PENDING.md' : `${group.containerPath}/PENDING.md`;
     const lines = group.entries.map(
-      (entry) => `  ${shortId(entry)} ${file}:${entry.line} ${entry.content}`,
+      (entry) => `  ${entryLine(shortId(entry), `${file}:${entry.line}`, entry.content)}`,
     );
-    return `领域 ${label(group.identifier)}\n${lines.join('\n')}`;
+    return `领域 ${domainRef(group.identifier)}\n${lines.join('\n')}`;
   });
   const total = groups.reduce((sum, group) => sum + group.entries.length, 0);
   return `${sections.join('\n\n')}\n\n共 ${total} 条待裁决条目，分布于 ${groups.length} 个领域。\n`;
@@ -442,15 +461,23 @@ function formatInspection(views: readonly InspectionView[], today: string): stri
   const lines: string[] = [];
   const domains = new Set(views.map((view) => view.member.domainIdentifier));
   lines.push(`巡检集合：${views.length} 条（${domains.size} 个领域）`);
-  const memberLine = (view: InspectionView, prefix = ''): string =>
-    `  ${prefix}${shortId(view.member.entry)} ${view.member.filePath}:${view.member.entry.line} ${view.member.entry.content}`;
+  const memberLine = (view: InspectionView, suffix = ''): string =>
+    `  ${entryLine(
+      shortId(view.member.entry),
+      `${view.member.filePath}:${view.member.entry.line}`,
+      view.member.entry.content,
+    )}${suffix}`;
 
   const buckets = bucketViews(views, today);
   if (buckets.expired.length > 0) {
     lines.push('', '到期：');
     for (const view of buckets.expired) {
       lines.push(
-        `  [expiry | machine-decidable] ${view.member.filePath}:${view.member.entry.line} 复查线索 ${view.effectiveDue} 已到期。`,
+        `  ${signalLine(
+          'expiry',
+          'machine-decidable',
+          `${view.member.filePath}:${view.member.entry.line} 复查线索 ${view.effectiveDue} 已到期。`,
+        )}`,
       );
     }
   }
@@ -464,7 +491,9 @@ function formatInspection(views: readonly InspectionView[], today: string): stri
   }
   if (buckets.upcoming.length > 0) {
     lines.push('', '日期型（未到期）：');
-    for (const view of buckets.upcoming) lines.push(memberLine(view, `${view.effectiveDue} `));
+    for (const view of buckets.upcoming) {
+      lines.push(memberLine(view, `（${view.effectiveDue} 到期）`));
+    }
   }
   const evaluatedPending = buckets.conditionPending.filter(
     (view) => view.derivation?.evaluation !== undefined,
@@ -544,7 +573,7 @@ export async function runInspectDerive(
       failures: result.failures.length,
     });
     io.stdout(
-      `推导完成（agent ${name}）：新推导 ${result.derived} 条，评估 ${result.evaluated} 条。\n`,
+      `推导完成（agent ${name}）：新推导 ${result.derived} 条、评估 ${result.evaluated} 条。\n`,
     );
     for (const failure of result.failures) io.stderr(`${failure}\n`);
     return result.failures.length > 0 ? 1 : 0;
@@ -586,7 +615,11 @@ export async function runInspectRegister(
         io.stderr(`id 有歧义：${problem.selector}，候选：\n`);
         for (const candidate of problem.candidates) {
           io.stderr(
-            `  ${label(candidate.domainIdentifier)}:${shortId(candidate.entry)} ${candidate.entry.content}\n`,
+            `  ${entryLine(
+              entryRef(candidate.domainIdentifier, candidate.entry.contentHash),
+              undefined,
+              candidate.entry.content,
+            )}\n`,
           );
         }
       }
@@ -609,12 +642,12 @@ export async function runInspectRegister(
     await writeDerivation(resolveGlobalPaths(), derivation);
     await audit(io, 'derivation-register', {
       id: shortId(match.entry),
-      domain: label(match.domainIdentifier),
+      domain: domainValue(match.domainIdentifier),
       type: derivation.type,
       ...(derivation.due === undefined ? {} : { due: derivation.due }),
     });
     io.stdout(
-      `已注册推导：${label(match.domainIdentifier)} ${shortId(match.entry)} → ${isDate ? `日期型（${valueArg}）` : '条件型'}\n`,
+      `已注册推导：领域 ${domainRef(match.domainIdentifier)} ${shortId(match.entry)} → ${isDate ? `日期型（${valueArg}）` : '条件型'}\n`,
     );
     return 0;
   } catch (error) {
@@ -651,7 +684,7 @@ export async function runPendingAdd(
     }
     if (plan.kind === 'duplicate') {
       io.stdout(
-        `已存在同内容条目：${label(identifier)} ${plan.contentHash.slice(0, 8)} ${filePath}:${plan.line}\n`,
+        `已存在同内容条目：领域 ${domainRef(identifier)} ${shortHash(plan.contentHash)} ${filePath}:${plan.line}\n`,
       );
       return 0;
     }
@@ -660,12 +693,12 @@ export async function runPendingAdd(
     }
     await writeFile(absolute, plan.source);
     await audit(io, 'pending-add', {
-      domain: label(identifier),
-      id: plan.contentHash.slice(0, 8),
+      domain: domainValue(identifier),
+      id: shortHash(plan.contentHash),
       file: filePath,
     });
     io.stdout(
-      `已登记待裁决条目：${label(identifier)} ${plan.contentHash.slice(0, 8)} ${filePath}:${plan.line}\n`,
+      `已登记待裁决条目：领域 ${domainRef(identifier)} ${shortHash(plan.contentHash)} ${filePath}:${plan.line}\n`,
     );
     return 0;
   } catch (error) {
@@ -700,7 +733,11 @@ export async function runPendingResolve(
           io.stderr(`id 有歧义：${problem.selector}，候选：\n`);
           for (const candidate of problem.candidates) {
             io.stderr(
-              `  ${label(candidate.domainIdentifier)}:${shortId(candidate.entry)} ${candidate.entry.content}\n`,
+              `  ${entryLine(
+                entryRef(candidate.domainIdentifier, candidate.entry.contentHash),
+                undefined,
+                candidate.entry.content,
+              )}\n`,
             );
           }
         }
@@ -744,14 +781,18 @@ export async function runPendingResolve(
     }
 
     await audit(io, 'pending-resolve', {
-      ids: selection.matches.map(
-        (match) => `${label(match.domainIdentifier)}:${shortId(match.entry)}`,
+      ids: selection.matches.map((match) =>
+        entryRef(match.domainIdentifier, match.entry.contentHash),
       ),
     });
     io.stdout(`已处置 ${selection.matches.length} 条待裁决条目：\n`);
     for (const match of selection.matches) {
       io.stdout(
-        `  ${label(match.domainIdentifier)} ${shortId(match.entry)} ${match.entry.content}\n`,
+        `  ${entryLine(
+          entryRef(match.domainIdentifier, match.entry.contentHash),
+          undefined,
+          match.entry.content,
+        )}\n`,
       );
     }
     for (const filePath of emptied) io.stdout(`${filePath} 清空即删。\n`);
@@ -885,7 +926,7 @@ export async function runDomains(io: CliIO, cwd: string): Promise<number> {
     const contents = await Promise.all(
       declared.map((domain) => extractDomainContent(repositoryRoot, repositoryFiles, domain)),
     );
-    const lines = contents
+    const rows = contents
       .map(({ domain, files }) => {
         const identifier = domain.identifier as string;
         const counts: readonly [string, number][] = [
@@ -894,24 +935,26 @@ export async function runDomains(io: CliIO, cwd: string): Promise<number> {
           ['残留', files['RESIDUE.md']?.entries.length ?? 0],
           ['待裁决', files['PENDING.md']?.entries.length ?? 0],
         ];
-        const parts = counts
-          .filter(([name, count]) => name === '真相' || count > 0)
-          .map(([name, count]) => `${name} ${count}`);
+        const records = enumeratePhrases(
+          counts
+            .filter(([name, count]) => name === '真相' || count > 0)
+            .map(([name, count]) => `${name} ${count}`),
+        );
+        let scope = '';
         if (domain.claimedPath !== undefined && domain.claimedPath !== identifier) {
-          parts.push(
-            domain.filesPresent
-              ? `范围 ${label(domain.claimedPath)} 的 ${(domain.files ?? []).join('、')}`
-              : `范围 ${label(domain.claimedPath)}`,
-          );
+          scope = domain.filesPresent
+            ? `范围 ${domainValue(domain.claimedPath)} 的 ${listValues(domain.files ?? [])}`
+            : `范围 ${domainValue(domain.claimedPath)}`;
         }
-        if (domain.dependsOn.length > 0) {
-          parts.push(`依赖 → ${domain.dependsOn.map((item) => label(item.domain)).join('、')}`);
-        }
-        return { identifier, text: `领域 ${label(identifier)}：${parts.join('，')}` };
+        const depends =
+          domain.dependsOn.length === 0
+            ? ''
+            : `依赖 → ${listValues(domain.dependsOn.map((item) => domainRef(item.domain)))}`;
+        return { identifier, cells: [`领域 ${domainRef(identifier)}`, records, scope, depends] };
       })
       .toSorted((left, right) => left.identifier.localeCompare(right.identifier));
-    for (const line of lines) io.stdout(`${line.text}\n`);
-    io.stdout(`\n共 ${lines.length} 个领域。\n`);
+    for (const line of alignRows(rows.map((row) => row.cells))) io.stdout(`${line}\n`);
+    io.stdout(`\n共 ${rows.length} 个领域。\n`);
     return 0;
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);

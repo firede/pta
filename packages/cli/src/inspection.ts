@@ -25,8 +25,11 @@ import {
   type GlobalPaths,
 } from '@pta/runtime';
 
+import { shortHash } from './format.ts';
+
+/** 条目的引用性 id：内容哈希的 8 位短形。 */
 export function shortId(entry: ExtractedEntry): string {
-  return entry.contentHash.slice(0, 8);
+  return shortHash(entry.contentHash);
 }
 
 export function runGit(args: readonly string[], cwd: string): Promise<string> {

@@ -199,7 +199,7 @@ export function classifyChanges(
           category: 'drift suspicion',
           status: 'suspicion',
           domainIdentifier: domain.domainIdentifier,
-          evidence: `实现被触及（${domain.implementationChanges.map((change) => change.path).join('、')}），真相记录未触及。`,
+          evidence: `实现被触及（${domain.implementationChanges.map((change) => change.path).join(', ')}），真相记录未触及。`,
         },
       ];
     }
@@ -209,7 +209,7 @@ export function classifyChanges(
           category: 'drift suspicion',
           status: 'suspicion',
           domainIdentifier: domain.domainIdentifier,
-          evidence: `真相记录被触及（${domain.truthRecordChanges.map((change) => change.path).join('、')}），实现未触及。`,
+          evidence: `真相记录被触及（${domain.truthRecordChanges.map((change) => change.path).join(', ')}），实现未触及。`,
         },
       ];
     }
@@ -223,7 +223,7 @@ export function classifyChanges(
     else reasons.push(reason);
   };
   for (const source of touchedDomains.filter((domain) => domain.truthRecordChanges.length > 0)) {
-    const changedRecords = source.truthRecordChanges.map((change) => change.path).join('、');
+    const changedRecords = source.truthRecordChanges.map((change) => change.path).join(', ');
     for (const domain of discovery.domains) {
       if (domain.identifier === undefined || domain.identifier === source.domainIdentifier)
         continue;

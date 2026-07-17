@@ -36,6 +36,7 @@ import {
   type LogSource,
 } from '@pta/runtime';
 
+import { listValues, shortHash } from './format.ts';
 import {
   bucketViews,
   collectInspectionViews,
@@ -357,7 +358,7 @@ export async function daemonStatus(io: CliIO): Promise<number> {
   const state = await verifiedDaemonState(paths);
   if (state !== undefined) {
     io.stdout(
-      `运行中${managed}：pid ${state.pid}，端口 ${state.port}，启动于 ${state.startedAt}\n地址：http://127.0.0.1:${state.port}/\n`,
+      `运行中${managed}：pid ${state.pid}、端口 ${state.port}、启动于 ${state.startedAt}\n地址：http://127.0.0.1:${state.port}/\n`,
     );
     return 0;
   }
@@ -541,7 +542,11 @@ export async function runDoctor(io: CliIO, cwd: string): Promise<number> {
   try {
     await mkdir(paths.cacheDir, { recursive: true });
     await mkdir(paths.stateDir, { recursive: true });
-    checks.push({ mark: '✓', name: '全局目录', detail: `${paths.cacheDir}｜${paths.stateDir}` });
+    checks.push({
+      mark: '✓',
+      name: '全局目录',
+      detail: listValues([paths.cacheDir, paths.stateDir]),
+    });
   } catch (error) {
     checks.push({
       mark: '✗',
@@ -572,7 +577,7 @@ export async function runDoctor(io: CliIO, cwd: string): Promise<number> {
   checks.push({
     mark: daemon !== undefined ? '✓' : '⚠',
     name: '守护进程',
-    detail: daemon !== undefined ? `运行中（pid ${daemon.pid}，端口 ${daemon.port}）` : '未运行',
+    detail: daemon !== undefined ? `运行中（pid ${daemon.pid}、端口 ${daemon.port}）` : '未运行',
   });
 
   const repositories = await readRepositories(paths);
@@ -594,9 +599,8 @@ export async function runDoctor(io: CliIO, cwd: string): Promise<number> {
   if (toplevel.ok) {
     const repositoryRoot = toplevel.stdout.trim();
     const roots = await run('git', ['-C', cwd, 'rev-list', '--max-parents=0', 'HEAD']);
-    const root = roots.ok
-      ? roots.stdout.trim().split('\n').toSorted().at(0)?.slice(0, 12)
-      : undefined;
+    const first = roots.ok ? roots.stdout.trim().split('\n').toSorted().at(0) : undefined;
+    const root = first === undefined ? undefined : shortHash(first);
     checks.push({
       mark: '✓',
       name: '当前仓库',
@@ -607,7 +611,7 @@ export async function runDoctor(io: CliIO, cwd: string): Promise<number> {
       checks.push({
         mark: signals.conflicts + signals.violations > 0 ? '⚠' : '✓',
         name: '核查信号',
-        detail: `冲突 ${signals.conflicts}，违例 ${signals.violations}，嫌疑 ${signals.suspicions}`,
+        detail: `冲突 ${signals.conflicts}、违例 ${signals.violations}、嫌疑 ${signals.suspicions}`,
       });
     } catch (error) {
       checks.push({
@@ -623,7 +627,7 @@ export async function runDoctor(io: CliIO, cwd: string): Promise<number> {
       checks.push({
         mark: attention > 0 ? '⚠' : '✓',
         name: '巡检集合',
-        detail: `${views.length} 条：到期 ${buckets.expired.length}，评估已触发 ${buckets.conditionTriggered.length}，待推导 ${buckets.awaitingDerivation.length}`,
+        detail: `${views.length} 条：到期 ${buckets.expired.length}、评估已触发 ${buckets.conditionTriggered.length}、待推导 ${buckets.awaitingDerivation.length}`,
       });
     } catch (error) {
       checks.push({
@@ -639,7 +643,7 @@ export async function runDoctor(io: CliIO, cwd: string): Promise<number> {
   for (const check of checks) io.stdout(`${check.mark} ${check.name}：${check.detail}\n`);
   const failed = checks.filter((check) => check.mark === '✗').length;
   io.stdout(
-    `\n${failed === 0 ? '健康' : `发现 ${failed} 项故障`}（✓ ${checks.filter((c) => c.mark === '✓').length}，⚠ ${checks.filter((c) => c.mark === '⚠').length}，✗ ${failed}）\n`,
+    `\n${failed === 0 ? '健康' : `发现 ${failed} 项故障`}（✓ ${checks.filter((c) => c.mark === '✓').length}、⚠ ${checks.filter((c) => c.mark === '⚠').length}、✗ ${failed}）\n`,
   );
   return failed === 0 ? 0 : 1;
 }

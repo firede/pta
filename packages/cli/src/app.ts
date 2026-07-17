@@ -476,7 +476,7 @@ const rootRoutes = buildRouteMap({
       '- 迭代之中：pending add 登记撞到的待裁决问题',
       '- 收尾自察：changes 核对变更漂移，check 核查记录结构',
       '- 定期巡检：inspect 跟进复查线索',
-      '- 全局设施：agent、cron、daemon、dashboard、doctor、logs',
+      '- 全局设施：agent, cron, daemon, dashboard, doctor, logs',
       '',
       '全局旗标 `--cwd <目录>` 与别名 `-C` 让命令在指定目录运行，替代当前目录。',
     ].join('\n'),
