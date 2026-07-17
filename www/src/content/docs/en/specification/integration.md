@@ -6,7 +6,7 @@ dependsOn:
   - argument/projection-view-compiled-on-demand
   - argument/derivable-content-in-tool-layer
   - argument/truth-record-work-language
-sourceHash: 9465a92bab09f01a0af82a013373a244ec301f563de8280a819b3cfbd518fb9d
+sourceHash: 1222a2a91b8a606e080d3ab2821dcf7a2be5206d3ccc442b464be22d1d67ac60
 ---
 
 Integration defines how the architecture plugs into an existing engineering environment: how the truth entry point coexists with ecosystem files, where project-level configuration lives, which facilities checkpoints attach to, and what sharing must satisfy at minimum.
@@ -33,7 +33,7 @@ A project **may** place a reference to project truth in engineering instruction 
 
 The top level keeps only the public fields defined by this specification:
 
-- `workingLanguage`: declares the working language of project truth; the value is a BCP 47 language tag. The declaration makes the expression principle machine-readable, providing a basis for terminology checks and diagnostic wording; it does not prescribe the language of tool interfaces.
+- `workingLanguage`: declares the working language of project truth. The working language delimits the project's semantic space, and a project **must** declare it explicitly rather than leave it to be inferred from content; a repository containing domain declarations without a declared working language constitutes a check signal. The value is a BCP 47 language tag: it takes the language subtag, **may** append a script subtag, and **must not** include region or other subtags — the truth record is a written artifact and script is constitutive of the written language, while wording consistency across regional variation is converged by the project's glossary rather than by finer-grained tags. The declaration makes the expression principle machine-readable, providing a basis for terminology checks and diagnostic wording; it does not prescribe the language of tool interfaces.
 - `externalRoots`: lists the external declaration roots; each item is a directory path in the written form of the identity specification.
 
 A configuration example:
