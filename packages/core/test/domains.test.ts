@@ -41,7 +41,7 @@ async function fixture(): Promise<{ root: string; repositoryFiles: string[] }> {
     'packages/legacy/sub/TRUTH.md': '- 遗留子域判断\n',
     '.pta/legacy/TRUTH.md': '---\npath: packages/legacy\n---\n- 遗留包判断\n',
     'packages/web/.pta/components/TRUTH.md': '---\npath: src/components\n---\n- 外置重复主张\n',
-    'pta.toml': 'externalRoots = ["packages/web/.pta"]\n',
+    'pta.toml': 'workingLanguage = "zh-Hans"\nexternalRoots = [".pta", "packages/web/.pta"]\n',
   };
 
   await Promise.all(
@@ -59,8 +59,9 @@ test('发现目录与默认/配置外置领域，计算标识和层级', async (
   context.after(() => rm(root, { recursive: true, force: true }));
   const result = await discoverDomains(root, repositoryFiles);
 
+  assert.equal(result.workingLanguage, 'zh-Hans');
   assert.deepEqual(result.externalRoots, [
-    { path: '.pta', source: 'default', usable: true },
+    { path: '.pta', source: 'pta.toml', usable: true },
     { path: 'packages/web/.pta', source: 'pta.toml', usable: true },
   ]);
   assert.equal(
@@ -184,4 +185,46 @@ test('TOML 只读取顶层 externalRoots，并暴露语法与字段形态问题'
   await writeFile(join(root, 'pta.toml'), 'externalRoots = [\n');
   const malformed = await discoverDomains(root, ['pta.toml']);
   assert.deepEqual(malformed.problems, [{ code: 'invalid-pta-toml', path: 'pta.toml' }]);
+});
+
+test('externalRoots 整体替代默认，空清单不设外置声明根', async (context) => {
+  const root = await mkdtemp(join(tmpdir(), 'pta-core-'));
+  context.after(() => rm(root, { recursive: true, force: true }));
+  const declaration = ['---', 'path: src', '---', '- 外置判断'].join('\n');
+  await mkdir(join(root, '.pta/tool'), { recursive: true });
+  await mkdir(join(root, 'src'), { recursive: true });
+  await writeFile(join(root, '.pta/tool/TRUTH.md'), declaration);
+  await writeFile(join(root, 'src/keep.txt'), 'src\n');
+  const files = ['pta.toml', '.pta/tool/TRUTH.md', 'src/keep.txt'];
+
+  await writeFile(join(root, 'pta.toml'), 'externalRoots = ["nested/.pta"]\n');
+  const replaced = await discoverDomains(root, files);
+  assert.deepEqual(replaced.externalRoots, [
+    { path: 'nested/.pta', source: 'pta.toml', usable: true },
+  ]);
+
+  await writeFile(join(root, 'pta.toml'), 'externalRoots = []\n');
+  const disabled = await discoverDomains(root, files);
+  assert.deepEqual(disabled.externalRoots, []);
+  // 失去外置声明根身份后，.pta 下的声明按目录声明重新解释，path 字段构成违例而非静默失效。
+  const orphan = disabled.domains.find((domain) => domain.declarationPath === '.pta/tool/TRUTH.md');
+  assert.equal(orphan?.kind, 'directory');
+  assert.deepEqual(orphan?.problems, [{ code: 'directory-declares-path', value: 'src' }]);
+});
+
+test('workingLanguage 读取合形制的值，其余暴露为形态问题', async (context) => {
+  const root = await mkdtemp(join(tmpdir(), 'pta-core-'));
+  context.after(() => rm(root, { recursive: true, force: true }));
+
+  await writeFile(join(root, 'pta.toml'), 'workingLanguage = "zh-Hant"\n');
+  const scripted = await discoverDomains(root, ['pta.toml']);
+  assert.equal(scripted.workingLanguage, 'zh-Hant');
+  assert.deepEqual(scripted.problems, []);
+
+  for (const invalid of ['"zh-CN"', '"ZH"', '"zh-hans"', '3']) {
+    await writeFile(join(root, 'pta.toml'), `workingLanguage = ${invalid}\n`);
+    const rejected = await discoverDomains(root, ['pta.toml']);
+    assert.equal(rejected.workingLanguage, undefined);
+    assert.deepEqual(rejected.problems, [{ code: 'invalid-working-language', path: 'pta.toml' }]);
+  }
 });

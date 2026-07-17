@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { execFile } from 'node:child_process';
 import { existsSync } from 'node:fs';
-import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, realpath, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
@@ -27,7 +27,8 @@ function git(root: string, args: readonly string[]): Promise<void> {
 }
 
 async function repository(files: Readonly<Record<string, string>>): Promise<string> {
-  const root = await mkdtemp(join(tmpdir(), 'pta-cli-'));
+  // 仓库根经 rev-parse 解析为物理路径，夹具先 realpath 使路径比较不受 /var 符号链接影响。
+  const root = await realpath(await mkdtemp(join(tmpdir(), 'pta-cli-')));
   await Promise.all(
     Object.entries(files).map(async ([path, source]) => {
       const absolute = join(root, ...path.split('/'));
@@ -91,7 +92,7 @@ test('未知命令与未知子命令枚举可用动词并返回 2', async () => 
   const rootLevel = capture();
   assert.equal(await runCli(['nonexistent'], rootLevel.io), 2);
   assert.match(rootLevel.stderr(), /未知命令 nonexistent/u);
-  assert.match(rootLevel.stderr(), /可用命令: domains, context, check, changes/u);
+  assert.match(rootLevel.stderr(), /可用命令: init, domains, context, check, changes/u);
 
   const groupLevel = capture();
   assert.equal(await runCli(['cron', 'add', 'x'], groupLevel.io), 2);
@@ -102,6 +103,73 @@ test('--version 输出版本号', async () => {
   const output = capture();
   assert.equal(await runCli(['--version'], output.io), 0);
   assert.match(output.stdout(), /\d+\.\d+\.\d+/u);
+});
+
+test('init 创建 pta.toml 声明工作语言，已存在或标签不合形制时拒绝', async (context) => {
+  const root = await repository({ 'README.md': '# demo\n' });
+  context.after(() => rm(root, { recursive: true, force: true }));
+  await git(root, ['init', '-q']);
+
+  const created = capture();
+  assert.equal(await runCli(['init', '--language', 'zh-Hans'], created.io, root), 0);
+  assert.match(created.stdout(), /完成: 已创建 pta\.toml，工作语言 zh-Hans。/u);
+  const config = await readFile(join(root, 'pta.toml'), 'utf8');
+  assert.match(config, /^workingLanguage = "zh-Hans"$/mu);
+  assert.match(config, /^# externalRoots = \["\.pta"\]$/mu);
+  assert.match(config, /https:\/\/pta\.pub\/specification\/integration\//u);
+
+  const exists = capture();
+  assert.equal(await runCli(['init', '--language', 'en'], exists.io, root), 2);
+  assert.match(exists.stderr(), /pta\.toml 已存在/u);
+  assert.match(await readFile(join(root, 'pta.toml'), 'utf8'), /zh-Hans/u);
+
+  const invalid = capture();
+  assert.equal(await runCli(['init', '--language', 'zh-CN'], invalid.io, root), 2);
+  assert.match(invalid.stderr(), /不合形制/u);
+});
+
+test('配置违例经 check 报告：缺 workingLanguage 与不可用外置根', async (context) => {
+  const missingRoot = await repository({ 'TRUTH.md': '- 根判断\n' });
+  const badRoot = await repository({
+    'pta.toml': 'workingLanguage = "zh-Hans"\nexternalRoots = ["../outside"]\n',
+    'TRUTH.md': '- 根判断\n',
+  });
+  context.after(async () => {
+    await Promise.all([
+      rm(missingRoot, { recursive: true, force: true }),
+      rm(badRoot, { recursive: true, force: true }),
+    ]);
+  });
+  await Promise.all([git(missingRoot, ['init', '-q']), git(badRoot, ['init', '-q'])]);
+
+  const missing = capture();
+  assert.equal(await runCli(['check'], missing.io, missingRoot), 1);
+  assert.match(missing.stdout(), /未声明 workingLanguage/u);
+
+  const bad = capture();
+  assert.equal(await runCli(['check'], bad.io, badRoot), 1);
+  assert.match(bad.stdout(), /\.\.\/outside 不合标识规范/u);
+});
+
+test('domains 头部显示工作语言与外置声明根，命令在子目录解析仓库根', async (context) => {
+  const root = await repository({
+    'pta.toml': 'workingLanguage = "zh-Hans"\nexternalRoots = []\n',
+    'TRUTH.md': '- 根判断\n',
+    'src/index.ts': 'export {};\n',
+  });
+  context.after(() => rm(root, { recursive: true, force: true }));
+  await git(root, ['init', '-q']);
+
+  const output = capture();
+  assert.equal(await runCli(['domains'], output.io, join(root, 'src')), 0);
+  assert.match(output.stdout(), /^工作语言: zh-Hans$/mu);
+  assert.match(output.stdout(), /^外置声明根: 无$/mu);
+  assert.match(output.stdout(), /^领域 `\.` \(根\)/mu);
+  assert.match(output.stdout(), /共 1 个领域。/u);
+
+  const outside = capture();
+  assert.equal(await runCli(['domains'], outside.io, tmpdir()), 2);
+  assert.match(outside.stderr(), /当前目录不在 Git 仓库内/u);
 });
 
 test('check 按领域输出机器违例并返回 1，--cwd 与 -C 等价', async (context) => {
@@ -129,12 +197,16 @@ test('check 按领域输出机器违例并返回 1，--cwd 与 -C 等价', async
 
 test('check 仅有术语不一致嫌疑时返回 0，无信号时输出通过', async (context) => {
   const suspicionRoot = await repository({
+    'pta.toml': 'workingLanguage = "zh-Hans"\n',
     'TRUTH.md': '- 根判断\n',
     'GLOSSARY.md': '- **术语**：上级定义\n',
     'child/TRUTH.md': '- 下级判断\n',
     'child/GLOSSARY.md': '- **术语**：下级定义\n',
   });
-  const cleanRoot = await repository({ 'TRUTH.md': '- 根判断\n' });
+  const cleanRoot = await repository({
+    'pta.toml': 'workingLanguage = "zh-Hans"\n',
+    'TRUTH.md': '- 根判断\n',
+  });
   context.after(async () => {
     await Promise.all([
       rm(suspicionRoot, { recursive: true, force: true }),
@@ -168,6 +240,8 @@ test('domains 列出领域、条目计数、依赖与外置范围', async (conte
   const output = capture();
 
   assert.equal(await runCli(['domains'], output.io, root), 0);
+  assert.match(output.stdout(), /^工作语言: 未声明$/mu);
+  assert.match(output.stdout(), /^外置声明根: \.pta \(默认\)$/mu);
   assert.match(output.stdout(), /^领域 `\.` \(根\) +真相 1、待裁决 1$/mu);
   assert.match(output.stdout(), /^领域 `src` +真相 2、术语 1$/mu);
   assert.match(output.stdout(), /^领域 `\.pta\/ext` +真相 1 +范围 lib$/mu);
@@ -473,6 +547,7 @@ test('参数错误与 git 错误返回 2', async (context) => {
 
 test('check 使用 Git 清单并排除被忽略路径', async (context) => {
   const root = await repository({
+    'pta.toml': 'workingLanguage = "zh-Hans"\n',
     'TRUTH.md': '- 根判断\n',
     '.gitignore': 'ignored/\n',
     'ignored/TRUTH.md': '- **不应出现**\n',
@@ -487,6 +562,7 @@ test('check 使用 Git 清单并排除被忽略路径', async (context) => {
 
 test('check 从清单扣除工作树中已删除的跟踪文件', async (context) => {
   const root = await repository({
+    'pta.toml': 'workingLanguage = "zh-Hans"\n',
     'TRUTH.md': '- 根判断\n',
     'PENDING.md': '- 待裁决问题？当前保留。\n',
   });
@@ -597,6 +673,7 @@ test('inspect derive 经 agent 推导条件线索并评估，报告随之升级'
 
 test('sweepRepositories 扫描注册仓库并落巡检报告，doctor 展示仓库健康', async (context) => {
   const root = await repository({
+    'pta.toml': 'workingLanguage = "zh-Hans"\n',
     'TRUTH.md': '- [?] 风险分级与学会指南一致。2020-01 核对指南是否更新。\n',
   });
   context.after(() => rm(root, { recursive: true, force: true }));

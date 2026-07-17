@@ -16,6 +16,7 @@ import {
   runCheck,
   runContext,
   runDomains,
+  runInit,
   runInspectDerive,
   runInspectList,
   runInspectRegister,
@@ -49,6 +50,28 @@ function parseCount(input: string): number {
   if (!Number.isInteger(value) || value <= 0) throw new Error('数量必须是正整数');
   return value;
 }
+
+const initCommand = buildCommand({
+  func: async function (this: PtaContext, flags: Readonly<{ language: string }>) {
+    this.process.exitCode = await runInit(flags.language, this.io, this.cwd);
+  },
+  parameters: {
+    flags: {
+      language: {
+        kind: 'parsed',
+        parse: String,
+        brief: '工作语言，BCP 47 语言标签，如 zh-Hans, en',
+        placeholder: '标签',
+      },
+    },
+  },
+  docs: {
+    brief: '创建 pta.toml，声明工作语言',
+    fullDescription:
+      '在仓库根创建 pta.toml 并声明工作语言，注释附各字段的一行说明与文档链接；文件已存在时不作改写。这是采纳项目真相架构的第一步。',
+    customUsage: ['--language zh-Hans'],
+  },
+});
 
 const domainsCommand = buildCommand({
   func: async function (this: PtaContext, _flags: {}) {
@@ -453,6 +476,7 @@ const logsCommand = buildCommand({
 
 const rootRoutes = buildRouteMap({
   routes: {
+    init: initCommand,
     domains: domainsCommand,
     context: contextCommand,
     check: checkCommand,
@@ -471,6 +495,7 @@ const rootRoutes = buildRouteMap({
     fullDescription: [
       '项目真相架构命令行工具',
       '',
+      '- 初次采纳：init 创建项目配置，声明工作语言',
       '- 开工之前：domains 看领域全貌，context 取路径背景',
       '- 迭代之中：pending add 登记撞到的待裁决问题',
       '- 收尾自察：changes 核对变更漂移，check 核查记录结构',
@@ -485,6 +510,7 @@ const rootRoutes = buildRouteMap({
 /** 未知子命令时用于枚举可用动词的静态路由表。 */
 export const routeListing: Readonly<Record<string, readonly string[]>> = {
   '': [
+    'init',
     'domains',
     'context',
     'check',

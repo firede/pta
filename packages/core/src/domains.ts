@@ -31,7 +31,10 @@ export type DomainProblem = Readonly<{
   value?: string;
 }>;
 
-export type DiscoveryProblemCode = 'invalid-pta-toml' | 'invalid-external-roots';
+export type DiscoveryProblemCode =
+  | 'invalid-pta-toml'
+  | 'invalid-external-roots'
+  | 'invalid-working-language';
 
 export type DiscoveryProblem = Readonly<{
   code: DiscoveryProblemCode;
@@ -63,6 +66,7 @@ export type ExternalRoot = Readonly<{
 export type DiscoveryResult = Readonly<{
   repositoryRoot: string;
   externalRoots: readonly ExternalRoot[];
+  workingLanguage?: string;
   domains: readonly Domain[];
   problems?: readonly DiscoveryProblem[];
 }>;
@@ -85,11 +89,19 @@ function repositoryPathKind(
   return [...files].some((file) => file.startsWith(`${path}/`)) ? 'directory' : 'missing';
 }
 
-async function externalRoots(
+/** 工作语言标签的书写形态：语言子标签，可附书写系统子标签；地区等其余子标签不入形制。 */
+const workingLanguagePattern = /^[a-z]{2,3}(-[A-Z][a-z]{3})?$/;
+
+export function isWorkingLanguage(value: string): boolean {
+  return workingLanguagePattern.test(value);
+}
+
+async function projectConfiguration(
   repositoryRoot: string,
   files: ReadonlySet<string>,
-): Promise<{ roots: ExternalRoot[]; problems: DiscoveryProblem[] }> {
-  const configured: string[] = [];
+): Promise<{ roots: ExternalRoot[]; workingLanguage?: string; problems: DiscoveryProblem[] }> {
+  let configured: string[] | undefined;
+  let workingLanguage: string | undefined;
   const problems: DiscoveryProblem[] = [];
   if (files.has('pta.toml')) {
     const source = await readFile(join(repositoryRoot, 'pta.toml'), 'utf8');
@@ -98,9 +110,17 @@ async function externalRoots(
       if (Object.prototype.hasOwnProperty.call(parsed, 'externalRoots')) {
         const value: unknown = parsed.externalRoots;
         if (Array.isArray(value) && value.every((item) => typeof item === 'string')) {
-          configured.push(...value);
+          configured = value;
         } else {
           problems.push({ code: 'invalid-external-roots', path: 'pta.toml' });
+        }
+      }
+      if (Object.prototype.hasOwnProperty.call(parsed, 'workingLanguage')) {
+        const value: unknown = parsed.workingLanguage;
+        if (typeof value === 'string' && isWorkingLanguage(value)) {
+          workingLanguage = value;
+        } else {
+          problems.push({ code: 'invalid-working-language', path: 'pta.toml' });
         }
       }
     } catch {
@@ -108,11 +128,16 @@ async function externalRoots(
     }
   }
 
-  const roots: ExternalRoot[] = [{ path: '.pta', source: 'default', usable: true }];
-  for (const path of configured) {
-    roots.push({ path, source: 'pta.toml', usable: isDomainPath(path, false) });
-  }
-  return { roots, problems };
+  // 声明的值整体替代默认，不与默认合并；空清单表示不设外置声明根。
+  const roots: ExternalRoot[] =
+    configured === undefined
+      ? [{ path: '.pta', source: 'default', usable: true }]
+      : configured.map((path) => ({
+          path,
+          source: 'pta.toml',
+          usable: isDomainPath(path, false),
+        }));
+  return { roots, ...(workingLanguage === undefined ? {} : { workingLanguage }), problems };
 }
 
 function insideExternalRoot(path: string, roots: readonly ExternalRoot[]): boolean {
@@ -285,7 +310,7 @@ export async function discoverDomains(
 ): Promise<DiscoveryResult> {
   const normalizedFiles = [...new Set(repositoryFiles)].sort();
   const files = new Set(normalizedFiles);
-  const { roots, problems } = await externalRoots(repositoryRoot, files);
+  const { roots, workingLanguage, problems } = await projectConfiguration(repositoryRoot, files);
   const domains = [
     ...(await directoryDeclarations(repositoryRoot, files, roots)),
     ...(await externalDeclarations(repositoryRoot, files, roots)),
@@ -294,6 +319,7 @@ export async function discoverDomains(
   return {
     repositoryRoot,
     externalRoots: roots,
+    ...(workingLanguage === undefined ? {} : { workingLanguage }),
     domains: assignDomainParents(domains),
     problems,
   };
