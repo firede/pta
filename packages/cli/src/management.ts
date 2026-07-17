@@ -71,7 +71,7 @@ export async function audit(
   try {
     await appendLogRecord(resolveGlobalPaths(), 'cli', event, details);
   } catch {
-    io.stderr('提示：行为日志写入失败。\n');
+    io.stderr('提示: 行为日志写入失败。\n');
   }
 }
 
@@ -141,7 +141,7 @@ export async function daemonRun(io: CliIO): Promise<number> {
     );
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    io.stderr(`守护进程启动失败：${message}\n`);
+    io.stderr(`守护进程启动失败: ${message}\n`);
     return 2;
   }
   await writeDaemonState(paths, {
@@ -246,7 +246,7 @@ export async function daemonRun(io: CliIO): Promise<number> {
   process.on('SIGTERM', shutdown);
   process.on('SIGINT', shutdown);
   io.stdout(
-    `守护进程运行中：http://127.0.0.1:${server.port}/（pid ${process.pid}，地板扫描每小时，cron 条目分钟级调度）\n`,
+    `守护进程运行中: http://127.0.0.1:${server.port}/ (pid ${process.pid}，地板扫描每小时，cron 条目分钟级调度)\n`,
   );
   return 0;
 }
@@ -255,7 +255,7 @@ export async function daemonStart(io: CliIO): Promise<number> {
   const paths = resolveGlobalPaths();
   const existing = await verifiedDaemonState(paths);
   if (existing !== undefined) {
-    io.stdout(`守护进程已在运行：http://127.0.0.1:${existing.port}/（pid ${existing.pid}）\n`);
+    io.stdout(`守护进程已在运行: http://127.0.0.1:${existing.port}/ (pid ${existing.pid})\n`);
     return 0;
   }
   await clearDaemonState(paths);
@@ -275,8 +275,8 @@ export async function daemonStart(io: CliIO): Promise<number> {
     await sleep(100);
     const state = await verifiedDaemonState(paths);
     if (state !== undefined) {
-      const via = manager === undefined ? '' : `（经 ${manager}）`;
-      io.stdout(`守护进程已启动${via}：http://127.0.0.1:${state.port}/（pid ${state.pid}）\n`);
+      const via = manager === undefined ? '' : ` (经 ${manager})`;
+      io.stdout(`守护进程已启动${via}: http://127.0.0.1:${state.port}/ (pid ${state.pid})\n`);
       return 0;
     }
   }
@@ -303,9 +303,9 @@ export async function daemonStop(io: CliIO): Promise<number> {
       }
       let diagnostic = '';
       if (state !== undefined && (await verifyDaemonToken(state))) {
-        diagnostic = `，守护进程仍在响应（端口 ${state.port}）`;
+        diagnostic = `，守护进程仍在响应 (端口 ${state.port})`;
       }
-      io.stderr(`${manager} 停止命令失败：${detail}${diagnostic}\n`);
+      io.stderr(`${manager} 停止命令失败: ${detail}${diagnostic}\n`);
       return 2;
     }
     // legacy launchctl unload 失败时也可能退出 0，停没停以令牌端点消失为准
@@ -334,7 +334,7 @@ export async function daemonStop(io: CliIO): Promise<number> {
   }
   if (!(await verifyDaemonToken(state))) {
     io.stderr(
-      `pid ${state.pid} 未通过身份核验（进程存活但健康端点未返回匹配令牌，可能是 PID 被系统复用或守护进程无响应），未发送信号。\n确认无守护进程在运行后，可删除状态文件：${daemonStateFilePath(paths)}\n`,
+      `pid ${state.pid} 未通过身份核验（进程存活但健康端点未返回匹配令牌，可能是 PID 被系统复用或守护进程无响应），未发送信号。\n确认无守护进程在运行后，可删除状态文件: ${daemonStateFilePath(paths)}\n`,
     );
     return 2;
   }
@@ -354,15 +354,15 @@ export async function daemonStop(io: CliIO): Promise<number> {
 export async function daemonStatus(io: CliIO): Promise<number> {
   const paths = resolveGlobalPaths();
   const manager = await installedServiceManager(process.env['HOME'] ?? '');
-  const managed = manager === undefined ? '' : `（由 ${manager} 管理）`;
+  const managed = manager === undefined ? '' : ` (由 ${manager} 管理)`;
   const state = await verifiedDaemonState(paths);
   if (state !== undefined) {
     io.stdout(
-      `运行中${managed}：pid ${state.pid}、端口 ${state.port}、启动于 ${state.startedAt}\n地址：http://127.0.0.1:${state.port}/\n`,
+      `运行中${managed}: pid ${state.pid}、端口 ${state.port}、启动于 ${state.startedAt}\n地址: http://127.0.0.1:${state.port}/\n`,
     );
     return 0;
   }
-  io.stdout(`未运行${managed}。\n`);
+  io.stdout(`未运行${managed}\n`);
   return 1;
 }
 
@@ -377,11 +377,11 @@ export async function daemonInstall(io: CliIO): Promise<number> {
     await writeFile(plist, renderLaunchdPlist(process.execPath, cliMainPath, logDir));
     const result = await run('launchctl', ['load', '-w', plist]);
     if (!result.ok) {
-      io.stderr(`launchctl 加载失败：${result.stderr.trim()}\n`);
+      io.stderr(`launchctl 加载失败: ${result.stderr.trim()}\n`);
       return 2;
     }
     await audit(io, 'daemon-install', { platform: 'darwin', plist });
-    io.stdout(`已安装为登录守护进程：${plist}\n`);
+    io.stdout(`已安装为登录守护进程: ${plist}\n`);
     return 0;
   }
   if (process.platform === 'linux') {
@@ -391,11 +391,11 @@ export async function daemonInstall(io: CliIO): Promise<number> {
     const reload = await run('systemctl', ['--user', 'daemon-reload']);
     const enable = await run('systemctl', ['--user', 'enable', '--now', 'pta-daemon']);
     if (!reload.ok || !enable.ok) {
-      io.stderr(`systemctl 配置失败：${(reload.stderr + enable.stderr).trim()}\n`);
+      io.stderr(`systemctl 配置失败: ${(reload.stderr + enable.stderr).trim()}\n`);
       return 2;
     }
     await audit(io, 'daemon-install', { platform: 'linux', unit });
-    io.stdout(`已安装为用户级 systemd 服务：${unit}\n`);
+    io.stdout(`已安装为用户级 systemd 服务: ${unit}\n`);
     return 0;
   }
   io.stderr(`暂不支持在 ${process.platform} 上安装守护进程。\n`);
@@ -435,7 +435,7 @@ export async function runDashboard(io: CliIO): Promise<number> {
   const state = await verifiedDaemonState(paths);
   if (state !== undefined) {
     const url = `http://127.0.0.1:${state.port}/`;
-    io.stdout(`管理界面：${url}\n`);
+    io.stdout(`管理界面: ${url}\n`);
     openUrl(url);
     return 0;
   }
@@ -451,7 +451,7 @@ export async function runDashboard(io: CliIO): Promise<number> {
   }
   const url = `http://127.0.0.1:${server.port}/`;
   io.stdout(
-    `守护进程未运行，已启动临时服务：${url}（按 Ctrl-C 结束；长期使用见 pta daemon install）\n`,
+    `守护进程未运行，已启动临时服务: ${url} (按 Ctrl-C 结束；长期使用见 pta daemon install)\n`,
   );
   openUrl(url);
   return 0;
@@ -481,14 +481,14 @@ export async function agentList(io: CliIO): Promise<number> {
   const names = Object.keys(config.agents);
   if (names.length === 0) {
     io.stdout(
-      `未配置 agent。在 ${config.path} 中声明，例如：\n\n[agents.default]\ncommand = ["codex", "exec", "{prompt}"]\n`,
+      `未配置 agent。在 ${config.path} 中声明，例如:\n\n[agents.default]\ncommand = ["codex", "exec", "{prompt}"]\n`,
     );
     return 0;
   }
   for (const name of names.toSorted((left, right) => left.localeCompare(right))) {
     const agent = config.agents[name];
     if (agent === undefined) continue;
-    io.stdout(`${name}：${agent.command.join(' ')}（超时 ${agent.timeoutSeconds}s）\n`);
+    io.stdout(`${name}: ${agent.command.join(' ')} (超时 ${agent.timeoutSeconds}s)\n`);
   }
   return 0;
 }
@@ -502,7 +502,7 @@ export async function agentRun(
   const config = await loadGlobalConfig(resolveGlobalPaths());
   const agent = config.agents[name];
   if (agent === undefined) {
-    io.stderr(`未找到 agent：${name}（见 pta agent list）\n`);
+    io.stderr(`未找到 agent: ${name} (见 pta agent list)\n`);
     return 2;
   }
   const prompt = promptArg ?? (process.stdin.isTTY === true ? undefined : await readStdin());
@@ -514,7 +514,7 @@ export async function agentRun(
   await audit(io, 'agent-run', { name, ok: result.ok, durationMs: result.durationMs });
   io.stdout(result.output);
   if (!result.ok) {
-    io.stderr(`agent 任务失败：${result.error ?? '未知错误'}\n`);
+    io.stderr(`agent 任务失败: ${result.error ?? '未知错误'}\n`);
     return 1;
   }
   return 0;
@@ -528,7 +528,7 @@ export async function runDoctor(io: CliIO, cwd: string): Promise<number> {
   checks.push({
     mark: nodeMajor >= 24 ? '✓' : '✗',
     name: 'Node.js',
-    detail: `${process.version}（要求 >=24）`,
+    detail: `${process.version} (要求 >=24)`,
   });
 
   const git = await run('git', ['--version']);
@@ -563,7 +563,7 @@ export async function runDoctor(io: CliIO, cwd: string): Promise<number> {
       ? config.problems.length === 0
         ? config.path
         : config.problems.join('；')
-      : `${config.path}（未创建，使用默认值）`,
+      : `${config.path} (未创建，使用默认值)`,
   });
 
   const agentCount = Object.keys(config.agents).length;
@@ -577,7 +577,7 @@ export async function runDoctor(io: CliIO, cwd: string): Promise<number> {
   checks.push({
     mark: daemon !== undefined ? '✓' : '⚠',
     name: '守护进程',
-    detail: daemon !== undefined ? `运行中（pid ${daemon.pid}、端口 ${daemon.port}）` : '未运行',
+    detail: daemon !== undefined ? `运行中 (pid ${daemon.pid}、端口 ${daemon.port})` : '未运行',
   });
 
   const repositories = await readRepositories(paths);
@@ -592,7 +592,7 @@ export async function runDoctor(io: CliIO, cwd: string): Promise<number> {
     detail:
       repositories.length > 0
         ? `${repositories.length} 个仓库${lastSweep === undefined ? '，尚无巡检报告' : `，最近巡检 ${lastSweep.slice(0, 16).replace('T', ' ')}`}`
-        : '为空：在仓库里运行任一 pta 命令即可登记',
+        : '为空: 在仓库里运行任一 pta 命令即可登记',
   });
 
   const toplevel = await run('git', ['-C', cwd, 'rev-parse', '--show-toplevel']);
@@ -604,7 +604,7 @@ export async function runDoctor(io: CliIO, cwd: string): Promise<number> {
     checks.push({
       mark: '✓',
       name: '当前仓库',
-      detail: `${repositoryRoot}${root === undefined ? '（无提交基线）' : `（根提交 ${root}）`}`,
+      detail: `${repositoryRoot}${root === undefined ? ' (无提交基线)' : ` (根提交 ${root})`}`,
     });
     try {
       const signals = await collectSignalCounts(repositoryRoot);
@@ -627,7 +627,7 @@ export async function runDoctor(io: CliIO, cwd: string): Promise<number> {
       checks.push({
         mark: attention > 0 ? '⚠' : '✓',
         name: '巡检集合',
-        detail: `${views.length} 条：到期 ${buckets.expired.length}、评估已触发 ${buckets.conditionTriggered.length}、待推导 ${buckets.awaitingDerivation.length}`,
+        detail: `${views.length} 条: 到期 ${buckets.expired.length}、评估已触发 ${buckets.conditionTriggered.length}、待推导 ${buckets.awaitingDerivation.length}`,
       });
     } catch (error) {
       checks.push({
@@ -640,10 +640,10 @@ export async function runDoctor(io: CliIO, cwd: string): Promise<number> {
     checks.push({ mark: '⚠', name: '当前仓库', detail: '当前目录不在 Git 仓库内' });
   }
 
-  for (const check of checks) io.stdout(`${check.mark} ${check.name}：${check.detail}\n`);
+  for (const check of checks) io.stdout(`${check.mark} ${check.name}: ${check.detail}\n`);
   const failed = checks.filter((check) => check.mark === '✗').length;
   io.stdout(
-    `\n${failed === 0 ? '健康' : `发现 ${failed} 项故障`}（✓ ${checks.filter((c) => c.mark === '✓').length}、⚠ ${checks.filter((c) => c.mark === '⚠').length}、✗ ${failed}）\n`,
+    `\n${failed === 0 ? '健康' : `发现 ${failed} 项故障`} (✓ ${checks.filter((c) => c.mark === '✓').length}、⚠ ${checks.filter((c) => c.mark === '⚠').length}、✗ ${failed})\n`,
   );
   return failed === 0 ? 0 : 1;
 }

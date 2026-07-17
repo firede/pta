@@ -34,7 +34,7 @@ function refuseOnProblems(
 ): boolean {
   if (crontab.problems.length === 0) return false;
   io.stderr(
-    `crontab.toml 存在无法解析或无效的条目，写操作会将其永久丢弃，已拒绝执行。先修复 ${crontab.path}：\n`,
+    `crontab.toml 存在无法解析或无效的条目，写操作会将其永久丢弃，已拒绝执行。先修复 ${crontab.path}:\n`,
   );
   for (const problem of crontab.problems) io.stderr(`  ${problem}\n`);
   return true;
@@ -43,7 +43,7 @@ function refuseOnProblems(
 export async function cronList(io: CliIO): Promise<number> {
   const paths = resolveGlobalPaths();
   const crontab = await readCrontab(paths);
-  for (const problem of crontab.problems) io.stderr(`提示：${problem}\n`);
+  for (const problem of crontab.problems) io.stderr(`提示: ${problem}\n`);
   if (crontab.entries.length === 0) {
     io.stdout(`没有 cron 条目。用 pta cron create 创建，存于 ${crontab.path}\n`);
     return 0;
@@ -56,7 +56,7 @@ export async function cronList(io: CliIO): Promise<number> {
       entry.prompt === undefined ? [] : ['prompt 已设'],
     ].flat();
     io.stdout(
-      `${entry.id}：[${entry.schedule}] ${entry.action} ${entry.repository}${extras.length > 0 ? `（${enumeratePhrases(extras)}）` : ''}\n  下次唤醒：${next === undefined ? '不可达' : formatLocalMinute(next)}\n`,
+      `${entry.id}: [${entry.schedule}] ${entry.action} ${entry.repository}${extras.length > 0 ? ` (${enumeratePhrases(extras)})` : ''}\n  下次唤醒: ${next === undefined ? '不可达' : formatLocalMinute(next)}\n`,
     );
   }
   return 0;
@@ -117,7 +117,7 @@ export async function cronEdit(
     fields.agent === undefined &&
     fields.prompt === undefined
   ) {
-    io.stderr('至少提供一个要修改的旗标：--schedule、--repo、--agent 或 --prompt。\n');
+    io.stderr('至少提供一个要修改的旗标：--schedule, --repo, --agent 或 --prompt。\n');
     return 2;
   }
   const paths = resolveGlobalPaths();
@@ -125,7 +125,7 @@ export async function cronEdit(
   if (refuseOnProblems(crontab, io)) return 2;
   const existing = crontab.entries.find((entry) => entry.id === id);
   if (existing === undefined) {
-    io.stderr(`未找到 cron 条目：${id}\n`);
+    io.stderr(`未找到 cron 条目: ${id}\n`);
     return 2;
   }
   const updated: CronEntry = {
@@ -154,7 +154,7 @@ export async function cronDelete(id: string, io: CliIO): Promise<number> {
   const crontab = await readCrontab(paths);
   if (refuseOnProblems(crontab, io)) return 2;
   if (!crontab.entries.some((entry) => entry.id === id)) {
-    io.stderr(`未找到 cron 条目：${id}\n`);
+    io.stderr(`未找到 cron 条目: ${id}\n`);
     return 2;
   }
   await writeCrontab(
@@ -171,7 +171,7 @@ export async function cronRun(id: string, io: CliIO): Promise<number> {
   const crontab = await readCrontab(paths);
   const entry = crontab.entries.find((item) => item.id === id);
   if (entry === undefined) {
-    io.stderr(`未找到 cron 条目：${id}\n`);
+    io.stderr(`未找到 cron 条目: ${id}\n`);
     return 2;
   }
   const config = await loadGlobalConfig(paths);
@@ -182,6 +182,6 @@ export async function cronRun(id: string, io: CliIO): Promise<number> {
     trigger: 'manual',
     ok: outcome.ok,
   });
-  io.stdout(`${outcome.ok ? '完成' : '失败'}：${outcome.detail}\n`);
+  io.stdout(`${outcome.ok ? '完成' : '失败'}: ${outcome.detail}\n`);
   return outcome.ok ? 0 : 1;
 }

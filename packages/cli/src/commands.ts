@@ -215,7 +215,7 @@ function formatChanges(result: ChangeClassification): string {
     const lines = [`领域 ${domainRef(identifier)}`];
     const domain = touched.get(identifier);
     if (domain !== undefined) {
-      lines.push(`  触面：${surfaceLabels[domain.surface]}`);
+      lines.push(`  触面: ${surfaceLabels[domain.surface]}`);
       for (const change of domain.changes) {
         lines.push(`  ${changeMark(change.type)} ${change.path}`);
       }
@@ -224,7 +224,7 @@ function formatChanges(result: ChangeClassification): string {
         lines.push(`  ${signalLine('drift suspicion', 'suspicion', suspicion.evidence)}`);
       }
       if (domain.inboxChanges.length > 0) {
-        lines.push(`  收件箱活动：${listValues(domain.inboxChanges.map((change) => change.path))}`);
+        lines.push(`  收件箱活动: ${listValues(domain.inboxChanges.map((change) => change.path))}`);
       }
     }
     const candidate = candidates.get(identifier);
@@ -234,7 +234,7 @@ function formatChanges(result: ChangeClassification): string {
       }
     }
     if (domain !== undefined) {
-      lines.push('  待裁决背景：');
+      lines.push('  待裁决背景:');
       if (domain.pendingContext.length === 0) lines.push('    无');
       for (const context of domain.pendingContext) {
         for (const entry of context.entries) {
@@ -274,20 +274,20 @@ function formatContext(
 ): string {
   const lines: string[] = ['# 项目真相背景', ''];
   if (source.baseVersion === undefined) {
-    lines.push('来源：无提交基线，所涉内容以哈希标识');
+    lines.push('来源: 无提交基线，所涉内容以哈希标识');
   } else if (source.hashedFiles.length > 0) {
-    lines.push(`来源：${commitRef(source.baseVersion)}，含未入库变更`);
+    lines.push(`来源: ${commitRef(source.baseVersion)}，含未入库变更`);
   } else {
-    lines.push(`来源：${commitRef(source.baseVersion)}`);
+    lines.push(`来源: ${commitRef(source.baseVersion)}`);
   }
   if (source.hashedFiles.length > 0) {
-    lines.push('所涉内容哈希：');
+    lines.push('所涉内容哈希:');
     for (const file of source.hashedFiles) {
       lines.push(`  ${file.path} ${contentHashRef(file.hash)}`);
     }
   }
   lines.push(
-    `范围：${
+    `范围: ${
       assembly.domains.length === 0
         ? '无'
         : enumeratePhrases(
@@ -295,7 +295,7 @@ function formatContext(
           )
     }`,
   );
-  lines.push('路径归属：');
+  lines.push('路径归属:');
   for (const resolution of assembly.resolutions) {
     lines.push(
       `  ${resolution.path === '' ? '.' : resolution.path} → ${
@@ -306,7 +306,7 @@ function formatContext(
     );
   }
   if (signals.length > 0) {
-    lines.push('核查提示（读取时叠加，不入产物）：');
+    lines.push('核查提示 (读取时叠加，不入产物):');
     for (const signal of signals.toSorted(
       (left, right) =>
         left.evidence.file.localeCompare(right.evidence.file) ||
@@ -334,9 +334,9 @@ function formatContext(
       }
     }
     if (domain.dependsOn.length > 0) {
-      lines.push('', '### 依赖领域（未展开，可按标识另行查询）', '');
+      lines.push('', '### 依赖领域 (未展开，可按标识另行查询)', '');
       for (const dependency of domain.dependsOn) {
-        lines.push(`- ${domainRef(dependency.domain)}：${dependency.reason}`);
+        lines.push(`- ${domainRef(dependency.domain)}: ${dependency.reason}`);
       }
     }
   }
@@ -434,7 +434,7 @@ export async function runContext(
     return 0;
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    io.stderr(`pta context 失败：${message}\n`);
+    io.stderr(`pta context 失败: ${message}\n`);
     return 2;
   }
 }
@@ -464,7 +464,7 @@ function formatInspection(views: readonly InspectionView[], today: string): stri
   }
   const lines: string[] = [];
   const domains = new Set(views.map((view) => view.member.domainIdentifier));
-  lines.push(`巡检集合：${views.length} 条（${domains.size} 个领域）`);
+  lines.push(`巡检集合: ${views.length} 条 (${domains.size} 个领域)`);
   const memberLine = (view: InspectionView, suffix = ''): string =>
     `  ${entryLine(
       shortId(view.member.entry),
@@ -474,7 +474,7 @@ function formatInspection(views: readonly InspectionView[], today: string): stri
 
   const buckets = bucketViews(views, today);
   if (buckets.expired.length > 0) {
-    lines.push('', '到期：');
+    lines.push('', '到期:');
     for (const view of buckets.expired) {
       lines.push(
         `  ${signalLine(
@@ -486,17 +486,17 @@ function formatInspection(views: readonly InspectionView[], today: string): stri
     }
   }
   if (buckets.conditionTriggered.length > 0) {
-    lines.push('', '条件型（评估为已触发，待人裁决）：');
+    lines.push('', '条件型 (评估为已触发，待人裁决):');
     for (const view of buckets.conditionTriggered) {
       lines.push(memberLine(view));
       const rationale = view.derivation?.evaluation?.rationale;
-      if (rationale !== undefined && rationale !== '') lines.push(`    评估理由：${rationale}`);
+      if (rationale !== undefined && rationale !== '') lines.push(`    评估理由: ${rationale}`);
     }
   }
   if (buckets.upcoming.length > 0) {
-    lines.push('', '日期型（未到期）：');
+    lines.push('', '日期型 (未到期):');
     for (const view of buckets.upcoming) {
-      lines.push(memberLine(view, `（${view.effectiveDue} 到期）`));
+      lines.push(memberLine(view, ` (${view.effectiveDue} 到期)`));
     }
   }
   const evaluatedPending = buckets.conditionPending.filter(
@@ -506,30 +506,30 @@ function formatInspection(views: readonly InspectionView[], today: string): stri
     (view) => view.derivation?.evaluation === undefined,
   );
   if (evaluatedPending.length > 0) {
-    lines.push('', '条件型（评估未触发）：');
+    lines.push('', '条件型 (评估未触发):');
     for (const view of evaluatedPending) {
       const evaluation = view.derivation?.evaluation;
       const suffix =
         evaluation === undefined
           ? ''
-          : `（${evaluation.result === 'unknown' ? '无法判断' : '未触发'}，${evaluation.evaluatedAt.slice(0, 10)} 由 ${evaluation.evaluatedBy} 评估）`;
+          : ` (${evaluation.result === 'unknown' ? '无法判断' : '未触发'}，${evaluation.evaluatedAt.slice(0, 10)} 由 ${evaluation.evaluatedBy} 评估)`;
       lines.push(`${memberLine(view)}${suffix}`);
     }
   }
   if (unevaluated.length > 0) {
-    lines.push('', '条件型（待评估）：');
+    lines.push('', '条件型 (待评估):');
     for (const view of unevaluated) lines.push(memberLine(view));
   }
   if (buckets.noClue.length > 0) {
-    lines.push('', '无线索（已推导，语义通读兜底）：');
+    lines.push('', '无线索 (已推导，语义通读兜底):');
     for (const view of buckets.noClue) lines.push(memberLine(view));
   }
   if (buckets.awaitingDerivation.length > 0) {
-    lines.push('', '待推导（无线索记录，可 pta inspect derive 或 pta inspect register）：');
+    lines.push('', '待推导 (无线索记录，可 pta inspect derive 或 pta inspect register):');
     for (const view of buckets.awaitingDerivation) lines.push(memberLine(view));
   }
   if (buckets.residue.length > 0) {
-    lines.push('', '残留（整类巡检）：');
+    lines.push('', '残留 (整类巡检):');
     for (const view of buckets.residue) lines.push(memberLine(view));
   }
   return `${lines.join('\n')}\n`;
@@ -544,7 +544,7 @@ export async function runInspectList(io: CliIO, cwd: string): Promise<number> {
     return 0;
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    io.stderr(`pta inspect list 失败：${message}\n`);
+    io.stderr(`pta inspect list 失败: ${message}\n`);
     return 2;
   }
 }
@@ -559,12 +559,12 @@ export async function runInspectDerive(
   const names = Object.keys(config.agents);
   const name = agentArg ?? (names.length === 1 ? names[0] : undefined);
   if (name === undefined) {
-    io.stderr('未指定 agent：pta inspect derive <名称>（配置多个 agent 时必须点名）。\n');
+    io.stderr('未指定 agent: pta inspect derive <名称> (配置多个 agent 时必须点名)。\n');
     return 2;
   }
   const agent = config.agents[name];
   if (agent === undefined) {
-    io.stderr(`未找到 agent：${name}（见 pta agent list）\n`);
+    io.stderr(`未找到 agent: ${name} (见 pta agent list)\n`);
     return 2;
   }
   try {
@@ -577,13 +577,13 @@ export async function runInspectDerive(
       failures: result.failures.length,
     });
     io.stdout(
-      `推导完成（agent ${name}）：新推导 ${result.derived} 条、评估 ${result.evaluated} 条。\n`,
+      `推导完成 (agent ${name}): 新推导 ${result.derived} 条、评估 ${result.evaluated} 条。\n`,
     );
     for (const failure of result.failures) io.stderr(`${failure}\n`);
     return result.failures.length > 0 ? 1 : 0;
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    io.stderr(`pta inspect derive 失败：${message}\n`);
+    io.stderr(`pta inspect derive 失败: ${message}\n`);
     return 2;
   }
 }
@@ -612,11 +612,11 @@ export async function runInspectRegister(
     const selection = selectPendingEntries(refs, [idArg]);
     const problem = selection.problems[0];
     if (problem !== undefined) {
-      if (problem.reason === 'invalid') io.stderr(`无法解析 id：${problem.selector}\n`);
+      if (problem.reason === 'invalid') io.stderr(`无法解析 id: ${problem.selector}\n`);
       else if (problem.reason === 'not-found') {
-        io.stderr(`未匹配任何巡检标记条目：${problem.selector}\n`);
+        io.stderr(`未匹配任何巡检标记条目: ${problem.selector}\n`);
       } else {
-        io.stderr(`id 有歧义：${problem.selector}，候选：\n`);
+        io.stderr(`id 有歧义: ${problem.selector}，候选:\n`);
         for (const candidate of problem.candidates) {
           io.stderr(
             `  ${entryLine(
@@ -651,12 +651,12 @@ export async function runInspectRegister(
       ...(derivation.due === undefined ? {} : { due: derivation.due }),
     });
     io.stdout(
-      `已注册推导：领域 ${domainRef(match.domainIdentifier)} ${shortId(match.entry)} → ${isDate ? `日期型（${valueArg}）` : '条件型'}\n`,
+      `已注册推导: 领域 ${domainRef(match.domainIdentifier)} ${shortId(match.entry)} → ${isDate ? `日期型 (${valueArg})` : '条件型'}\n`,
     );
     return 0;
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    io.stderr(`pta inspect register 失败：${message}\n`);
+    io.stderr(`pta inspect register 失败: ${message}\n`);
     return 2;
   }
 }
@@ -674,7 +674,7 @@ export async function runPendingAdd(
     const identifier = domainArg === '.' ? '' : domainArg;
     const domain = discovery.domains.find((item) => item.identifier === identifier);
     if (domain === undefined) {
-      io.stderr(`未找到领域：${domainArg}\n`);
+      io.stderr(`未找到领域: ${domainArg}\n`);
       return 2;
     }
     const prefix = domain.containerPath === '' ? '' : `${domain.containerPath}/`;
@@ -688,12 +688,12 @@ export async function runPendingAdd(
     }
     if (plan.kind === 'duplicate') {
       io.stdout(
-        `已存在同内容条目：领域 ${domainRef(identifier)} ${shortHash(plan.contentHash)} ${filePath}:${plan.line}\n`,
+        `已存在同内容条目: 领域 ${domainRef(identifier)} ${shortHash(plan.contentHash)} ${filePath}:${plan.line}\n`,
       );
       return 0;
     }
     if (!/[？?]/u.test(text)) {
-      io.stderr('提示：待裁决条目应当以问句表述。\n');
+      io.stderr('提示: 待裁决条目应当以问句表述。\n');
     }
     await writeFile(absolute, plan.source);
     await audit(io, 'pending-add', {
@@ -702,12 +702,12 @@ export async function runPendingAdd(
       file: filePath,
     });
     io.stdout(
-      `已登记待裁决条目：领域 ${domainRef(identifier)} ${shortHash(plan.contentHash)} ${filePath}:${plan.line}\n`,
+      `已登记待裁决条目: 领域 ${domainRef(identifier)} ${shortHash(plan.contentHash)} ${filePath}:${plan.line}\n`,
     );
     return 0;
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    io.stderr(`pta pending add 失败：${message}\n`);
+    io.stderr(`pta pending add 失败: ${message}\n`);
     return 2;
   }
 }
@@ -730,11 +730,11 @@ export async function runPendingResolve(
     if (selection.problems.length > 0) {
       for (const problem of selection.problems) {
         if (problem.reason === 'invalid') {
-          io.stderr(`无法解析 id：${problem.selector}\n`);
+          io.stderr(`无法解析 id: ${problem.selector}\n`);
         } else if (problem.reason === 'not-found') {
-          io.stderr(`未匹配任何待裁决条目：${problem.selector}\n`);
+          io.stderr(`未匹配任何待裁决条目: ${problem.selector}\n`);
         } else {
-          io.stderr(`id 有歧义：${problem.selector}，候选：\n`);
+          io.stderr(`id 有歧义: ${problem.selector}，候选:\n`);
           for (const candidate of problem.candidates) {
             io.stderr(
               `  ${entryLine(
@@ -789,7 +789,7 @@ export async function runPendingResolve(
         entryRef(match.domainIdentifier, match.entry.contentHash),
       ),
     });
-    io.stdout(`已处置 ${selection.matches.length} 条待裁决条目：\n`);
+    io.stdout(`已处置 ${selection.matches.length} 条待裁决条目:\n`);
     for (const match of selection.matches) {
       io.stdout(
         `  ${entryLine(
@@ -803,7 +803,7 @@ export async function runPendingResolve(
     return 0;
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    io.stderr(`pta pending resolve 失败：${message}\n`);
+    io.stderr(`pta pending resolve 失败: ${message}\n`);
     return 2;
   }
 }
@@ -829,7 +829,7 @@ export async function runPendingList(io: CliIO, cwd: string): Promise<number> {
     return 0;
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    io.stderr(`pta pending list 失败：${message}\n`);
+    io.stderr(`pta pending list 失败: ${message}\n`);
     return 2;
   }
 }
@@ -852,7 +852,7 @@ export async function runChanges(
     return 0;
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    io.stderr(`pta changes 失败：${message}\n`);
+    io.stderr(`pta changes 失败: ${message}\n`);
     return 2;
   }
 }
@@ -896,14 +896,14 @@ export async function runCheck(io: CliIO, cwd: string): Promise<number> {
     );
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    io.stderr(`pta check 失败：${message}\n`);
+    io.stderr(`pta check 失败: ${message}\n`);
     return 2;
   }
   await touchRepository(repositoryRoot);
   const signals = [...lintDiscoveryProblems(discovery), ...lintDomainContents(contents)];
 
   if (signals.length === 0) {
-    io.stdout('通过：未发现核查信号。\n');
+    io.stdout('通过: 未发现核查信号。\n');
     return 0;
   }
 
@@ -962,7 +962,7 @@ export async function runDomains(io: CliIO, cwd: string): Promise<number> {
     return 0;
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    io.stderr(`pta domains 失败：${message}\n`);
+    io.stderr(`pta domains 失败: ${message}\n`);
     return 2;
   }
 }

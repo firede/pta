@@ -11,7 +11,7 @@ export function domainValue(identifier: string): string {
 /** 领域引用：反引号给值以可见边界（markdown 免费渲染），根领域补注免漏视。 */
 export function domainRef(identifier: string): string {
   const value = domainValue(identifier);
-  return value === '.' ? '`.`（根）' : `\`${value}\``;
+  return value === '.' ? '`.` (根)' : `\`${value}\``;
 }
 
 /** 引用性 id 一律 8 位短形；完整性哈希（来源基线、内容哈希清单）保留全长，不经此函数。 */

@@ -49,10 +49,10 @@ function unknownCommandHint(args: readonly string[], io: CliIO): void {
   const group = first !== undefined && first in routeListing ? first : '';
   const available = routeListing[group] as readonly string[];
   if (group === '') {
-    io.stderr(`可用命令：${listValues(available)}；pta --help 看分组说明。\n`);
+    io.stderr(`可用命令: ${listValues(available)}；pta --help 看分组说明。\n`);
   } else {
     io.stderr(
-      `「pta ${group}」可用子命令：${listValues(available)}；细节见 pta ${group} --help。\n`,
+      `「pta ${group}」可用子命令: ${listValues(available)}；细节见 pta ${group} --help。\n`,
     );
   }
 }
@@ -90,7 +90,7 @@ async function main(): Promise<void> {
     process.exitCode = await runCli(process.argv.slice(2));
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    process.stderr.write(`pta 运行失败：${message}\n`);
+    process.stderr.write(`pta 运行失败: ${message}\n`);
     process.exitCode = 2;
   }
 }

@@ -254,7 +254,7 @@ export async function runDerivationPass(
       (type === 'condition' && typeof parsed['condition'] !== 'string')
     ) {
       failures.push(
-        `${shortId(view.member.entry)} 推导失败：${result.ok ? '输出不是可解析的线索 JSON' : (result.error ?? '未知错误')}`,
+        `${shortId(view.member.entry)} 推导失败: ${result.ok ? '输出不是可解析的线索 JSON' : (result.error ?? '未知错误')}`,
       );
       continue;
     }
@@ -296,7 +296,7 @@ export async function runDerivationPass(
       (verdict !== 'triggered' && verdict !== 'not-triggered' && verdict !== 'unknown')
     ) {
       failures.push(
-        `${shortId(view.member.entry)} 评估失败：${result.ok ? '输出不是可解析的评估 JSON' : (result.error ?? '未知错误')}`,
+        `${shortId(view.member.entry)} 评估失败: ${result.ok ? '输出不是可解析的评估 JSON' : (result.error ?? '未知错误')}`,
       );
       continue;
     }
@@ -484,7 +484,7 @@ export async function sweepRepositories(
     try {
       reports.push(await inspectRepositoryOnce(repository.root, { paths, now }));
     } catch (error) {
-      errors.push(`${repository.root}：${error instanceof Error ? error.message : String(error)}`);
+      errors.push(`${repository.root}: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
   return { inspected: reports.length, skipped, reports, errors };
