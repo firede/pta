@@ -7,7 +7,7 @@ dependsOn:
   - argument/project-truth-freshness-governance
   - argument/history-still-in-effect
   - argument/material-temporal-claim
-sourceHash: 39b068f777384f7288afeafed035f281b66f6a9de0b67dd26a15a74175ff3da9
+sourceHash: 0509456d4398fe08473a7d52f2b7012402c8007fdf51dad3e2f4450e79a63883
 ---
 
 Domain declaration defines how domains are delimited, marked, and connected in the repository.
@@ -68,7 +68,7 @@ When the repository root carries `TRUTH.md`, it forms the root domain, holding p
 
 When a domain cannot appear as a single directory, or files cannot be placed in the target directory, an external domain declaration **may** be used.
 
-External declarations are collected under external declaration roots, organized as a single level of directories by domain name, and **must not** be nested; `.pta/` at the repository root is the default external declaration root, and other roots are declared in `pta.toml`. A `TRUTH.md` inside an external declaration root is interpreted only as an external declaration and does not make its containing directory a domain. Each external domain's entry point is `{externalRoot}/{name}/TRUTH.md`, whose frontmatter **must** include `path` pointing to a real directory; `files` is optional and used only when the domain needs to be limited to some of the directory's files:
+External declarations are collected under external declaration roots, organized as a single level of directories by domain name, and **must not** be nested; external declaration roots are declared by `externalRoots` in `pta.toml`, and when none are declared, `.pta/` at the repository root is the default external declaration root. A `TRUTH.md` inside an external declaration root is interpreted only as an external declaration and does not make its containing directory a domain. Each external domain's entry point is `{externalRoot}/{name}/TRUTH.md`, whose frontmatter **must** include `path` pointing to a real directory; `files` is optional and used only when the domain needs to be limited to some of the directory's files:
 
 ```markdown
 ---
