@@ -56,9 +56,9 @@ const domainsCommand = buildCommand({
   },
   parameters: {},
   docs: {
-    brief: '领域一览：记录计数与依赖',
+    brief: '列出全部领域及其记录计数与依赖',
     fullDescription:
-      '列出仓库的全部领域，附各领域的真相、术语、残留与待裁决计数，以及 dependsOn 依赖。定向用：先看有哪些领域，再用 context 取具体背景。',
+      '列出仓库的全部领域，附真相、术语、残留与待裁决四类条目计数，以及领域间的依赖关系。先看有哪些领域，再用 context 取具体背景。',
   },
 });
 
@@ -78,9 +78,9 @@ const contextCommand = buildCommand({
     },
   },
   docs: {
-    brief: '路径归属的领域及其真相、术语与待裁决背景',
+    brief: '汇集路径所属领域的真相记录与待裁决背景',
     fullDescription:
-      '汇集路径所属领域及其祖先的真相记录、术语表、残留与待裁决背景，输出附来源标识（版本，含未入库变更时附内容哈希）。开工前先跑它。',
+      '汇集路径所属领域及其祖先的真相记录、术语表、残留与待裁决背景，开工前先跑它。输出附来源标识：已入库状态为版本号，含未入库变更时附内容哈希。',
     customUsage: ['packages/cli src/index.ts', 'docs/argument'],
   },
 });
@@ -91,9 +91,15 @@ const checkCommand = buildCommand({
   },
   parameters: {},
   docs: {
-    brief: '真相记录的结构核查信号',
-    fullDescription:
-      '对全仓真相记录做结构核查，按领域输出核查信号。退出码：0 无信号或仅嫌疑级；1 存在机器可判定的冲突或违例；2 运行失败。',
+    brief: '核查真相记录结构，报告核查信号',
+    fullDescription: [
+      '对全仓真相记录做结构核查，按领域输出核查信号。',
+      '',
+      '退出码：',
+      '- 0 无信号，或仅嫌疑级信号',
+      '- 1 存在机器可判定的冲突或违例',
+      '- 2 运行失败',
+    ].join('\n'),
   },
 });
 
@@ -113,7 +119,7 @@ const changesCommand = buildCommand({
       kind: 'tuple',
       parameters: [
         {
-          brief: '对比基线（提交、分支）；缺省为工作树对 HEAD',
+          brief: '对比基线，接受提交或分支名',
           parse: String,
           placeholder: '基线',
           optional: true,
@@ -122,9 +128,14 @@ const changesCommand = buildCommand({
     },
   },
   docs: {
-    brief: '变更触碰的领域、触面与漂移嫌疑',
-    fullDescription:
-      '按领域分类变更，报告触面（真相记录或实现被触）、漂移嫌疑、传播候选与附近的待裁决背景。缺省对比工作树与 HEAD；给出基线（如 pta changes dev）则对比 基线...HEAD。受托任务收尾时用它自察未解释漂移。',
+    brief: '按领域分类变更，报告触面与漂移嫌疑',
+    fullDescription: [
+      '按领域分类变更，报告触面、漂移嫌疑、传播候选与相关的待裁决背景。受托任务收尾时用它自察未解释漂移。',
+      '',
+      '- 缺省对比工作树与 HEAD',
+      '- 给出基线则对比 基线...HEAD，如 pta changes dev',
+      '- 加 --staged 只看暂存区',
+    ].join('\n'),
   },
 });
 
@@ -145,7 +156,7 @@ const pendingRoutes = buildRouteMap({
         positional: {
           kind: 'tuple',
           parameters: [
-            { brief: '领域标识（仓库根为 .）', parse: String, placeholder: '领域' },
+            { brief: '领域标识，仓库根用 .', parse: String, placeholder: '领域' },
             { brief: '待裁决的问题，以问句表述', parse: String, placeholder: '问题' },
           ],
         },
@@ -153,7 +164,7 @@ const pendingRoutes = buildRouteMap({
       docs: {
         brief: '登记待裁决条目',
         fullDescription:
-          '把迭代中撞到的未裁决判断登记进领域收件箱（PENDING.md）。同内容条目幂等，不重复登记。',
+          '把迭代中撞到的未裁决判断登记进领域收件箱 PENDING.md，同内容条目幂等，不重复登记。',
         customUsage: ['packages "cron 解析器要不要换标准解析器？"'],
       },
     }),
@@ -165,7 +176,7 @@ const pendingRoutes = buildRouteMap({
         positional: {
           kind: 'array',
           parameter: {
-            brief: '条目 id（内容哈希前缀，跨领域歧义时用 领域:id 限定）',
+            brief: '条目 id，即内容哈希前缀；跨领域歧义时用 领域:id 限定',
             parse: String,
             placeholder: '条目id',
           },
@@ -175,13 +186,13 @@ const pendingRoutes = buildRouteMap({
       docs: {
         brief: '处置完成后移除条目',
         fullDescription:
-          '裁决落定后从收件箱移除条目；文件清空即删。处置本身（修订真相或确认）走正常变更流程。',
+          '裁决落定后从收件箱移除条目，文件清空即删。处置本身走正常变更流程，修订真相或确认仍然成立。',
         customUsage: ['1a2b3c4d', 'src:5e6f7a8b 9c0d1e2f'],
       },
     }),
   },
   docs: {
-    brief: '收件箱：登记与处置待裁决问题',
+    brief: '登记与处置待裁决问题',
   },
 });
 
@@ -192,7 +203,7 @@ const inspectRoutes = buildRouteMap({
         this.process.exitCode = await runInspectList(this.io, this.cwd);
       },
       parameters: {},
-      docs: { brief: '巡检集合：到期、触发与待推导' },
+      docs: { brief: '列出巡检集合的到期与触发情况' },
     }),
     register: buildCommand({
       func: async function (this: PtaContext, _flags: {}, id: string, value: string) {
@@ -204,7 +215,7 @@ const inspectRoutes = buildRouteMap({
           parameters: [
             { brief: '巡检标记条目的 id', parse: String, placeholder: '条目id' },
             {
-              brief: '到期日期（YYYY-MM 或 YYYY-MM-DD），或字面量「条件」',
+              brief: '到期日期如 2027-01，或字面量「条件」',
               parse: String,
               placeholder: '线索值',
             },
@@ -212,7 +223,7 @@ const inspectRoutes = buildRouteMap({
         },
       },
       docs: {
-        brief: '为条目注册复查线索（写入全局工具层）',
+        brief: '为条目注册复查线索，记入全局工具层',
         customUsage: ['1a2b3c4d 2027-01', '1a2b3c4d 条件'],
       },
     }),
@@ -225,7 +236,7 @@ const inspectRoutes = buildRouteMap({
           kind: 'tuple',
           parameters: [
             {
-              brief: 'agent 名称（仅配置一个时可缺省）',
+              brief: 'agent 名称，仅配置一个时可缺省',
               parse: String,
               placeholder: '名称',
               optional: true,
@@ -237,7 +248,7 @@ const inspectRoutes = buildRouteMap({
     }),
   },
   docs: {
-    brief: '巡检：复查线索的消费与推导',
+    brief: '查看与推导巡检复查线索',
   },
 });
 
@@ -248,7 +259,7 @@ const agentRoutes = buildRouteMap({
         this.process.exitCode = await agentList(this.io);
       },
       parameters: {},
-      docs: { brief: '已配置的 agent' },
+      docs: { brief: '列出已配置的 agent' },
     }),
     run: buildCommand({
       func: async function (this: PtaContext, _flags: {}, name: string, prompt?: string) {
@@ -260,7 +271,7 @@ const agentRoutes = buildRouteMap({
           parameters: [
             { brief: 'agent 名称', parse: String, placeholder: '名称' },
             {
-              brief: '提示词（缺省时从标准输入读取）',
+              brief: '提示词，缺省时从标准输入读取',
               parse: String,
               placeholder: '提示词',
               optional: true,
@@ -272,7 +283,7 @@ const agentRoutes = buildRouteMap({
     }),
   },
   docs: {
-    brief: '第三方 agent 接入（全局配置）',
+    brief: '管理与调用第三方 agent',
   },
 });
 
@@ -285,7 +296,7 @@ const cronRoutes = buildRouteMap({
         this.process.exitCode = await cronList(this.io);
       },
       parameters: {},
-      docs: { brief: '全部 cron 条目与下次唤醒时间' },
+      docs: { brief: '列出 cron 条目与下次唤醒时间' },
     }),
     create: buildCommand({
       func: async function (
@@ -314,7 +325,7 @@ const cronRoutes = buildRouteMap({
           kind: 'tuple',
           parameters: [
             { brief: '条目 id', parse: String, placeholder: 'id' },
-            { brief: 'cron 表达式（五段）', parse: String, placeholder: 'cron表达式' },
+            { brief: '五段式 cron 表达式', parse: String, placeholder: 'cron表达式' },
             { brief: '动作类型', parse: cronActionParser, placeholder: '动作' },
           ],
         },
@@ -375,7 +386,7 @@ const cronRoutes = buildRouteMap({
     }),
   },
   docs: {
-    brief: '全局定时任务',
+    brief: '管理全局定时任务',
   },
 });
 
@@ -391,16 +402,16 @@ function daemonAction(brief: string, action: (io: CliIO) => Promise<number>): Co
 
 const daemonRoutes = buildRouteMap({
   routes: {
-    install: daemonAction('安装为登录守护进程（launchd/systemd）', daemonInstall),
+    install: daemonAction('安装为登录时自启的守护进程', daemonInstall),
     uninstall: daemonAction('卸载守护进程', daemonUninstall),
-    status: daemonAction('守护进程状态（未运行时退出码 1）', daemonStatus),
+    status: daemonAction('查看守护进程状态，未运行时退出码 1', daemonStatus),
     start: daemonAction('启动守护进程', daemonStart),
     stop: daemonAction('停止守护进程', daemonStop),
     restart: daemonAction('重启守护进程', daemonRestart),
-    run: daemonAction('前台运行守护进程（服务管理器的内部入口）', daemonRun),
+    run: daemonAction('在前台运行守护进程，供服务管理器调用', daemonRun),
   },
   docs: {
-    brief: '守护进程：地板巡检与 cron 调度',
+    brief: '管理承担定时巡检与 cron 调度的守护进程',
     hideRoute: { run: true },
   },
 });
@@ -410,7 +421,7 @@ const dashboardCommand = buildCommand({
     this.process.exitCode = await runDashboard(this.io);
   },
   parameters: {},
-  docs: { brief: '打开管理面板（复用守护进程或临时起服务）' },
+  docs: { brief: '打开浏览器管理面板，复用守护进程或临时起服务' },
 });
 
 const doctorCommand = buildCommand({
@@ -418,7 +429,7 @@ const doctorCommand = buildCommand({
     this.process.exitCode = await runDoctor(this.io, this.cwd);
   },
   parameters: {},
-  docs: { brief: '环境健康检查（有故障时退出码 1）' },
+  docs: { brief: '检查环境健康状况，有故障时退出码 1' },
 });
 
 const logsCommand = buildCommand({
@@ -430,7 +441,7 @@ const logsCommand = buildCommand({
       kind: 'tuple',
       parameters: [
         {
-          brief: '显示条数（默认 20）',
+          brief: '显示条数，默认 20',
           parse: parseCount,
           placeholder: '数量',
           optional: true,
@@ -438,7 +449,7 @@ const logsCommand = buildCommand({
       ],
     },
   },
-  docs: { brief: '全局行为日志' },
+  docs: { brief: '查看全局行为日志' },
 });
 
 const rootRoutes = buildRouteMap({
@@ -457,17 +468,17 @@ const rootRoutes = buildRouteMap({
     logs: logsCommand,
   },
   docs: {
-    brief: '项目真相架构的命令行界面',
+    brief: '项目真相架构命令行工具',
     fullDescription: [
-      '项目真相架构（PTA）的命令行界面。',
+      '项目真相架构命令行工具',
       '',
-      '开工拿背景：domains 看领域全貌，context 取路径背景。',
-      '迭代之中：pending add 登记撞到的待裁决问题。',
-      '收尾自察：changes 核对变更与漂移，check 核查记录结构。',
-      '保鲜：inspect 消费巡检复查线索。',
-      '全局设施：agent、cron、daemon、dashboard、doctor、logs。',
+      '- 开工之前：domains 看领域全貌，context 取路径背景',
+      '- 迭代之中：pending add 登记撞到的待裁决问题',
+      '- 收尾自察：changes 核对变更漂移，check 核查记录结构',
+      '- 定期巡检：inspect 跟进复查线索',
+      '- 全局设施：agent、cron、daemon、dashboard、doctor、logs',
       '',
-      '全局旗标 --cwd <目录>（别名 -C）：在指定目录运行，替代当前目录。',
+      '全局旗标 `--cwd <目录>` 与别名 `-C` 让命令在指定目录运行，替代当前目录。',
     ].join('\n'),
   },
 });

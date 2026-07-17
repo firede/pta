@@ -59,10 +59,10 @@ test('裸 pta 输出动线叙事帮助并返回 0', async () => {
   const output = capture();
   assert.equal(await runCli([], output.io), 0);
   assert.match(output.stdout(), /用法/u);
-  assert.match(output.stdout(), /开工拿背景/u);
-  assert.match(output.stdout(), /全局旗标 --cwd/u);
+  assert.match(output.stdout(), /- 开工之前：/u);
+  assert.match(output.stdout(), /全局旗标 `--cwd <目录>`/u);
   assert.match(output.stdout(), /domains {2,}/u);
-  assert.match(output.stdout(), /收件箱：登记与处置待裁决问题/u);
+  assert.match(output.stdout(), /登记与处置待裁决问题/u);
   assert.equal(output.stderr(), '');
 });
 
@@ -84,7 +84,7 @@ test('裸组名输出组帮助，命令帮助含示例与完整说明', async ()
 
   const revealed = capture();
   assert.equal(await runCli(['daemon', '--help-all'], revealed.io), 0);
-  assert.match(revealed.stdout(), /前台运行守护进程（服务管理器的内部入口）/u);
+  assert.match(revealed.stdout(), /在前台运行守护进程，供服务管理器调用/u);
 });
 
 test('未知命令与未知子命令枚举可用动词并返回 2', async () => {
