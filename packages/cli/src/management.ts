@@ -37,6 +37,7 @@ import {
 } from '@pta/runtime';
 
 import { listValues, shortHash } from './format.ts';
+import { plainStyle, type Style } from './style.ts';
 import {
   bucketViews,
   collectInspectionViews,
@@ -49,6 +50,8 @@ import { executeCronEntry } from './schedule.ts';
 export type CliIO = Readonly<{
   stdout: (text: string) => void;
   stderr: (text: string) => void;
+  /** 标准输出的样式能力，入口判定注入；缺省素文。标准错误恒为素文。 */
+  style?: Style;
 }>;
 
 const cliMainPath = fileURLToPath(new URL('./main.ts', import.meta.url));
@@ -463,9 +466,10 @@ export async function runLogs(limit: number, io: CliIO): Promise<number> {
     io.stdout('暂无日志。\n');
     return 0;
   }
+  const s = io.style ?? plainStyle;
   for (const record of records) {
     const details = record.details === undefined ? '' : ` ${JSON.stringify(record.details)}`;
-    io.stdout(`${record.time} [${record.source}] ${record.event}${details}\n`);
+    io.stdout(`${s.dim(record.time)} ${s.dim(`[${record.source}]`)} ${record.event}${details}\n`);
   }
   return 0;
 }
@@ -640,10 +644,18 @@ export async function runDoctor(io: CliIO, cwd: string): Promise<number> {
     checks.push({ mark: '⚠', name: '当前仓库', detail: '当前目录不在 Git 仓库内' });
   }
 
-  for (const check of checks) io.stdout(`${check.mark} ${check.name}: ${check.detail}\n`);
+  const s = io.style ?? plainStyle;
+  const markPaint: Readonly<Record<Check['mark'], (text: string) => string>> = {
+    '✓': s.green,
+    '⚠': s.yellow,
+    '✗': s.red,
+  };
+  for (const check of checks) {
+    io.stdout(`${markPaint[check.mark](check.mark)} ${check.name}: ${check.detail}\n`);
+  }
   const failed = checks.filter((check) => check.mark === '✗').length;
   io.stdout(
-    `\n${failed === 0 ? '健康' : `发现 ${failed} 项故障`} (✓ ${checks.filter((c) => c.mark === '✓').length}、⚠ ${checks.filter((c) => c.mark === '⚠').length}、✗ ${failed})\n`,
+    `\n${failed === 0 ? s.green('健康') : s.red(`发现 ${failed} 项故障`)} (✓ ${checks.filter((c) => c.mark === '✓').length}、⚠ ${checks.filter((c) => c.mark === '⚠').length}、✗ ${failed})\n`,
   );
   return failed === 0 ? 0 : 1;
 }
