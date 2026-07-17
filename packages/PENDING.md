@@ -1,0 +1,1 @@
+- CLI 输出词汇表已定稿实施（设计存档 local/design/cli-output-vocabulary.md，输出即合同）：其核心裁定是否钉入 packages 领域真相记录？
