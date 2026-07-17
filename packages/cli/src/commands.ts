@@ -8,6 +8,7 @@ import {
   discoverDomains,
   extractDomainContent,
   hashFileBytes,
+  isWorkingLanguage,
   lintDiscoveryProblems,
   lintDomainContents,
   planPendingAddition,
@@ -57,6 +58,15 @@ import {
 } from './inspection.ts';
 import { audit, type CliIO } from './management.ts';
 import { plainStyle, type Style } from './style.ts';
+
+/** 仓库根由实现判定：Git 绑定下即 cwd 所在仓库的顶层目录。 */
+async function repositoryRootFor(cwd: string): Promise<string> {
+  try {
+    return (await runGit(['rev-parse', '--show-toplevel'], resolve(cwd))).trim();
+  } catch {
+    throw new Error('当前目录不在 Git 仓库内');
+  }
+}
 
 function changeType(status: string): ChangeType {
   if (status.includes('?')) return 'untracked';
@@ -382,8 +392,8 @@ export async function runContext(
   io: CliIO,
   cwd: string,
 ): Promise<number> {
-  const repositoryRoot = resolve(cwd);
   try {
+    const repositoryRoot = await repositoryRootFor(cwd);
     const repositoryFiles = await gitRepositoryFiles(repositoryRoot);
     const discovery = await discoverDomains(repositoryRoot, repositoryFiles);
     const contents = await Promise.all(
@@ -547,8 +557,8 @@ function formatInspection(
 }
 
 export async function runInspectList(io: CliIO, cwd: string): Promise<number> {
-  const repositoryRoot = resolve(cwd);
   try {
+    const repositoryRoot = await repositoryRootFor(cwd);
     const views = await collectInspectionViews(repositoryRoot);
     await touchRepository(repositoryRoot);
     io.stdout(
@@ -563,7 +573,6 @@ export async function runInspectList(io: CliIO, cwd: string): Promise<number> {
 }
 
 export async function runInspectDerive(name: string, io: CliIO, cwd: string): Promise<number> {
-  const repositoryRoot = resolve(cwd);
   const config = await loadGlobalConfig(resolveGlobalPaths());
   const agent = config.agents[name];
   if (agent === undefined) {
@@ -571,6 +580,7 @@ export async function runInspectDerive(name: string, io: CliIO, cwd: string): Pr
     return 2;
   }
   try {
+    const repositoryRoot = await repositoryRootFor(cwd);
     const result = await runDerivationPass(repositoryRoot, name, agent);
     await touchRepository(repositoryRoot);
     await audit(io, 'inspect-derive', {
@@ -602,8 +612,8 @@ export async function runInspectRegister(
     io.stderr('线索值必须是到期日期（YYYY-MM 或 YYYY-MM-DD），或字面量「条件」。\n');
     return 2;
   }
-  const repositoryRoot = resolve(cwd);
   try {
+    const repositoryRoot = await repositoryRootFor(cwd);
     const views = await collectInspectionViews(repositoryRoot);
     const refs = views
       .filter((view) => view.member.kind === 'marked-truth')
@@ -670,8 +680,8 @@ export async function runPendingAdd(
   io: CliIO,
   cwd: string,
 ): Promise<number> {
-  const repositoryRoot = resolve(cwd);
   try {
+    const repositoryRoot = await repositoryRootFor(cwd);
     const repositoryFiles = await gitRepositoryFiles(repositoryRoot);
     const discovery = await discoverDomains(repositoryRoot, repositoryFiles);
     const identifier = domainArg === '.' ? '' : domainArg;
@@ -720,8 +730,8 @@ export async function runPendingResolve(
   io: CliIO,
   cwd: string,
 ): Promise<number> {
-  const repositoryRoot = resolve(cwd);
   try {
+    const repositoryRoot = await repositoryRootFor(cwd);
     const repositoryFiles = await gitRepositoryFiles(repositoryRoot);
     const discovery = await discoverDomains(repositoryRoot, repositoryFiles);
     const contents = await Promise.all(
@@ -810,8 +820,8 @@ export async function runPendingResolve(
 }
 
 export async function runPendingList(io: CliIO, cwd: string): Promise<number> {
-  const repositoryRoot = resolve(cwd);
   try {
+    const repositoryRoot = await repositoryRootFor(cwd);
     const repositoryFiles = await gitRepositoryFiles(repositoryRoot);
     const discovery = await discoverDomains(repositoryRoot, repositoryFiles);
     const contents = await Promise.all(
@@ -845,8 +855,8 @@ export async function runChanges(
     io.stderr('基线与 --staged 不能同时使用。\n');
     return 2;
   }
-  const repositoryRoot = resolve(cwd);
   try {
+    const repositoryRoot = await repositoryRootFor(cwd);
     const { classification, containers } = await classifyRepository(repositoryRoot, base, staged);
     await touchRepository(repositoryRoot);
     io.stdout(formatChanges(classification, containers, io.style ?? plainStyle));
@@ -889,10 +899,11 @@ async function classifyRepository(
 }
 
 export async function runCheck(io: CliIO, cwd: string): Promise<number> {
-  const repositoryRoot = resolve(cwd);
+  let repositoryRoot = '';
   let discovery;
   let contents;
   try {
+    repositoryRoot = await repositoryRootFor(cwd);
     const repositoryFiles = await gitRepositoryFiles(repositoryRoot);
     discovery = await discoverDomains(repositoryRoot, repositoryFiles);
     contents = await Promise.all(
@@ -924,11 +935,62 @@ export async function runCheck(io: CliIO, cwd: string): Promise<number> {
     : 0;
 }
 
-export async function runDomains(io: CliIO, cwd: string): Promise<number> {
-  const repositoryRoot = resolve(cwd);
+export async function runInit(language: string, io: CliIO, cwd: string): Promise<number> {
+  if (!isWorkingLanguage(language)) {
+    io.stderr('工作语言标签不合形制：取语言子标签，可附书写系统子标签，如 zh-Hans, en。\n');
+    return 2;
+  }
   try {
+    const repositoryRoot = await repositoryRootFor(cwd);
+    const configPath = join(repositoryRoot, 'pta.toml');
+    const template = [
+      '# 项目真相架构的项目级配置，字段定义见集成规范：https://pta.pub/specification/integration/',
+      '',
+      '# 项目真相的工作语言：BCP 47 语言标签，取语言子标签，可附书写系统子标签。',
+      `workingLanguage = "${language}"`,
+      '',
+      '# 外置领域声明根的完整清单，未声明时默认 [".pta"]，空清单表示不设外置声明根。',
+      '# externalRoots = [".pta"]',
+      '',
+    ].join('\n');
+    // wx 原子创建：检查与写入合为一步，并发场景下不截断他人刚写入的配置。
+    try {
+      await writeFile(configPath, template, { flag: 'wx' });
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === 'EEXIST') {
+        io.stderr('pta.toml 已存在，不作改写；直接编辑该文件调整配置。\n');
+        return 2;
+      }
+      throw error;
+    }
+    await touchRepository(repositoryRoot);
+    await audit(io, 'init', { workingLanguage: language });
+    io.stdout(`完成: 已创建 pta.toml，工作语言 ${language}。\n`);
+    return 0;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    io.stderr(`pta init 失败: ${message}\n`);
+    return 2;
+  }
+}
+
+export async function runDomains(io: CliIO, cwd: string): Promise<number> {
+  try {
+    const repositoryRoot = await repositoryRootFor(cwd);
     const repositoryFiles = await gitRepositoryFiles(repositoryRoot);
     const discovery = await discoverDomains(repositoryRoot, repositoryFiles);
+    const s = io.style ?? plainStyle;
+    io.stdout(`工作语言: ${discovery.workingLanguage ?? '未声明'}\n`);
+    const roots =
+      discovery.externalRoots.length === 0
+        ? '无'
+        : listValues(
+            discovery.externalRoots.map((root) => {
+              const note = root.source === 'default' ? ' (默认)' : root.usable ? '' : ' (不可用)';
+              return note === '' ? root.path : `${root.path}${s.dim(note)}`;
+            }),
+          );
+    io.stdout(`外置声明根: ${roots}\n\n`);
     const declared = discovery.domains.filter((domain) => domain.identifier !== undefined);
     if (declared.length === 0) {
       io.stdout('没有发现领域：仓库中无领域声明。\n');
@@ -937,7 +999,6 @@ export async function runDomains(io: CliIO, cwd: string): Promise<number> {
     const contents = await Promise.all(
       declared.map((domain) => extractDomainContent(repositoryRoot, repositoryFiles, domain)),
     );
-    const s = io.style ?? plainStyle;
     const rows = contents
       .map(({ domain, files }) => {
         const identifier = domain.identifier as string;

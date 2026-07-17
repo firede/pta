@@ -1,6 +1,6 @@
 import { posix } from 'node:path';
 
-import type { DiscoveryResult, Domain, DomainContent } from './domains.ts';
+import type { DiscoveryProblemCode, DiscoveryResult, Domain, DomainContent } from './domains.ts';
 import type { ExtractedContent, ExtractedEntry, FileKind } from './entries.ts';
 import { normalizeEntryContent } from './identity.ts';
 
@@ -427,17 +427,48 @@ export function lintDomainContents(contents: readonly DomainContent[]): readonly
   ];
 }
 
+const discoveryProblemMessages: Readonly<Record<DiscoveryProblemCode, string>> = {
+  'invalid-pta-toml': 'pta.toml 无法按 TOML 1.0 解析，未产生任何配置。',
+  'invalid-external-roots': 'pta.toml 顶层字段 externalRoots 必须是字符串数组，未采用该字段。',
+  'invalid-working-language':
+    'pta.toml 顶层字段 workingLanguage 必须是语言子标签加可选书写系统子标签，未采用该字段。',
+};
+
 export function lintDiscoveryProblems(discovery: DiscoveryResult): readonly CheckSignal[] {
-  return (discovery.problems ?? []).map((problem) =>
+  const problems = discovery.problems ?? [];
+  const configurationSignal = (message: string): CheckSignal =>
     signal({
       category: 'violation',
-      anchor: { kind: 'project-configuration', path: problem.path },
-      message:
-        problem.code === 'invalid-pta-toml'
-          ? 'pta.toml 无法按 TOML 1.0 解析，未产生任何配置。'
-          : 'pta.toml 顶层字段 externalRoots 必须是字符串数组，未采用该字段。',
-      file: problem.path,
+      anchor: { kind: 'project-configuration', path: 'pta.toml' },
+      message,
+      file: 'pta.toml',
       line: 1,
-    }),
+    });
+
+  const signals = problems.map((problem) =>
+    configurationSignal(discoveryProblemMessages[problem.code]),
   );
+
+  for (const root of discovery.externalRoots) {
+    if (root.usable) continue;
+    signals.push(
+      configurationSignal(
+        `externalRoots 中的 ${root.path} 不合标识规范的路径书写形态，该外置声明根未生效。`,
+      ),
+    );
+  }
+
+  // 工作语言必须显式声明；配置本身已有问题时不叠加缺声明信号，先修配置。
+  const configurationBroken = problems.some(
+    (problem) => problem.code === 'invalid-pta-toml' || problem.code === 'invalid-working-language',
+  );
+  if (
+    discovery.workingLanguage === undefined &&
+    !configurationBroken &&
+    discovery.domains.length > 0
+  ) {
+    signals.push(configurationSignal('版本库中存在领域声明，pta.toml 未声明 workingLanguage。'));
+  }
+
+  return signals;
 }

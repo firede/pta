@@ -1,0 +1,7 @@
+# 项目真相架构的项目级配置，字段定义见集成规范：https://pta.pub/specification/integration/
+
+# 项目真相的工作语言：BCP 47 语言标签，取语言子标签，可附书写系统子标签。
+workingLanguage = "zh-Hans"
+
+# 外置领域声明根的完整清单，未声明时默认 [".pta"]，空清单表示不设外置声明根。
+# externalRoots = [".pta"]

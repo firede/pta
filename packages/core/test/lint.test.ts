@@ -146,6 +146,61 @@ test('无法解析的 YAML frontmatter 与 TOML 配置问题产生违例', () =>
   assert.equal(hasMessage(signals, '无法按 TOML 1.0 解析'), true);
 });
 
+test('工作语言未声明且存在领域声明时产生违例，配置已有问题或无领域时不叠加', () => {
+  const domain = directoryDomain('src').domain;
+  const declared = lintDiscoveryProblems({
+    repositoryRoot: '/repo',
+    externalRoots: [],
+    workingLanguage: 'zh-Hans',
+    domains: [domain],
+    problems: [],
+  });
+  assert.equal(hasMessage(declared, '未声明 workingLanguage'), false);
+
+  const missing = lintDiscoveryProblems({
+    repositoryRoot: '/repo',
+    externalRoots: [],
+    domains: [domain],
+    problems: [],
+  });
+  assert.equal(hasMessage(missing, '未声明 workingLanguage'), true);
+
+  const empty = lintDiscoveryProblems({
+    repositoryRoot: '/repo',
+    externalRoots: [],
+    domains: [],
+    problems: [],
+  });
+  assert.equal(hasMessage(empty, '未声明 workingLanguage'), false);
+
+  const invalid = lintDiscoveryProblems({
+    repositoryRoot: '/repo',
+    externalRoots: [],
+    domains: [domain],
+    problems: [{ code: 'invalid-working-language', path: 'pta.toml' }],
+  });
+  assert.equal(hasMessage(invalid, '语言子标签'), true);
+  assert.equal(hasMessage(invalid, '未声明 workingLanguage'), false);
+});
+
+test('不可用的外置声明根产生违例', () => {
+  const signals = lintDiscoveryProblems({
+    repositoryRoot: '/repo',
+    externalRoots: [
+      { path: '.pta', source: 'pta.toml', usable: true },
+      { path: '../outside', source: 'pta.toml', usable: false },
+    ],
+    workingLanguage: 'zh-Hans',
+    domains: [],
+    problems: [],
+  });
+  assert.equal(hasMessage(signals, '../outside 不合标识规范'), true);
+  assert.equal(
+    signals.every((item) => item.category === 'violation'),
+    true,
+  );
+});
+
 test('同一目录的整目录声明重复产生冲突，不同目录不产生', () => {
   const directory = directoryDomain('src');
   const duplicate = externalDomain('src-copy', 'src');
