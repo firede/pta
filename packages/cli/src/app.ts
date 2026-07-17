@@ -228,7 +228,7 @@ const inspectRoutes = buildRouteMap({
       },
     }),
     derive: buildCommand({
-      func: async function (this: PtaContext, _flags: {}, agent?: string) {
+      func: async function (this: PtaContext, _flags: {}, agent: string) {
         this.process.exitCode = await runInspectDerive(agent, this.io, this.cwd);
       },
       parameters: {
@@ -236,10 +236,9 @@ const inspectRoutes = buildRouteMap({
           kind: 'tuple',
           parameters: [
             {
-              brief: 'agent 名称，仅配置一个时可缺省',
+              brief: 'agent 名称，见 pta agent list',
               parse: String,
               placeholder: '名称',
-              optional: true,
             },
           ],
         },
@@ -476,7 +475,7 @@ const rootRoutes = buildRouteMap({
       '- 迭代之中：pending add 登记撞到的待裁决问题',
       '- 收尾自察：changes 核对变更漂移，check 核查记录结构',
       '- 定期巡检：inspect 跟进复查线索',
-      '- 全局设施：agent、cron、daemon、dashboard、doctor、logs',
+      '- 全局设施：agent, cron, daemon, dashboard, doctor, logs',
       '',
       '全局旗标 `--cwd <目录>` 与别名 `-C` 让命令在指定目录运行，替代当前目录。',
     ].join('\n'),

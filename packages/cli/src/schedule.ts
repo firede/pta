@@ -9,6 +9,7 @@ import {
   type GlobalPaths,
 } from '@pta/runtime';
 
+import { listValues } from './format.ts';
 import { inspectRepositoryOnce } from './inspection.ts';
 
 export type CronRunOutcome = Readonly<{
@@ -66,7 +67,7 @@ export async function executeCronEntry(
       action: entry.action,
       ok: false,
       detail:
-        missing.length > 0 ? `仓库不可达：${missing.join('、')}` : '注册表为空，没有可巡检的仓库',
+        missing.length > 0 ? `仓库不可达: ${listValues(missing)}` : '注册表为空，没有可巡检的仓库',
     };
   }
 
@@ -87,15 +88,15 @@ export async function executeCronEntry(
             ? ''
             : `，推导 ${report.derivation.derived}/评估 ${report.derivation.evaluated}${report.derivation.failures.length > 0 ? `/失败 ${report.derivation.failures.length}` : ''}`;
         parts.push(
-          `${root}：到期 ${report.counts.expired}，条件触发 ${report.counts.conditionTriggered}${derivation}`,
+          `${root}: 到期 ${report.counts.expired}、条件触发 ${report.counts.conditionTriggered}${derivation}`,
         );
         if ((report.derivation?.failures.length ?? 0) > 0) ok = false;
       } catch (error) {
         ok = false;
-        parts.push(`${root}：${error instanceof Error ? error.message : String(error)}`);
+        parts.push(`${root}: ${error instanceof Error ? error.message : String(error)}`);
       }
     }
-    if (missing.length > 0) parts.push(`不可达：${missing.join('、')}`);
+    if (missing.length > 0) parts.push(`不可达: ${listValues(missing)}`);
     return { id: entry.id, action: entry.action, ok, detail: parts.join('；') };
   }
 
@@ -113,7 +114,7 @@ export async function executeCronEntry(
     action: entry.action,
     ok: result.ok,
     detail: result.ok
-      ? `完成（${Math.round(result.durationMs / 1000)}s），输出存于 ${outputFile}`
-      : `失败：${result.error ?? '未知错误'}`,
+      ? `完成 (${Math.round(result.durationMs / 1000)}s)，输出存于 ${outputFile}`
+      : `失败: ${result.error ?? '未知错误'}`,
   };
 }

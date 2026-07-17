@@ -25,8 +25,11 @@ import {
   type GlobalPaths,
 } from '@pta/runtime';
 
+import { shortHash } from './format.ts';
+
+/** 条目的引用性 id：内容哈希的 8 位短形。 */
 export function shortId(entry: ExtractedEntry): string {
-  return entry.contentHash.slice(0, 8);
+  return shortHash(entry.contentHash);
 }
 
 export function runGit(args: readonly string[], cwd: string): Promise<string> {
@@ -251,7 +254,7 @@ export async function runDerivationPass(
       (type === 'condition' && typeof parsed['condition'] !== 'string')
     ) {
       failures.push(
-        `${shortId(view.member.entry)} 推导失败：${result.ok ? '输出不是可解析的线索 JSON' : (result.error ?? '未知错误')}`,
+        `${shortId(view.member.entry)} 推导失败: ${result.ok ? '输出不是可解析的线索 JSON' : (result.error ?? '未知错误')}`,
       );
       continue;
     }
@@ -293,7 +296,7 @@ export async function runDerivationPass(
       (verdict !== 'triggered' && verdict !== 'not-triggered' && verdict !== 'unknown')
     ) {
       failures.push(
-        `${shortId(view.member.entry)} 评估失败：${result.ok ? '输出不是可解析的评估 JSON' : (result.error ?? '未知错误')}`,
+        `${shortId(view.member.entry)} 评估失败: ${result.ok ? '输出不是可解析的评估 JSON' : (result.error ?? '未知错误')}`,
       );
       continue;
     }
@@ -481,7 +484,7 @@ export async function sweepRepositories(
     try {
       reports.push(await inspectRepositoryOnce(repository.root, { paths, now }));
     } catch (error) {
-      errors.push(`${repository.root}：${error instanceof Error ? error.message : String(error)}`);
+      errors.push(`${repository.root}: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
   return { inspected: reports.length, skipped, reports, errors };
