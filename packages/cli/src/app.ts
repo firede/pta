@@ -52,24 +52,26 @@ function parseCount(input: string): number {
 }
 
 const initCommand = buildCommand({
-  func: async function (this: PtaContext, flags: Readonly<{ language: string }>) {
-    this.process.exitCode = await runInit(flags.language, this.io, this.cwd);
+  func: async function (this: PtaContext, _flags: {}, language: string) {
+    this.process.exitCode = await runInit(language, this.io, this.cwd);
   },
   parameters: {
-    flags: {
-      language: {
-        kind: 'parsed',
-        parse: String,
-        brief: '工作语言，BCP 47 语言标签，如 zh-Hans, en',
-        placeholder: '标签',
-      },
+    positional: {
+      kind: 'tuple',
+      parameters: [
+        {
+          brief: '工作语言，BCP 47 语言标签，如 zh-Hans, en',
+          parse: String,
+          placeholder: '语言',
+        },
+      ],
     },
   },
   docs: {
     brief: '创建 pta.toml，声明工作语言',
     fullDescription:
       '在仓库根创建 pta.toml 并声明工作语言，注释附各字段的一行说明与文档链接；文件已存在时不作改写。这是采纳项目真相架构的第一步。',
-    customUsage: ['--language zh-Hans'],
+    customUsage: ['zh-Hans'],
   },
 });
 
