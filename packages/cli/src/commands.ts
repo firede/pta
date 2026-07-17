@@ -1,4 +1,4 @@
-import { access, readFile, rm, writeFile } from 'node:fs/promises';
+import { readFile, rm, writeFile } from 'node:fs/promises';
 import { join, posix, resolve } from 'node:path';
 
 import {
@@ -943,16 +943,6 @@ export async function runInit(language: string, io: CliIO, cwd: string): Promise
   try {
     const repositoryRoot = await repositoryRootFor(cwd);
     const configPath = join(repositoryRoot, 'pta.toml');
-    let exists = true;
-    try {
-      await access(configPath);
-    } catch {
-      exists = false;
-    }
-    if (exists) {
-      io.stderr('pta.toml 已存在，不作改写；直接编辑该文件调整配置。\n');
-      return 2;
-    }
     const template = [
       '# 项目真相架构的项目级配置，字段定义见集成规范：https://pta.pub/specification/integration/',
       '',
@@ -963,7 +953,16 @@ export async function runInit(language: string, io: CliIO, cwd: string): Promise
       '# externalRoots = [".pta"]',
       '',
     ].join('\n');
-    await writeFile(configPath, template);
+    // wx 原子创建：检查与写入合为一步，并发场景下不截断他人刚写入的配置。
+    try {
+      await writeFile(configPath, template, { flag: 'wx' });
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === 'EEXIST') {
+        io.stderr('pta.toml 已存在，不作改写；直接编辑该文件调整配置。\n');
+        return 2;
+      }
+      throw error;
+    }
     await touchRepository(repositoryRoot);
     await audit(io, 'init', { workingLanguage: language });
     io.stdout(`完成: 已创建 pta.toml，工作语言 ${language}。\n`);
