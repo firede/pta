@@ -56,6 +56,7 @@ import {
   type InspectionView,
 } from './inspection.ts';
 import { audit, type CliIO } from './management.ts';
+import { plainStyle, type Style } from './style.ts';
 
 function changeType(status: string): ChangeType {
   if (status.includes('?')) return 'untracked';
@@ -159,15 +160,16 @@ function domainLabel(signal: CheckSignal): string {
   return anchor.kind === 'domain-declaration' ? anchor.declarationPath : '.';
 }
 
-function checkSignalLine(signal: CheckSignal): string {
+function checkSignalLine(signal: CheckSignal, s: Style = plainStyle): string {
   return signalLine(
     signal.category,
     signal.status,
     `${signal.evidence.file}:${signal.evidence.line} ${signal.evidence.message}`,
+    s,
   );
 }
 
-function formatSignals(signals: readonly CheckSignal[]): string {
+function formatSignals(signals: readonly CheckSignal[], s: Style = plainStyle): string {
   const byDomain = new Map<string, CheckSignal[]>();
   for (const signal of signals) {
     const label = domainLabel(signal);
@@ -187,8 +189,8 @@ function formatSignals(signals: readonly CheckSignal[]): string {
           left.evidence.line - right.evidence.line ||
           left.category.localeCompare(right.category),
       )
-      .map((signal) => `  ${checkSignalLine(signal)}`);
-    sections.push(`领域 ${domainRef(domain)}\n${lines.join('\n')}`);
+      .map((signal) => `  ${checkSignalLine(signal, s)}`);
+    sections.push(`${s.bold(`领域 ${domainRef(domain, s)}`)}\n${lines.join('\n')}`);
   }
   return `${sections.join('\n\n')}\n`;
 }
@@ -200,7 +202,11 @@ const surfaceLabels: Readonly<Record<string, string>> = {
   'inbox-only': '仅收件箱活动',
 };
 
-function formatChanges(result: ChangeClassification): string {
+function formatChanges(
+  result: ChangeClassification,
+  containers: ReadonlyMap<string, string>,
+  s: Style = plainStyle,
+): string {
   if (result.ownership.length === 0) return '未发现变更。\n';
   const touched = new Map(result.touchedDomains.map((domain) => [domain.domainIdentifier, domain]));
   const suspicions = new Map(
@@ -212,16 +218,16 @@ function formatChanges(result: ChangeClassification): string {
   const identifiers = new Set([...touched.keys(), ...candidates.keys()]);
   const sections: string[] = [];
   for (const identifier of [...identifiers].sort((left, right) => left.localeCompare(right))) {
-    const lines = [`领域 ${domainRef(identifier)}`];
+    const lines = [s.bold(`领域 ${domainRef(identifier, s)}`)];
     const domain = touched.get(identifier);
     if (domain !== undefined) {
       lines.push(`  触面: ${surfaceLabels[domain.surface]}`);
       for (const change of domain.changes) {
-        lines.push(`  ${changeMark(change.type)} ${change.path}`);
+        lines.push(`  ${changeMark(change.type, s)} ${change.path}`);
       }
       const suspicion = suspicions.get(identifier);
       if (suspicion !== undefined) {
-        lines.push(`  ${signalLine('drift suspicion', 'suspicion', suspicion.evidence)}`);
+        lines.push(`  ${signalLine('drift suspicion', 'suspicion', suspicion.evidence, s)}`);
       }
       if (domain.inboxChanges.length > 0) {
         lines.push(`  收件箱活动: ${listValues(domain.inboxChanges.map((change) => change.path))}`);
@@ -230,20 +236,19 @@ function formatChanges(result: ChangeClassification): string {
     const candidate = candidates.get(identifier);
     if (candidate !== undefined) {
       for (const reason of candidate.reasons) {
-        lines.push(`  ${signalLine('propagation', 'candidate', reason.evidence)}`);
+        lines.push(`  ${signalLine('propagation', 'candidate', reason.evidence, s)}`);
       }
     }
     if (domain !== undefined) {
       lines.push('  待裁决背景:');
       if (domain.pendingContext.length === 0) lines.push('    无');
       for (const context of domain.pendingContext) {
+        const container = containers.get(context.domainIdentifier) ?? '';
+        const file = container === '' ? 'PENDING.md' : `${container}/PENDING.md`;
         for (const entry of context.entries) {
+          // 与 pending list 同一形制：id 一律裸形，领域归属由完整路径定位自明。
           lines.push(
-            `    ${entryLine(
-              entryRef(context.domainIdentifier, entry.contentHash),
-              `PENDING.md:${entry.line}`,
-              entry.content,
-            )}`,
+            `    ${entryLine(shortHash(entry.contentHash), `${file}:${entry.line}`, entry.content, s)}`,
           );
         }
       }
@@ -254,8 +259,8 @@ function formatChanges(result: ChangeClassification): string {
   if (uncovered.length > 0) {
     sections.push(
       [
-        '未覆盖',
-        ...uncovered.map((item) => `  ${changeMark(item.change.type)} ${item.change.path}`),
+        s.bold('未覆盖'),
+        ...uncovered.map((item) => `  ${changeMark(item.change.type, s)} ${item.change.path}`),
       ].join('\n'),
     );
   }
@@ -445,20 +450,24 @@ type PendingGroup = Readonly<{
   entries: readonly ExtractedEntry[];
 }>;
 
-function formatPending(groups: readonly PendingGroup[]): string {
+function formatPending(groups: readonly PendingGroup[], s: Style = plainStyle): string {
   if (groups.length === 0) return '收件箱为空：没有待裁决条目。\n';
   const sections = groups.map((group) => {
     const file = group.containerPath === '' ? 'PENDING.md' : `${group.containerPath}/PENDING.md`;
     const lines = group.entries.map(
-      (entry) => `  ${entryLine(shortId(entry), `${file}:${entry.line}`, entry.content)}`,
+      (entry) => `  ${entryLine(shortId(entry), `${file}:${entry.line}`, entry.content, s)}`,
     );
-    return `领域 ${domainRef(group.identifier)}\n${lines.join('\n')}`;
+    return `${s.bold(`领域 ${domainRef(group.identifier, s)}`)}\n${lines.join('\n')}`;
   });
   const total = groups.reduce((sum, group) => sum + group.entries.length, 0);
   return `${sections.join('\n\n')}\n\n共 ${total} 条待裁决条目，分布于 ${groups.length} 个领域；处置用 pta pending resolve <id>。\n`;
 }
 
-function formatInspection(views: readonly InspectionView[], today: string): string {
+function formatInspection(
+  views: readonly InspectionView[],
+  today: string,
+  s: Style = plainStyle,
+): string {
   if (views.length === 0) {
     return '巡检集合为空：没有巡检标记条目与残留条目。\n';
   }
@@ -470,23 +479,25 @@ function formatInspection(views: readonly InspectionView[], today: string): stri
       shortId(view.member.entry),
       `${view.member.filePath}:${view.member.entry.line}`,
       view.member.entry.content,
-    )}${suffix}`;
+      s,
+    )}${suffix === '' ? '' : s.dim(suffix)}`;
 
   const buckets = bucketViews(views, today);
   if (buckets.expired.length > 0) {
-    lines.push('', '到期:');
+    lines.push('', s.bold('到期:'));
     for (const view of buckets.expired) {
       lines.push(
         `  ${signalLine(
           'expiry',
           'machine-decidable',
           `${view.member.filePath}:${view.member.entry.line} 复查线索 ${view.effectiveDue} 已到期。`,
+          s,
         )}`,
       );
     }
   }
   if (buckets.conditionTriggered.length > 0) {
-    lines.push('', '条件型 (评估为已触发，待人裁决):');
+    lines.push('', s.bold('条件型 (评估为已触发，待人裁决):'));
     for (const view of buckets.conditionTriggered) {
       lines.push(memberLine(view));
       const rationale = view.derivation?.evaluation?.rationale;
@@ -494,7 +505,7 @@ function formatInspection(views: readonly InspectionView[], today: string): stri
     }
   }
   if (buckets.upcoming.length > 0) {
-    lines.push('', '日期型 (未到期):');
+    lines.push('', s.bold('日期型 (未到期):'));
     for (const view of buckets.upcoming) {
       lines.push(memberLine(view, ` (${view.effectiveDue} 到期)`));
     }
@@ -506,30 +517,30 @@ function formatInspection(views: readonly InspectionView[], today: string): stri
     (view) => view.derivation?.evaluation === undefined,
   );
   if (evaluatedPending.length > 0) {
-    lines.push('', '条件型 (评估未触发):');
+    lines.push('', s.bold('条件型 (评估未触发):'));
     for (const view of evaluatedPending) {
       const evaluation = view.derivation?.evaluation;
       const suffix =
         evaluation === undefined
           ? ''
           : ` (${evaluation.result === 'unknown' ? '无法判断' : '未触发'}，${evaluation.evaluatedAt.slice(0, 10)} 由 ${evaluation.evaluatedBy} 评估)`;
-      lines.push(`${memberLine(view)}${suffix}`);
+      lines.push(memberLine(view, suffix));
     }
   }
   if (unevaluated.length > 0) {
-    lines.push('', '条件型 (待评估):');
+    lines.push('', s.bold('条件型 (待评估):'));
     for (const view of unevaluated) lines.push(memberLine(view));
   }
   if (buckets.noClue.length > 0) {
-    lines.push('', '无线索 (已推导，语义通读兜底):');
+    lines.push('', s.bold('无线索 (已推导，语义通读兜底):'));
     for (const view of buckets.noClue) lines.push(memberLine(view));
   }
   if (buckets.awaitingDerivation.length > 0) {
-    lines.push('', '待推导 (无线索记录，可 pta inspect derive 或 pta inspect register):');
+    lines.push('', s.bold('待推导 (无线索记录，可 pta inspect derive 或 pta inspect register):'));
     for (const view of buckets.awaitingDerivation) lines.push(memberLine(view));
   }
   if (buckets.residue.length > 0) {
-    lines.push('', '残留 (整类巡检):');
+    lines.push('', s.bold('残留 (整类巡检):'));
     for (const view of buckets.residue) lines.push(memberLine(view));
   }
   return `${lines.join('\n')}\n`;
@@ -540,7 +551,9 @@ export async function runInspectList(io: CliIO, cwd: string): Promise<number> {
   try {
     const views = await collectInspectionViews(repositoryRoot);
     await touchRepository(repositoryRoot);
-    io.stdout(formatInspection(views, new Date().toISOString().slice(0, 10)));
+    io.stdout(
+      formatInspection(views, new Date().toISOString().slice(0, 10), io.style ?? plainStyle),
+    );
     return 0;
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
@@ -641,7 +654,7 @@ export async function runInspectRegister(
       ...(derivation.due === undefined ? {} : { due: derivation.due }),
     });
     io.stdout(
-      `已注册推导: 领域 ${domainRef(match.domainIdentifier)} ${shortId(match.entry)} → ${isDate ? `日期型 (${valueArg})` : '条件型'}\n`,
+      `已注册推导: 领域 ${domainRef(match.domainIdentifier, io.style ?? plainStyle)} ${shortId(match.entry)} → ${isDate ? `日期型 (${valueArg})` : '条件型'}\n`,
     );
     return 0;
   } catch (error) {
@@ -678,7 +691,7 @@ export async function runPendingAdd(
     }
     if (plan.kind === 'duplicate') {
       io.stdout(
-        `已存在同内容条目: 领域 ${domainRef(identifier)} ${shortHash(plan.contentHash)} ${filePath}:${plan.line}\n`,
+        `已存在同内容条目: 领域 ${domainRef(identifier, io.style ?? plainStyle)} ${shortHash(plan.contentHash)} ${filePath}:${plan.line}\n`,
       );
       return 0;
     }
@@ -692,7 +705,7 @@ export async function runPendingAdd(
       file: filePath,
     });
     io.stdout(
-      `已登记待裁决条目: 领域 ${domainRef(identifier)} ${shortHash(plan.contentHash)} ${filePath}:${plan.line}\n`,
+      `已登记待裁决条目: 领域 ${domainRef(identifier, io.style ?? plainStyle)} ${shortHash(plan.contentHash)} ${filePath}:${plan.line}\n`,
     );
     return 0;
   } catch (error) {
@@ -779,14 +792,12 @@ export async function runPendingResolve(
         entryRef(match.domainIdentifier, match.entry.contentHash),
       ),
     });
+    const s = io.style ?? plainStyle;
     io.stdout(`已处置 ${selection.matches.length} 条待裁决条目:\n`);
     for (const match of selection.matches) {
+      const domain = ` (领域 ${domainRef(match.domainIdentifier, s)})`;
       io.stdout(
-        `  ${entryLine(
-          entryRef(match.domainIdentifier, match.entry.contentHash),
-          undefined,
-          match.entry.content,
-        )}\n`,
+        `  ${entryLine(shortId(match.entry), undefined, match.entry.content, s)}${s.dim(domain)}\n`,
       );
     }
     for (const filePath of emptied) io.stdout(`${filePath} 清空即删。\n`);
@@ -815,7 +826,7 @@ export async function runPendingList(io: CliIO, cwd: string): Promise<number> {
         return [{ identifier: domain.identifier, containerPath: domain.containerPath, entries }];
       })
       .sort((left, right) => left.identifier.localeCompare(right.identifier));
-    io.stdout(formatPending(groups));
+    io.stdout(formatPending(groups, io.style ?? plainStyle));
     return 0;
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
@@ -836,9 +847,9 @@ export async function runChanges(
   }
   const repositoryRoot = resolve(cwd);
   try {
-    const result = await classifyRepository(repositoryRoot, base, staged);
+    const { classification, containers } = await classifyRepository(repositoryRoot, base, staged);
     await touchRepository(repositoryRoot);
-    io.stdout(formatChanges(result));
+    io.stdout(formatChanges(classification, containers, io.style ?? plainStyle));
     return 0;
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
@@ -851,7 +862,7 @@ async function classifyRepository(
   repositoryRoot: string,
   base: string | undefined,
   staged: boolean,
-): Promise<ChangeClassification> {
+): Promise<{ classification: ChangeClassification; containers: ReadonlyMap<string, string> }> {
   const [changes, repositoryFiles] = await Promise.all([
     gitChanges(repositoryRoot, base, staged),
     gitRepositoryFiles(repositoryRoot),
@@ -869,7 +880,12 @@ async function classifyRepository(
         : [[domain.identifier, files['PENDING.md']?.entries ?? []] as const],
     ),
   );
-  return classifyChanges(discovery, changes, pendingEntries);
+  const containers = new Map(
+    discovery.domains.flatMap((domain) =>
+      domain.identifier === undefined ? [] : [[domain.identifier, domain.containerPath] as const],
+    ),
+  );
+  return { classification: classifyChanges(discovery, changes, pendingEntries), containers };
 }
 
 export async function runCheck(io: CliIO, cwd: string): Promise<number> {
@@ -891,13 +907,14 @@ export async function runCheck(io: CliIO, cwd: string): Promise<number> {
   }
   await touchRepository(repositoryRoot);
   const signals = [...lintDiscoveryProblems(discovery), ...lintDomainContents(contents)];
+  const s = io.style ?? plainStyle;
 
   if (signals.length === 0) {
-    io.stdout('通过: 未发现核查信号。\n');
+    io.stdout(`${s.green('通过')}: 未发现核查信号。\n`);
     return 0;
   }
 
-  io.stdout(formatSignals(signals));
+  io.stdout(formatSignals(signals, s));
   return signals.some(
     (signal) =>
       signal.status === 'machine-decidable' &&
@@ -920,6 +937,7 @@ export async function runDomains(io: CliIO, cwd: string): Promise<number> {
     const contents = await Promise.all(
       declared.map((domain) => extractDomainContent(repositoryRoot, repositoryFiles, domain)),
     );
+    const s = io.style ?? plainStyle;
     const rows = contents
       .map(({ domain, files }) => {
         const identifier = domain.identifier as string;
@@ -943,8 +961,11 @@ export async function runDomains(io: CliIO, cwd: string): Promise<number> {
         const depends =
           domain.dependsOn.length === 0
             ? ''
-            : `依赖 → ${listValues(domain.dependsOn.map((item) => domainRef(item.domain)))}`;
-        return { identifier, cells: [`领域 ${domainRef(identifier)}`, records, scope, depends] };
+            : `依赖 → ${listValues(domain.dependsOn.map((item) => domainRef(item.domain, s)))}`;
+        return {
+          identifier,
+          cells: [s.bold(`领域 ${domainRef(identifier, s)}`), records, scope, depends],
+        };
       })
       .toSorted((left, right) => left.identifier.localeCompare(right.identifier));
     for (const line of alignRows(rows.map((row) => row.cells))) io.stdout(`${line}\n`);

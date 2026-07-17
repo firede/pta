@@ -22,6 +22,7 @@ const forbidden: readonly Readonly<{
   { pattern: /join\(', '\)/u, reason: '值并列须经 listValues', allowIn: ['format.ts'] },
   { pattern: /slice\(0, 8\)/u, reason: '引用性 id 须经 shortHash', allowIn: ['format.ts'] },
   { pattern: /slice\(0, 12\)/u, reason: '引用性 id 一律 8 位短形，须经 shortHash' },
+  { pattern: /\\x1b|/u, reason: 'SGR 转义须经 style 层，不得散落各处', allowIn: ['style.ts'] },
 ];
 
 test('词汇表禁形制不在原语层之外出现', async () => {

@@ -1,5 +1,7 @@
 import type { ChangeType } from '@pta/core';
 
+import { plainStyle, stripStyles, type Style } from './style.ts';
+
 // 输出排版词汇表的原子层：每种值类型全 CLI 唯一书写形制，本模块是唯一入口。
 // 首个发布版本起输出承担合同职责；预发布期形制可随迭代演化，不背破坏性调整义务。
 
@@ -8,10 +10,13 @@ export function domainValue(identifier: string): string {
   return identifier === '' ? '.' : identifier;
 }
 
-/** 领域引用：反引号给值以可见边界（markdown 免费渲染），根领域补注免漏视。 */
-export function domainRef(identifier: string): string {
+/** 领域引用：反引号给值以可见边界（markdown 免费渲染），根领域补注免漏视。着色时反引号退灰，领域名用紫（边界概念，不承载状态语义）。 */
+export function domainRef(identifier: string, s: Style = plainStyle): string {
   const value = domainValue(identifier);
-  return value === '.' ? '`.` (根)' : `\`${value}\``;
+  const tick = s.dim('`');
+  return value === '.'
+    ? `${tick}${s.magenta('.')}${tick}${s.dim(' (根)')}`
+    : `${tick}${s.magenta(value)}${tick}`;
 }
 
 /** 引用性 id 一律 8 位短形；完整性哈希（来源基线、内容哈希清单）保留全长，不经此函数。 */
@@ -19,7 +24,7 @@ export function shortHash(hash: string): string {
   return hash.slice(0, 8);
 }
 
-/** 跨领域条目引用：与 pending resolve 的选择器输入同形，输出可直接回填。 */
+/** 条目选择器：pending resolve 的输入语法。仅用于歧义候选清单（形制＝输入回显）与机器记录；常规显示行 id 一律裸形，领域归属由定位路径自明。 */
 export function entryRef(domainIdentifier: string, contentHash: string): string {
   return `${domainValue(domainIdentifier)}:${shortHash(contentHash)}`;
 }
@@ -35,8 +40,15 @@ export function contentHashRef(hash: string): string {
 }
 
 /** 条目行：`- ` 前缀与真相记录存储形制同构，id 在前便于 grep 与复制，定位（文件:行）随其后。 */
-export function entryLine(id: string, locator: string | undefined, content: string): string {
-  return locator === undefined ? `- ${id} ${content}` : `- ${id} ${locator} ${content}`;
+export function entryLine(
+  id: string,
+  locator: string | undefined,
+  content: string,
+  s: Style = plainStyle,
+): string {
+  return locator === undefined
+    ? `- ${s.dim(id)} ${content}`
+    : `- ${s.dim(id)} ${s.dim(locator)} ${content}`;
 }
 
 const changeMarks: Readonly<Record<ChangeType, string>> = {
@@ -48,9 +60,18 @@ const changeMarks: Readonly<Record<ChangeType, string>> = {
   copied: 'C',
 };
 
-/** 文件变更用 git status 字母，不造标签。 */
-export function changeMark(type: ChangeType): string {
-  return changeMarks[type];
+const changeMarkPaint: Readonly<Record<ChangeType, keyof Style>> = {
+  modified: 'yellow',
+  added: 'green',
+  deleted: 'red',
+  untracked: 'dim',
+  renamed: 'cyan',
+  copied: 'cyan',
+};
+
+/** 文件变更用 git status 字母，不造标签；着色随 git status 惯例。 */
+export function changeMark(type: ChangeType, s: Style = plainStyle): string {
+  return s[changeMarkPaint[type]](changeMarks[type]);
 }
 
 // 核查信号的规范正名：概念术语以汉语表达，core 的英文字面量是实现别名（根域真相）。
@@ -70,9 +91,16 @@ const statusTerms: Readonly<Record<string, string>> = {
   candidate: '候选',
 };
 
-/** 核查信号行：[类别 | 状态] 详情，类别与状态用工作语言的规范用词。 */
-export function signalLine(category: string, status: string, detail: string): string {
-  return `[${categoryTerms[category] ?? category} | ${statusTerms[status] ?? status}] ${detail}`;
+/** 核查信号行：[类别 | 状态] 详情，类别与状态用工作语言的规范用词；标记按严重度着色（冲突与违例红，其余黄）。 */
+export function signalLine(
+  category: string,
+  status: string,
+  detail: string,
+  s: Style = plainStyle,
+): string {
+  const marker = `[${categoryTerms[category] ?? category} | ${statusTerms[status] ?? status}]`;
+  const paint = category === 'conflict' || category === 'violation' ? s.red : s.yellow;
+  return `${paint(marker)} ${detail}`;
 }
 
 /** 非自然语言值（路径、标识、命令名）的单行并列：半角逗号加空格，多语言版本形制不变。 */
@@ -98,8 +126,9 @@ function isWideCodePoint(code: number): boolean {
   );
 }
 
-/** 终端显示宽度：东亚全角计 2，半角计 1。列对齐按它而非字符数。 */
-export function displayWidth(text: string): number {
+/** 终端显示宽度：东亚全角计 2，半角计 1，SGR 转义不占宽。列对齐按它而非字符数。 */
+export function displayWidth(styled: string): number {
+  const text = stripStyles(styled);
   let width = 0;
   for (const character of text) {
     width += isWideCodePoint(character.codePointAt(0) as number) ? 2 : 1;

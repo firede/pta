@@ -14,7 +14,8 @@
     "@pta/core": "workspace:*",
     "@pta/runtime": "workspace:*",
     "@pta/server": "workspace:*",
-    "@stricli/core": "1.3.0"
+    "@stricli/core": "1.3.0",
+    "picocolors": "1.1.1"
   },
   "devDependencies": {
     "@types/node": "^24.10.1",

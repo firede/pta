@@ -7,12 +7,14 @@ import { ExitCode, run } from '@stricli/core';
 import { buildPtaApplication, routeListing, type PtaContext } from './app.ts';
 import { listValues } from './format.ts';
 import { cliVersion, type CliIO } from './management.ts';
+import { stdoutSupportsColor, terminalStyle } from './style.ts';
 
 export type { CliIO };
 
 const processIO: CliIO = {
   stdout: (text) => process.stdout.write(text),
   stderr: (text) => process.stderr.write(text),
+  style: terminalStyle(stdoutSupportsColor()),
 };
 
 type PreparedInput =
