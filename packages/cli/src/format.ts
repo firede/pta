@@ -1,7 +1,7 @@
 import type { ChangeType } from '@pta/core';
 
 // 输出排版词汇表的原子层：每种值类型全 CLI 唯一书写形制。
-// 输出即合同，改动任一形制视为破坏性调整，需显式记账（见 local/design/cli-output-vocabulary.md）。
+// 输出即合同，改动任一形制视为破坏性调整，需显式记账。
 
 /** 领域标识的裸值：根领域写作「.」。选择器等需回填输入的场合用它。 */
 export function domainValue(identifier: string): string {
