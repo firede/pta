@@ -10,6 +10,7 @@ import {
   type CronEntry,
 } from '@pta/runtime';
 
+import { enumeratePhrases } from './format.ts';
 import { runGit } from './inspection.ts';
 import { audit, type CliIO } from './management.ts';
 import { executeCronEntry } from './schedule.ts';
@@ -55,7 +56,7 @@ export async function cronList(io: CliIO): Promise<number> {
       entry.prompt === undefined ? [] : ['prompt 已设'],
     ].flat();
     io.stdout(
-      `${entry.id}：[${entry.schedule}] ${entry.action} ${entry.repository}${extras.length > 0 ? `（${extras.join('、')}）` : ''}\n  下次唤醒：${next === undefined ? '不可达' : formatLocalMinute(next)}\n`,
+      `${entry.id}：[${entry.schedule}] ${entry.action} ${entry.repository}${extras.length > 0 ? `（${enumeratePhrases(extras)}）` : ''}\n  下次唤醒：${next === undefined ? '不可达' : formatLocalMinute(next)}\n`,
     );
   }
   return 0;

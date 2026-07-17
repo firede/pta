@@ -9,6 +9,7 @@ import {
   type GlobalPaths,
 } from '@pta/runtime';
 
+import { listValues } from './format.ts';
 import { inspectRepositoryOnce } from './inspection.ts';
 
 export type CronRunOutcome = Readonly<{
@@ -66,7 +67,7 @@ export async function executeCronEntry(
       action: entry.action,
       ok: false,
       detail:
-        missing.length > 0 ? `仓库不可达：${missing.join('、')}` : '注册表为空，没有可巡检的仓库',
+        missing.length > 0 ? `仓库不可达：${listValues(missing)}` : '注册表为空，没有可巡检的仓库',
     };
   }
 
@@ -95,7 +96,7 @@ export async function executeCronEntry(
         parts.push(`${root}：${error instanceof Error ? error.message : String(error)}`);
       }
     }
-    if (missing.length > 0) parts.push(`不可达：${missing.join('、')}`);
+    if (missing.length > 0) parts.push(`不可达：${listValues(missing)}`);
     return { id: entry.id, action: entry.action, ok, detail: parts.join('；') };
   }
 

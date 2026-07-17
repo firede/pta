@@ -5,6 +5,8 @@ import {
   type ApplicationText,
 } from '@stricli/core';
 
+import { listValues } from './format.ts';
+
 function describeException(exc: unknown): string {
   if (exc instanceof ArgumentScannerError) {
     return formatMessageForArgumentScannerError(exc, {
@@ -14,7 +16,7 @@ function describeException(exc: unknown): string {
           error.exception instanceof Error ? error.exception.message : String(error.exception)
         }`,
       EnumValidationError: (error) =>
-        `${error.externalFlagName} 的值 "${error.input}" 不在可选范围（${error.values.join(', ')}）`,
+        `${error.externalFlagName} 的值 "${error.input}" 不在可选范围（${listValues(error.values)}）`,
       FlagNotFoundError: (error) =>
         `未知旗标 --${error.input}${
           error.corrections.length > 0 ? `，是否想输入 ${error.corrections.join(' / ')}？` : ''
