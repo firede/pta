@@ -5,12 +5,13 @@ dependsOn:
   - argument/project-truth-freshness-governance
   - argument/projection-view-compiled-on-demand
   - argument/derivable-content-in-tool-layer
-sourceHash: e33c68f038326ac18a6a67179289a3e8f15c811167b0417aba29079cfc9542fa
+  - argument/truth-record-work-language
+sourceHash: 9465a92bab09f01a0af82a013373a244ec301f563de8280a819b3cfbd518fb9d
 ---
 
 Integration defines how the architecture plugs into an existing engineering environment: how the truth entry point coexists with ecosystem files, where project-level configuration lives, which facilities checkpoints attach to, and what sharing must satisfy at minimum.
 
-> This specification implements how the checkpoints of [Project Truth Needs Freshness Governance](/en/argument/project-truth-freshness-governance/) land on engineering facilities, and delimits the relationship with ecosystem files according to the critique of parallel truth in [Projection Views Should Be Compiled on Demand](/en/argument/projection-view-compiled-on-demand/). The arguments answer why; this specification answers how.
+> This specification implements how the checkpoints of [Project Truth Needs Freshness Governance](/en/argument/project-truth-freshness-governance/) land on engineering facilities, delimits the relationship with ecosystem files according to the critique of parallel truth in [Projection Views Should Be Compiled on Demand](/en/argument/projection-view-compiled-on-demand/), and provides a machine-readable place to declare the expression principle of [Natural Language Expression Should Match the Working Language](/en/argument/truth-record-work-language/). The arguments answer why; this specification answers how.
 
 ## Terminology
 
@@ -28,13 +29,21 @@ A project **may** place a reference to project truth in engineering instruction 
 
 ## Project Configuration
 
-`pta.toml` sits at the repository root and is the single entry point for project-level integration configuration, with syntax following TOML 1.0; a file that cannot be parsed produces no configuration and constitutes a check signal. The YAML of domain declaration frontmatter is given by the Markdown ecosystem; the configuration entry point independently adopts TOML, because custom configuration has a wider type surface than declaration fields and must rest on a standard with stronger cross-implementation consistency. `externalRoots` is a reserved field declaring the list of external declaration roots; each item is a directory path in the written form of the identity specification, pointing to one external declaration root:
+`pta.toml` sits at the repository root and is the single entry point for project-level integration configuration, with syntax following TOML 1.0; a file that cannot be parsed produces no configuration and constitutes a check signal. The YAML of domain declaration frontmatter is given by the Markdown ecosystem; the configuration entry point independently adopts TOML, because custom configuration has a wider type surface than declaration fields and must rest on a standard with stronger cross-implementation consistency.
+
+The top level keeps only the public fields defined by this specification:
+
+- `workingLanguage`: declares the working language of project truth; the value is a BCP 47 language tag. The declaration makes the expression principle machine-readable, providing a basis for terminology checks and diagnostic wording; it does not prescribe the language of tool interfaces.
+- `externalRoots`: lists the external declaration roots; each item is a directory path in the written form of the identity specification.
+
+A configuration example:
 
 ```toml
+workingLanguage = "zh-Hans"
 externalRoots = ["packages/web/.pta", "packages/client/.pta"]
 ```
 
-Implementation-defined configuration such as checkpoint attachment and inspection arrangements **may** go into `pta.toml`, and **must** be housed under a namespace distinguished by implementation name, such as `[tool.{name}]`; the top level keeps only the public fields defined by this specification, so implementations never contend for the same field name. An implementation encountering an unrecognized namespace **should** ignore it rather than error, so that multiple tools can coexist in one configuration.
+Custom configuration of tool implementations **may** go into `pta.toml`, and **must** be housed under a namespace distinguished by implementation name, such as `[tool.{name}]`, so implementations never contend for the same field name. An implementation encountering an unrecognized namespace **should** ignore it rather than error, so that multiple tools can coexist in one configuration.
 
 ## Checkpoint Attachment
 
