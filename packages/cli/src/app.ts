@@ -499,6 +499,8 @@ export function buildPtaApplication(version: string): Application<PtaContext> {
   return buildApplication(rootRoutes, {
     name: 'pta',
     versionInfo: { currentVersion: version },
+    // kebab 形态是内建 --help-all 的书写习惯；自有旗标全为小写单词，不受此转换影响。
+    scanner: { caseStyle: 'allow-kebab-for-camel' },
     localization: {
       loadText: () => textZh,
       defaultLocale: 'zh-CN',

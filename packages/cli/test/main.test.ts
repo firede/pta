@@ -77,6 +77,14 @@ test('裸组名输出组帮助，命令帮助含示例与完整说明', async ()
   assert.match(command.stdout(), /受托任务收尾时用它自察未解释漂移/u);
   assert.match(command.stdout(), /pta changes \[--staged\] \[<基线>\]/u);
   assert.match(command.stdout(), /--staged/u);
+
+  const hidden = capture();
+  assert.equal(await runCli(['daemon'], hidden.io), 0);
+  assert.doesNotMatch(hidden.stdout(), /前台运行守护进程/u);
+
+  const revealed = capture();
+  assert.equal(await runCli(['daemon', '--help-all'], revealed.io), 0);
+  assert.match(revealed.stdout(), /前台运行守护进程（服务管理器的内部入口）/u);
 });
 
 test('未知命令与未知子命令枚举可用动词并返回 2', async () => {
