@@ -43,9 +43,26 @@ export function changeMark(type: ChangeType): string {
   return changeMarks[type];
 }
 
-/** 核查信号行：[类别 | 状态] 详情，对齐规范词汇。 */
+// 核查信号的规范正名：概念术语以汉语表达，core 的英文字面量是实现别名（根域真相）。
+// 信号类别是开放清单，未知码原样透出。
+const categoryTerms: Readonly<Record<string, string>> = {
+  conflict: '冲突',
+  violation: '违例',
+  'term inconsistency': '术语不一致',
+  'drift suspicion': '漂移嫌疑',
+  propagation: '传播',
+  expiry: '到期',
+};
+
+const statusTerms: Readonly<Record<string, string>> = {
+  'machine-decidable': '机器可判定',
+  suspicion: '嫌疑',
+  candidate: '候选',
+};
+
+/** 核查信号行：[类别 | 状态] 详情，类别与状态用工作语言的规范用词。 */
 export function signalLine(category: string, status: string, detail: string): string {
-  return `[${category} | ${status}] ${detail}`;
+  return `[${categoryTerms[category] ?? category} | ${statusTerms[status] ?? status}] ${detail}`;
 }
 
 /** 非自然语言值（路径、标识、命令名）的单行并列：半角逗号加空格，多语言版本形制不变。 */

@@ -115,7 +115,7 @@ test('check 按领域输出机器违例并返回 1，--cwd 与 -C 等价', async
   const viaCwd = capture();
   assert.equal(await runCli(['check'], viaCwd.io, root), 1);
   assert.match(viaCwd.stdout(), /领域 `src`/u);
-  assert.match(viaCwd.stdout(), /\[violation \| machine-decidable\] src\/TRUTH\.md:1/u);
+  assert.match(viaCwd.stdout(), /\[违例 \| 机器可判定\] src\/TRUTH\.md:1/u);
   assert.equal(viaCwd.stderr(), '');
 
   const viaFlag = capture();
@@ -145,7 +145,7 @@ test('check 仅有术语不一致嫌疑时返回 0，无信号时输出通过', 
 
   const suspicion = capture();
   assert.equal(await runCli(['check'], suspicion.io, suspicionRoot), 0);
-  assert.match(suspicion.stdout(), /\[term inconsistency \| suspicion\]/u);
+  assert.match(suspicion.stdout(), /\[术语不一致 \| 嫌疑\]/u);
 
   const clean = capture();
   assert.equal(await runCli(['check'], clean.io, cleanRoot), 0);
@@ -223,7 +223,7 @@ test('changes 从工作树收集变更，输出漂移候选与待裁决背景并
   assert.equal(await runCli(['changes'], output.io, root), 0);
   assert.match(output.stdout(), /领域 `src`/u);
   assert.match(output.stdout(), /触面：实现文件被触/u);
-  assert.match(output.stdout(), /\[drift suspicion \| suspicion\]/u);
+  assert.match(output.stdout(), /\[漂移嫌疑 \| 嫌疑\]/u);
   assert.match(output.stdout(), /待裁决背景：[\s\S]*根问题如何处理/u);
   assert.equal(output.stderr(), '');
 
@@ -358,7 +358,7 @@ test('context 透出涉及领域的核查提示且不阻断', async (context) =>
 
   assert.equal(await runCli(['context', 'src/index.ts'], output.io, root), 0);
   assert.match(output.stdout(), /核查提示（读取时叠加，不入产物）：/u);
-  assert.match(output.stdout(), /\[violation \| machine-decidable\] src\/TRUTH\.md:1/u);
+  assert.match(output.stdout(), /\[违例 \| 机器可判定\] src\/TRUTH\.md:1/u);
 });
 
 test('pending list 收件箱为空时输出空提示，多余参数返回 2', async (context) => {
@@ -390,7 +390,7 @@ test('inspect list 圈定巡检集合并报告到期', async (context) => {
   assert.match(output.stdout(), /巡检集合：3 条（1 个领域）/u);
   assert.match(
     output.stdout(),
-    /到期：\n {2}\[expiry \| machine-decidable\] TRUTH\.md:2 复查线索 2020-01 已到期/u,
+    /到期：\n {2}\[到期 \| 机器可判定\] TRUTH\.md:2 复查线索 2020-01 已到期/u,
   );
   assert.match(
     output.stdout(),
