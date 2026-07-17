@@ -127,7 +127,7 @@ function buildServerApi(paths: GlobalPaths, logSource: LogSource): ServerApi {
   };
 }
 
-async function daemonRun(io: CliIO): Promise<number> {
+export async function daemonRun(io: CliIO): Promise<number> {
   const paths = resolveGlobalPaths();
   const config = await loadGlobalConfig(paths);
   const version = await cliVersion();
@@ -250,7 +250,7 @@ async function daemonRun(io: CliIO): Promise<number> {
   return 0;
 }
 
-async function daemonStart(io: CliIO): Promise<number> {
+export async function daemonStart(io: CliIO): Promise<number> {
   const paths = resolveGlobalPaths();
   const existing = await verifiedDaemonState(paths);
   if (existing !== undefined) {
@@ -283,7 +283,7 @@ async function daemonStart(io: CliIO): Promise<number> {
   return 2;
 }
 
-async function daemonStop(io: CliIO): Promise<number> {
+export async function daemonStop(io: CliIO): Promise<number> {
   const paths = resolveGlobalPaths();
   const state = await readDaemonState(paths);
   const home = process.env['HOME'] ?? '';
@@ -350,7 +350,7 @@ async function daemonStop(io: CliIO): Promise<number> {
   return 2;
 }
 
-async function daemonStatus(io: CliIO): Promise<number> {
+export async function daemonStatus(io: CliIO): Promise<number> {
   const paths = resolveGlobalPaths();
   const manager = await installedServiceManager(process.env['HOME'] ?? '');
   const managed = manager === undefined ? '' : `（由 ${manager} 管理）`;
@@ -365,7 +365,7 @@ async function daemonStatus(io: CliIO): Promise<number> {
   return 1;
 }
 
-async function daemonInstall(io: CliIO): Promise<number> {
+export async function daemonInstall(io: CliIO): Promise<number> {
   const paths = resolveGlobalPaths();
   const home = process.env['HOME'] ?? '';
   const logDir = join(paths.stateDir, 'logs');
@@ -401,7 +401,7 @@ async function daemonInstall(io: CliIO): Promise<number> {
   return 2;
 }
 
-async function daemonUninstall(io: CliIO): Promise<number> {
+export async function daemonUninstall(io: CliIO): Promise<number> {
   const home = process.env['HOME'] ?? '';
   if (process.platform === 'darwin') {
     const plist = launchdPlistPath(home);
@@ -423,34 +423,10 @@ async function daemonUninstall(io: CliIO): Promise<number> {
   return 2;
 }
 
-export async function runDaemon(args: readonly string[], io: CliIO): Promise<number> {
-  const action = args[0];
-  if (args.length !== 1) {
-    io.stderr('用法：pta daemon <install|uninstall|status|start|stop|restart|run>\n');
-    return 2;
-  }
-  switch (action) {
-    case 'run':
-      return daemonRun(io);
-    case 'start':
-      return daemonStart(io);
-    case 'stop':
-      return daemonStop(io);
-    case 'status':
-      return daemonStatus(io);
-    case 'restart': {
-      const stopped = await daemonStop(io);
-      if (stopped !== 0) return stopped;
-      return daemonStart(io);
-    }
-    case 'install':
-      return daemonInstall(io);
-    case 'uninstall':
-      return daemonUninstall(io);
-    default:
-      io.stderr('用法：pta daemon <install|uninstall|status|start|stop|restart|run>\n');
-      return 2;
-  }
+export async function daemonRestart(io: CliIO): Promise<number> {
+  const stopped = await daemonStop(io);
+  if (stopped !== 0) return stopped;
+  return daemonStart(io);
 }
 
 export async function runDashboard(io: CliIO): Promise<number> {
@@ -480,19 +456,7 @@ export async function runDashboard(io: CliIO): Promise<number> {
   return 0;
 }
 
-export async function runLogs(args: readonly string[], io: CliIO): Promise<number> {
-  if (args.length > 1) {
-    io.stderr('用法：pta logs [数量]\n');
-    return 2;
-  }
-  let limit = 20;
-  if (args[0] !== undefined) {
-    limit = Number(args[0]);
-    if (!Number.isInteger(limit) || limit <= 0) {
-      io.stderr('用法：pta logs [数量]\n');
-      return 2;
-    }
-  }
+export async function runLogs(limit: number, io: CliIO): Promise<number> {
   const records = await readLogRecords(resolveGlobalPaths(), limit);
   if (records.length === 0) {
     io.stdout('暂无日志。\n');
@@ -511,55 +475,48 @@ async function readStdin(): Promise<string> {
   return Buffer.concat(chunks).toString('utf8');
 }
 
-export async function runAgent(args: readonly string[], io: CliIO, cwd: string): Promise<number> {
-  const paths = resolveGlobalPaths();
-  const config = await loadGlobalConfig(paths);
-  if (args[0] === 'list') {
-    if (args.length !== 1) {
-      io.stderr('用法：pta agent list\n');
-      return 2;
-    }
-    const names = Object.keys(config.agents);
-    if (names.length === 0) {
-      io.stdout(
-        `未配置 agent。在 ${config.path} 中声明，例如：\n\n[agents.default]\ncommand = ["codex", "exec", "{prompt}"]\n`,
-      );
-      return 0;
-    }
-    for (const name of names.toSorted((left, right) => left.localeCompare(right))) {
-      const agent = config.agents[name];
-      if (agent === undefined) continue;
-      io.stdout(`${name}：${agent.command.join(' ')}（超时 ${agent.timeoutSeconds}s）\n`);
-    }
+export async function agentList(io: CliIO): Promise<number> {
+  const config = await loadGlobalConfig(resolveGlobalPaths());
+  const names = Object.keys(config.agents);
+  if (names.length === 0) {
+    io.stdout(
+      `未配置 agent。在 ${config.path} 中声明，例如：\n\n[agents.default]\ncommand = ["codex", "exec", "{prompt}"]\n`,
+    );
     return 0;
   }
-  if (args[0] === 'run') {
-    const name = args[1];
-    if (name === undefined || args.length > 3) {
-      io.stderr('用法：pta agent run <名称> [提示词]（缺省时从标准输入读取）\n');
-      return 2;
-    }
+  for (const name of names.toSorted((left, right) => left.localeCompare(right))) {
     const agent = config.agents[name];
-    if (agent === undefined) {
-      io.stderr(`未找到 agent：${name}（见 pta agent list）\n`);
-      return 2;
-    }
-    const prompt = args[2] ?? (process.stdin.isTTY === true ? undefined : await readStdin());
-    if (prompt === undefined || prompt.trim() === '') {
-      io.stderr('提示词为空：以参数传入，或经标准输入提供。\n');
-      return 2;
-    }
-    const result = await runAgentTask(agent, prompt, cwd);
-    await audit(io, 'agent-run', { name, ok: result.ok, durationMs: result.durationMs });
-    io.stdout(result.output);
-    if (!result.ok) {
-      io.stderr(`agent 任务失败：${result.error ?? '未知错误'}\n`);
-      return 1;
-    }
-    return 0;
+    if (agent === undefined) continue;
+    io.stdout(`${name}：${agent.command.join(' ')}（超时 ${agent.timeoutSeconds}s）\n`);
   }
-  io.stderr('用法：pta agent list\n       pta agent run <名称> [提示词]\n');
-  return 2;
+  return 0;
+}
+
+export async function agentRun(
+  name: string,
+  promptArg: string | undefined,
+  io: CliIO,
+  cwd: string,
+): Promise<number> {
+  const config = await loadGlobalConfig(resolveGlobalPaths());
+  const agent = config.agents[name];
+  if (agent === undefined) {
+    io.stderr(`未找到 agent：${name}（见 pta agent list）\n`);
+    return 2;
+  }
+  const prompt = promptArg ?? (process.stdin.isTTY === true ? undefined : await readStdin());
+  if (prompt === undefined || prompt.trim() === '') {
+    io.stderr('提示词为空：以参数传入，或经标准输入提供。\n');
+    return 2;
+  }
+  const result = await runAgentTask(agent, prompt, cwd);
+  await audit(io, 'agent-run', { name, ok: result.ok, durationMs: result.durationMs });
+  io.stdout(result.output);
+  if (!result.ok) {
+    io.stderr(`agent 任务失败：${result.error ?? '未知错误'}\n`);
+    return 1;
+  }
+  return 0;
 }
 
 export async function runDoctor(io: CliIO, cwd: string): Promise<number> {

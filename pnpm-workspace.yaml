@@ -9,3 +9,6 @@ allowBuilds:
   sharp: true
   simple-git-hooks: true
   workerd: true
+
+minimumReleaseAgeExclude:
+  - '@stricli/core@1.3.0'
