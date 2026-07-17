@@ -3,7 +3,7 @@ title: Natural Language Expression Should Match the Working Language
 description: Natural language expression in the truth record should match the working language, improving understandability and reducing translation loss, term drift, and retrieval gaps.
 dependsOn:
   - argument/what-is-project-truth
-sourceHash: c8ad43f42c94134725c6189259e213d97c700e935bafe5b9905773f26c132492
+sourceHash: 51fe65869f19b5b6e8cd2c92069982fc413e5a73b90c97efdd76978a66b08b5b
 ---
 
 Natural language expression in the truth record should match the working language.
@@ -53,6 +53,16 @@ Commands, configuration items, API names, and error messages are all such proper
 Cross-project reuse at the implementation level usually depends on compatible programming languages, package management systems, and runtime environments. Cross-project reuse of the truth record is mainly about moving domain knowledge, rule patterns, term relationships, and modeling experience into the target project.
 
 When this content enters the target project, it needs to be re-expressed in terms of the target project's existing project truth, implementation structure, and working language. Only after the migrated content is adopted by the target project and becomes a judgment it currently follows does it enter project truth in the target project.
+
+**In a monorepo whose packages use different languages, does the working language still hold?**
+
+The working language exists per project, and a project is delimited by maintenance relationships: the scope that a group of primary maintainers continuously understands, discusses, records, and maintains constitutes one project. Packages and repositories are units of engineering facilities, not natural project boundaries: packages in a monorepo[^monorepo] are units of the build and distribution ecosystem, and repository boundaries vary with the version control system — Git's conventions make one repository carrying one project feel natural, while a single SVN repository customarily hosts multiple projects. Project boundaries should not be inherited by default from the topology of facilities; they should be explicitly delimited by maintenance relationships.
+
+Multiple packages maintained by the same group of maintainers under the same set of judgments form one project, sharing one semantic space and one working language. A package forked from an open-source project in another language keeps its original documentation as external material; judgments the project relies on are still re-expressed in the working language when they enter project truth.
+
+If a repository does contain several scopes maintained separately without shared judgments, those are multiple projects, each with its own working language. How tools accommodate multiple projects is an engineering choice; it does not change that the working language holds per project.
+
+[^monorepo]: A monorepo is a repository layout that manages multiple packages or subprojects in one repository.
 
 **Will differences between natural language expression and engineering symbol names create confusion?**
 

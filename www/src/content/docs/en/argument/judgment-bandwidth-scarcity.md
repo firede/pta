@@ -1,7 +1,7 @@
 ---
 title: Human Judgment Bandwidth Is the Scarce Resource
 description: Machine generation and execution keep growing, while the human channel for explicit expression, continuous judgment, and accountability stays nearly constant; the bottleneck of collaborative systems therefore shifts to human judgment. Collaboration arrangements should be accounted for in judgment bandwidth — judgments made explicit once and reused, steps machines can take on kept off the human channel, and matters that need human adjudication arriving in adjudicable form at the cheapest moment.
-sourceHash: 1f0113c7675635dc47323419474bb5bf27d523b3d9e383a3ec4f15bfce14544a
+sourceHash: 003fddd5c828fb1fb92fcd746629309338292226cec6d61b7b8977fb69bba9a3
 ---
 
 Human judgment bandwidth is the scarce resource. Judgment bandwidth is the channel for what a person can explicitly express, continuously judge, and take responsibility for. Human perception and intuition are far wider than this channel, and machine generation and execution grow far faster than it does; the channel itself stays nearly constant. Once the output of collaboration exceeds what a person can read in full, the scarce resource of the system shifts from machine capability to human judgment.
@@ -16,6 +16,8 @@ Every act of communication between a person and a machine is a lossy compression
 
 Once machines became executors, the structure of this account changed. When machines waited to be operated, how human attention was allocated was a question of interaction efficiency; now machines produce continuously, and human expression, understanding, judgment, and accountability become the limiting factor of system output. Once output exceeds what can be read in full, line-by-line verification stops adding up, and people turn to sampling and gut-feel approval — a rational strategy under a resource shortage, not a lapse of discipline. How reliable is approval by gut feel? It has been measured once: in a randomized controlled trial in early 2025, experienced developers using AI tools in familiar, mature projects took 19% longer to finish, yet still believed afterward that they had been faster[^metr]. Task boundaries determine the direction of the gains, and the subjective sense of speed cannot replace measurement.
 
+[^metr]: The experiment was run by METR (Model Evaluation & Threat Research) and published in 2025 (https://arxiv.org/abs/2507.09089); its 19% slowdown reflects the tools, mature open-source projects, and senior developers of early 2025, and METR's later rerun has seen speedup signals with no reliable magnitude due to selection bias: https://metr.org/blog/2026-02-24-uplift-update/
+
 The core question, therefore, is: when human judgment becomes the bottleneck of a collaborative system, how should information and judgments be organized so that limited judgment bandwidth goes to what only a person can provide?
 
 ## Reasons
@@ -23,6 +25,8 @@ The core question, therefore, is: when human judgment becomes the bottleneck of 
 **The scarcity of judgment bandwidth is structural.**
 
 Expression, understanding, adjudication, and accountability all pass through the same serial channel, whose width is set by human cognitive architecture. One measurement for reference: the effective information rate of explicit human expression and continuous judgment is about 10 bits per second, eight orders of magnitude below the rate of sensory intake[^10bits]. Training improves the technique at either end of the channel, and interfaces improve the peripherals of input and output; the channel itself grows no wider with any generation of tools, while the machine side keeps growing. The gap widens with time and the scarcity deepens — this is not a phase tied to any generation of models, but a structural fact that holds as long as machines keep improving.
+
+[^10bits]: The measurement comes from a 2025 article by Zheng and Meister in _Neuron_; the figure describes the effective information rate of high-level behavior and explicit judgment, not an upper bound on the brain's overall processing: https://www.sciencedirect.com/science/article/pii/S0896627324008080
 
 **Some judgments can only come from a person.**
 
@@ -85,7 +89,3 @@ Interfaces optimize the efficiency of a single consumption; organization decides
 Human judgment bandwidth is the scarce resource: machine generation and execution keep growing, the human channel for explicit expression, continuous judgment, and accountability stays nearly constant, and the bottleneck of collaborative systems shifts to human judgment accordingly.
 
 There are three directions for economizing it: make judgments explicit once and keep reusing them, so retelling stops at the first telling; hand the steps machines can take on to machines, withdrawing people from the posts they can leave; and let matters that must be adjudicated by a person arrive in adjudicable form, at the cheapest moment. The three directions serve one goal — that every judgment passing through the narrow channel goes to what only a person can provide.
-
-[^metr]: The experiment was run by METR (Model Evaluation & Threat Research) and published in 2025 (https://arxiv.org/abs/2507.09089); its 19% slowdown reflects the tools, mature open-source projects, and senior developers of early 2025, and METR's later rerun has seen speedup signals with no reliable magnitude due to selection bias: https://metr.org/blog/2026-02-24-uplift-update/
-
-[^10bits]: The measurement comes from a 2025 article by Zheng and Meister in _Neuron_; the figure describes the effective information rate of high-level behavior and explicit judgment, not an upper bound on the brain's overall processing: https://www.sciencedirect.com/science/article/pii/S0896627324008080

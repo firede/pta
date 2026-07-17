@@ -5,7 +5,7 @@ dependsOn:
   - argument/what-is-project-truth
   - argument/truth-record-versioned-with-implementation
   - argument/project-truth-by-domain
-sourceHash: e84d5e6329053cc43ab3dfff0d29d97bdc16b3630f82069a05a964a64ab11f4b
+sourceHash: 94e8693c0f364fdaa2f592dbe70789ae03c349fd932feda05b2257fd00e28a54
 ---
 
 Projection views should be compiled on demand. A projection view targets a specific usage context and extracts, reorganizes, and presents content from project truth and the implementation. Its relationship to its sources resembles the relationship between build artifacts and source code: it is generated from the current sources when needed, can be cached and distributed, and can be discarded and rebuilt at any time.
@@ -19,6 +19,8 @@ Projection views are read-only. When content in a projection needs correction, t
 A project serves many usage contexts. Taking on a new task calls for a digest of the relevant background, new members need an onboarding tour, audits need a cross-domain view of rules, and related projects may need background knowledge about one of this project's domains. These contexts require different ways of extracting and presenting content.
 
 A common practice is to build an external knowledge base for the project: organizing project content into a separately maintained set of parallel materials for people and AI to query. As LLMs sharply reduced the cost of this organizing work, the practice spread further, and such knowledge bases can now be generated and continuously maintained by AI[^llm-wiki].
+
+[^llm-wiki]: The representative practice is the LLM Wiki: an interlinked knowledge base generated and continuously maintained by an LLM from source materials. See Andrej Karpathy's proposal and the practical feedback in its comments: https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f
 
 The difficulty with external knowledge bases is synchronization. The knowledge base and the project do not share a version boundary, so staying in sync depends on extra maintenance work. The faster the project iterates, the more visible the lag and drift become. In reports from real use, silent staleness caused by under-updated cross-references is listed as the primary problem of such systems, and concurrent maintenance by multiple people lacks coordination mechanisms.
 
@@ -103,5 +105,3 @@ The same tool can slide between the two modes of operation. The criteria this ar
 Projection views should be compiled on demand. Truth and implementation are the only sources, and projection views are their compiled artifacts for usage contexts. On-demand generation removes the synchronization burden of parallel knowledge bases, version boundaries make cache staleness decidable, and domain organization allows regeneration to happen locally.
 
 Projection views are read-only. Problems found in a projection are corrected at the sources, and the projection is then regenerated. This discipline keeps the sources singular: the presentation people and AI receive in any usage context can be traced to the current version of the sources.
-
-[^llm-wiki]: The representative practice is the LLM Wiki: an interlinked knowledge base generated and continuously maintained by an LLM from source materials. See Andrej Karpathy's proposal and the practical feedback in its comments: https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f

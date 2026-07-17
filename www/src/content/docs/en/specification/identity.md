@@ -4,7 +4,7 @@ description: 'Defines the identity computation shared across the architecture: n
 dependsOn:
   - argument/truth-record-versioned-with-implementation
   - argument/derivable-content-in-tool-layer
-sourceHash: 7adf596a445cd4d2c94703d3bfabfc0793f4d0248d921c2b9906fe9f0ad8340e
+sourceHash: 448587f471db702289abcdbb8cefc6d3cc620b3ac9b0a3d4ca0dae7ac86e189d
 ---
 
 Identity defines how content acquires an identity that any tool can recompute. The cache keys of governance, the source identification of compilation, and entry identity are all built from the parts defined here; two implementations must compute the same identity for the same content, or sharing and flow cannot hold.
@@ -33,7 +33,7 @@ An entry's full identity consists of its container and its content hash; the con
 
 A file's identity is the SHA-256 of its byte content, with no normalization: files are native objects of the repository, and bytes are identity.
 
-Committed state is expressed by the repository's native version identifier, such as a git commit hash; this specification invents no version numbering of its own. A state containing uncommitted changes is expressed as a base version plus a collection of change records: each record contains the path, the change type — added, modified, or deleted — the file mode, and the hash of the content after the change; deletion records carry no content hash, and records are sorted by canonical path. A bare collection of content hashes cannot identify a state: files swapping contents, deletions, and renames leave the hash collection unchanged while changing the project's semantics. Serialization of the collection belongs to the integration specification; the semantics of the identification are given by the traceability obligation of the compilation specification.
+Committed state is expressed by the repository's native version identifier, such as a Git commit hash; this specification invents no version numbering of its own. A state containing uncommitted changes is expressed as a base version plus a collection of change records: each record contains the path, the change type — added, modified, or deleted — the file mode, and the hash of the content after the change; deletion records carry no content hash, and records are sorted by canonical path. A bare collection of content hashes cannot identify a state: files swapping contents, deletions, and renames leave the hash collection unchanged while changing the project's semantics. Serialization of the collection belongs to the integration specification; the semantics of the identification are given by the traceability obligation of the compilation specification.
 
 ## Domain Identity
 
