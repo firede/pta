@@ -586,6 +586,10 @@ test('inspect derive 经 agent 推导条件线索并评估，报告随之升级'
   const missingAgent = capture();
   assert.equal(await runCli(['inspect', 'derive', 'absent'], missingAgent.io, root), 2);
   assert.match(missingAgent.stderr(), /未找到 agent: absent/u);
+
+  const unnamed = capture();
+  assert.equal(await runCli(['inspect', 'derive'], unnamed.io, root), 2);
+  assert.match(unnamed.stderr(), /参数错误: 缺少位置参数 <名称>/u);
 });
 
 test('sweepRepositories 扫描注册仓库并落巡检报告，doctor 展示仓库健康', async (context) => {

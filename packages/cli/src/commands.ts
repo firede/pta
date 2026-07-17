@@ -549,19 +549,9 @@ export async function runInspectList(io: CliIO, cwd: string): Promise<number> {
   }
 }
 
-export async function runInspectDerive(
-  agentArg: string | undefined,
-  io: CliIO,
-  cwd: string,
-): Promise<number> {
+export async function runInspectDerive(name: string, io: CliIO, cwd: string): Promise<number> {
   const repositoryRoot = resolve(cwd);
   const config = await loadGlobalConfig(resolveGlobalPaths());
-  const names = Object.keys(config.agents);
-  const name = agentArg ?? (names.length === 1 ? names[0] : undefined);
-  if (name === undefined) {
-    io.stderr('未指定 agent: pta inspect derive <名称> (配置多个 agent 时必须点名)。\n');
-    return 2;
-  }
   const agent = config.agents[name];
   if (agent === undefined) {
     io.stderr(`未找到 agent: ${name} (见 pta agent list)\n`);

@@ -228,7 +228,7 @@ const inspectRoutes = buildRouteMap({
       },
     }),
     derive: buildCommand({
-      func: async function (this: PtaContext, _flags: {}, agent?: string) {
+      func: async function (this: PtaContext, _flags: {}, agent: string) {
         this.process.exitCode = await runInspectDerive(agent, this.io, this.cwd);
       },
       parameters: {
@@ -236,10 +236,9 @@ const inspectRoutes = buildRouteMap({
           kind: 'tuple',
           parameters: [
             {
-              brief: 'agent 名称，仅配置一个时可缺省',
+              brief: 'agent 名称，见 pta agent list',
               parse: String,
               placeholder: '名称',
-              optional: true,
             },
           ],
         },
