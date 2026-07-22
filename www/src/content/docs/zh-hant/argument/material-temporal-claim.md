@@ -6,7 +6,7 @@ dependsOn:
   - argument/projection-view-compiled-on-demand
   - argument/project-truth-freshness-governance
   - argument/history-still-in-effect
-sourceHash: 69ad646da79ba23b51cebd0bb470f7b03b0cc9acaeb07b59c72d07e820d040ec
+sourceHash: a9411321bfd3bd1b8f4ad4781f8a12d28737697d7df95d7bcbe8f48c47f4c542
 ---
 
 材料的時效主張必須顯式。一份材料除了陳述內容，還在主張自己的有效時間：主張此刻仍然有效，主張只在記錄時點為真，或者主張可以隨時由來源重新生成。主張與維護方式的匹配，構成材料的三種姿態：當前主張、時點快照、可再生。主張與維護錯配時，材料開始腐化——內容停在寫下的時刻，口吻卻繼續宣稱現在。時效主張無法從內容中讀出，需要作為材料自身的屬性顯式表達。
@@ -65,7 +65,7 @@ sourceHash: 69ad646da79ba23b51cebd0bb470f7b03b0cc9acaeb07b59c72d07e820d040ec
 
 **時效姿態與真相成員資格正交。**
 
-一條內容是否屬於專案真相，由定義篇的兩個條件判定；時效姿態回答另一個問題：這份材料對時間主張什麼、需要什麼維護。快照與可再生材料不進入真相，並不妨礙它們被良好保存和消費。
+一條內容是否屬於專案真相，由定義篇的兩個條件判定；時效姿態回答另一個問題：這份材料對時間主張什麼、需要什麼維護。快照與可再生材料不進入真相記錄，並不妨礙它們被良好保存和消費。
 
 ## 反對意見
 

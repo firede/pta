@@ -5,7 +5,7 @@ dependsOn:
   - argument/project-truth-freshness-governance
   - argument/project-truth-by-domain
   - argument/derivable-content-in-tool-layer
-sourceHash: f2e2786b44295e37e2c02f54f31d60d2e967bd829eb2e1c4100de52470df1906
+sourceHash: 54f01f51f5a2006e6d051469856fdcaa103d516c5640aa904216bef6241f5004
 ---
 
 Governance defines the operating loop of freshness checks: how deviation becomes a signal, at which points signals are consumed, and how adjudication lands back on the records.
@@ -46,7 +46,7 @@ The category list is open: as machine detection expands, new categories join und
 - **Drift suspicion**: a change touches a domain's implementation without touching its truth records, or changes only records without touching the implementation; also suspected contradictions between records and what is actually followed, found by inspection. Whether it holds requires human adjudication.
 - **Omission suspicion**: a choice hit in the course of work that the truth records have not pinned, that reasonable practice cannot settle uniquely, and that the project may care about. It points to a gap in the records rather than a deviation of an existing record; its evidence lives at the site of discovery and cannot be re-derived outside the loop, so it is carried by pending entries in `PENDING.md`, persisted with the repository — the entry is the signal, and also the anchor for adjudication and the cache. Whether the judgment is admitted into truth requires human adjudication.
 - **Propagation**: when a domain's truth records change, the domains related to it through `dependsOn`, hierarchy, or references enter check candidacy. Propagation produces candidates; whether a candidate holds requires human adjudication.
-- **Expiry**: a review clue attached to an entry in the inspection set expires. Clues are extracted from the entry text, and the extraction is tool-layer derivation; expiry is machine-decidable, while whether the entry still holds requires human adjudication.
+- **Expiry**: a review clue attached to an entry in the inspection set expires. Clues are extracted from the entry text, and the extraction is tool-layer derivation; expiry is machine-decidable, while whether the judgment the entry carries still holds requires human adjudication.
 
 ## Checkpoints
 
@@ -62,9 +62,9 @@ Inspection points carry what structure cannot delimit: consuming the review clue
 
 ## Adjudication
 
-Whether a record still holds **must** be adjudicated by a person. For machine-decidable conflicts and violations, machines **may** draft revisions that enter the change flow directly, with adjudication taking place in change review.
+Whether a judgment still holds **must** be adjudicated by a person. For machine-decidable conflicts and violations, machines **may** draft revisions that enter the change flow directly, with adjudication taking place in change review.
 
-Adjudication lands in two places: when the record needs revision or deletion, the revision enters the repository through the normal change flow; when the record is confirmed to still hold, the confirmation is written into the adjudication cache. New content produced during adjudication — the reason a rule still holds, a newly discovered boundary — enters the record itself through the normal change flow.
+Adjudication lands in two places: when the record needs revision or deletion, the revision enters the repository through the normal change flow; when the judgment is confirmed to still hold, the confirmation is written into the adjudication cache. New content produced during adjudication — the reason a rule still holds, a newly discovered boundary — enters the record itself through the normal change flow.
 
 The adjudication of an omission suspicion follows the same division: what needs writing — a new judgment or a revision of an existing record — enters the repository through the normal change flow; for a confirmed delegation, the confirmation is written into the adjudication cache. The reason of an admitted judgment is given or ratified by the adjudicator: the disposition reason in a pending entry explains why the interim disposition is sound, which is a different direction from why the project cares, and **should not** be carried over as the judgment's reason without the adjudicator's ratification; when the adjudicator cannot give a reason the project cares about, the disposition is delegation rather than admission. Whatever the disposition, the pending entry is deleted with the adjudication, the deletion entering the change flow together with the disposition; the deletion requirement is given by the domain declaration specification.
 

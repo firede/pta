@@ -1,12 +1,12 @@
 ---
-title: The Identity of Truth Should Be Bound to Concepts
+title: The Identity of the Truth Record Should Be Bound to Concepts
 description: Identity answers whether content is still the same one - dependencies, references, adjudications, and caches attach to it, and accumulation survives only as long as identity does. Coordinates move with the implementation's convenience while concepts change with what the project cares about, so a good identity expires in step with that caring; identity should therefore be bound to explicitly named concepts, with coordinates demoted to revisable claims.
 dependsOn:
   - argument/what-is-project-truth
-sourceHash: 1822824250f30713d248213ed3393d7a61cb17607d0bf2ea38d5698923a23b75
+sourceHash: ea9393426ac75c010c7b791a7c3304bb6930e87bb4680781f5eb92159b7c7051
 ---
 
-The identity of truth should be bound to concepts. Identity answers whether a piece of content is "still the same one": dependencies and references between records, people's adjudication confirmations, and tools' derived results all attach to an identity. While the identity survives, the accumulation survives; when the identity breaks, the accumulation is wiped. A concept is a stable unit of understanding the project has explicitly named. Coordinates are a content's current location and wording. A claim is a statement of which coordinates a concept currently corresponds to. When identity is bound to concepts, coordinate movement is absorbed by claims: when coordinates change, the claim is revised, and the identity, together with everything attached to it, is untouched.
+The identity of the truth record should be bound to concepts. Identity answers whether a piece of content is "still the same one": dependencies and references between records, people's adjudication confirmations, and tools' derived results all attach to an identity. While the identity survives, the accumulation survives; when the identity breaks, the accumulation is wiped. A concept is a stable unit of understanding the project has explicitly named. Coordinates are a content's current location and wording. A claim is a statement of which coordinates a concept currently corresponds to. When identity is bound to concepts, coordinate movement is absorbed by claims: when coordinates change, the claim is revised, and the identity, together with everything attached to it, is untouched.
 
 > This article builds on the definition of naming judgments and consumption results in [What Is Project Truth](/en/argument/what-is-project-truth/), and discusses what should carry the identity that accumulation attaches to.
 
@@ -42,7 +42,7 @@ When coordinates change, the claim is revised, and identity and accumulation sur
 
 **Concepts precede coordinates, so truth can precede structure.**
 
-The definition article establishes that a judgment can hold before the implementation does; with identity bound to coordinates, that statement is discounted: truth has nowhere to land until structure appears. Bound to concepts, two adoption scenarios open at once. A new project names its concepts and pins its judgments before the first line of code, such as how users are modeled or what form login takes; mature judgments brought in from outside land in named concepts rather than in directories that do not yet exist. An existing project organizes truth by concept, with claims mapping onto the current implementation coarsely at first and more finely later; the judgments identified do not shake as the structure converges, and restructuring instead takes the declared concepts as its blueprint. Structure turns from truth's prerequisite into one of truth's consumption scenarios.
+The definition article establishes that a judgment can hold before the implementation does; with identity bound to coordinates, that statement is discounted: the truth record has nowhere to land until structure appears. Bound to concepts, two adoption scenarios open at once. A new project names its concepts and pins its judgments before the first line of code, such as how users are modeled or what form login takes; mature judgments brought in from outside land in named concepts rather than in directories that do not yet exist. An existing project organizes truth by concept, with claims mapping onto the current implementation coarsely at first and more finely later; the judgments identified do not shake as the structure converges, and restructuring instead takes the declared concepts as its blueprint. Structure turns from truth's prerequisite into one of truth's consumption scenarios.
 
 ## Boundaries
 
@@ -60,7 +60,7 @@ A concept's meaning can shift gradually while its name stays still, and a record
 
 **Different levels approach concept identity at different costs.**
 
-Organizational units are few, long-lived, and attached to from many places, so explicit naming is worth it; record entries are many and their wording changes often, so naming each one may cost more than it returns. How to approach an entry's concept identity by derivation, such as semantic-equivalence judgment, belongs to later design. This article only fixes the direction: the closer the attachment is to the concept, the longer the accumulation lives.
+Organizational units are few, long-lived, and attached to from many places, so explicit naming is worth it; entries are many and their wording changes often, so naming each one may cost more than it returns. How to approach an entry's concept identity by derivation, such as semantic-equivalence judgment, belongs to later design. This article only fixes the direction: the closer the attachment is to the concept, the longer the accumulation lives.
 
 **Renaming is concept change.**
 
@@ -78,7 +78,7 @@ Tracking is heuristic: within similarity thresholds, single-repository in scope,
 
 **Why not meaningless identifiers? Surrogate keys were invented for exactly this.**
 
-Surrogate keys serve machine-to-machine references, at the price that nobody recognizes the key itself. The identity of truth is consumed by people and AI alike: references must be readable, adjudications must be speakable; on top of meaningless keys, colloquial names inevitably grow, and the semantic space splits into a layer of keys and a layer of what things are called. Naming judgments are already a kind of project truth; carrying identity with working-language names makes identity coincide with the semantic space.
+Surrogate keys serve machine-to-machine references, at the price that nobody recognizes the key itself. The identity of the truth record is consumed by people and AI alike: references must be readable, adjudications must be speakable; on top of meaningless keys, colloquial names inevitably grow, and the semantic space splits into a layer of keys and a layer of what things are called. Naming judgments are already a kind of project truth; carrying identity with working-language names makes identity coincide with the semantic space.
 
 **Most content stays put for years; is the naming cost worth paying for rare migrations?**
 
@@ -86,6 +86,6 @@ The frequency premise has changed; the background section gives the observable p
 
 ## Conclusion
 
-The identity of truth should be bound to concepts. The criterion for a good identity is expiry in step with what the project cares about: concept identity expires when the concept changes, while coordinate identity misaligns with caring in both directions. Concept identity cannot be derived from coordinates and must be pinned down explicitly as a naming judgment. Coordinates are demoted to claims and their movement is absorbed by revision; a claim pointing at coordinates that no longer exist is decided by machine, and content changing hands goes to checks and adjudication.
+The identity of the truth record should be bound to concepts. The criterion for a good identity is expiry in step with what the project cares about: concept identity expires when the concept changes, while coordinate identity misaligns with caring in both directions. Concept identity cannot be derived from coordinates and must be pinned down explicitly as a naming judgment. Coordinates are demoted to claims and their movement is absorbed by revision; a claim pointing at coordinates that no longer exist is decided by machine, and content changing hands goes to checks and adjudication.
 
 With identity bound to concepts, dependencies, references, adjudications, and caches gain a lifespan of the same order as the judgments themselves; truth can exist before structure, and survive structure's convergence.

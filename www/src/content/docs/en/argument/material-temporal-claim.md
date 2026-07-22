@@ -6,7 +6,7 @@ dependsOn:
   - argument/projection-view-compiled-on-demand
   - argument/project-truth-freshness-governance
   - argument/history-still-in-effect
-sourceHash: 69ad646da79ba23b51cebd0bb470f7b03b0cc9acaeb07b59c72d07e820d040ec
+sourceHash: a9411321bfd3bd1b8f4ad4781f8a12d28737697d7df95d7bcbe8f48c47f4c542
 ---
 
 A material's temporal claim must be explicit. Beyond stating its content, a material also makes a claim about its own window of validity: it may claim to be valid right now, to be true only as of the moment it was recorded, or to be regenerable from its sources at any time. The match between claim and maintenance forms a material's three stances: current claim, point-in-time snapshot, and regenerable. When claim and maintenance are mismatched, the material begins to decay — its content stops at the moment of writing while its voice keeps asserting the present. A temporal claim cannot be read out of the content; it needs to be expressed explicitly as a property of the material itself.
@@ -65,7 +65,7 @@ Maintenance-free means the content is not updated as iteration proceeds; where s
 
 **Temporal stance is orthogonal to truth membership.**
 
-Whether a piece of content belongs to project truth is decided by the two conditions of the definition article; temporal stance answers a different question: what this material claims about time and what maintenance it needs. That snapshots and regenerable materials do not enter truth in no way prevents them from being well kept and well consumed.
+Whether a piece of content belongs to project truth is decided by the two conditions of the definition article; temporal stance answers a different question: what this material claims about time and what maintenance it needs. That snapshots and regenerable materials do not enter the truth record in no way prevents them from being well kept and well consumed.
 
 ## Objections
 

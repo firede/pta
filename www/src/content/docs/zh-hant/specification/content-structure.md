@@ -7,7 +7,7 @@ dependsOn:
   - argument/project-truth-freshness-governance
   - argument/derivable-content-in-tool-layer
   - argument/history-still-in-effect
-sourceHash: ba1b2c822686a049eeb2da6d3273bfe426f2ed799dad0fb9dfa38c35afdea39c
+sourceHash: 64e3080c941748e5858f576998234faebf846e6f52bd5c33e053734985d59d75
 ---
 
 內容結構定義領域聲明檔案內部如何組織。檔案的存在、位置與 frontmatter 欄位由領域聲明規範定義，本規範定義正文。
@@ -22,7 +22,7 @@ sourceHash: ba1b2c822686a049eeb2da6d3273bfe426f2ed799dad0fb9dfa38c35afdea39c
 
 `TRUTH.md` 正文是一個扁平清單，由判斷條目構成。判斷條目是一個清單項目，以自然語言陳述一個專案目前實際遵循的判斷——規則、約束或取捨。正文從第一個條目開始，沒有引導區。
 
-一個條目 **應當** 只承載一個可獨立裁決的判斷：人裁決一個條目是否仍然成立時，答案應當只有一個。判斷的原因仍影響後續裁決時，**應當** 隨判斷寫在同一條目，讓裁決時原因在場。
+一個條目 **應當** 只承載一個可獨立裁決的判斷：人裁決它是否仍然成立時，答案應當只有一個。判斷的原因仍影響後續裁決時，**應當** 隨判斷寫在同一條目，讓裁決時原因在場。
 
 ```markdown
 - 乳牙與恆牙在同一牙位並存時，恆牙覆蓋乳牙顯示。原因：混合牙列期的家長更關注恆牙的萌出進度。

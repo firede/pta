@@ -7,7 +7,7 @@ dependsOn:
   - argument/project-truth-freshness-governance
   - argument/derivable-content-in-tool-layer
   - argument/history-still-in-effect
-sourceHash: ba1b2c822686a049eeb2da6d3273bfe426f2ed799dad0fb9dfa38c35afdea39c
+sourceHash: 64e3080c941748e5858f576998234faebf846e6f52bd5c33e053734985d59d75
 ---
 
 Content structure defines how domain declaration files are organized internally. The existence, location, and frontmatter fields of the files are defined by the domain declaration specification; this specification defines the body.
@@ -22,7 +22,7 @@ This specification expresses requirement levels with the following words: **must
 
 The `TRUTH.md` body is a flat list consisting of judgment entries. A judgment entry is a list item stating, in natural language, one judgment the project currently follows — a rule, a constraint, or a tradeoff. The body begins with the first entry, with no preamble.
 
-An entry **should** carry only one independently adjudicable judgment: when a person adjudicates whether an entry still holds, there should be only one answer. When the reason behind a judgment still affects later adjudication, it **should** be written in the same entry as the judgment, so the reason is present at adjudication time.
+An entry **should** carry only one independently adjudicable judgment: when a person adjudicates whether it still holds, there should be only one answer. When the reason behind a judgment still affects later adjudication, it **should** be written in the same entry as the judgment, so the reason is present at adjudication time.
 
 ```markdown
 - When a primary tooth and its permanent successor occupy the same position, the permanent tooth is displayed over the primary one. Reason: during the mixed dentition stage, parents care most about the eruption progress of permanent teeth.
