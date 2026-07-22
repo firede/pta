@@ -5,14 +5,14 @@ dependsOn:
   - argument/what-is-project-truth
   - argument/truth-record-versioned-with-implementation
   - argument/project-truth-by-domain
-sourceHash: 7dd579dfb0b21e79c0e2cccabf6bc16d693e21182772790a60bb7348b2ee0d3f
+sourceHash: c50f618ea6e0efec3157c9487aab31cab05876559644bdb0d8f4cb6044e4a636
 ---
 
 Project truth needs freshness governance. Freshness is the degree of consistency between the project truth recorded in the repository and what the project actually follows. Records do not track reality on their own; governance assigns them fixed checkpoints: change points handle internal drift triggered by changes inside the repository, and inspection points handle external drift that produces no version events.
 
 The division of labor in governance follows verifiability: detecting drift and drafting revisions goes to machines as much as possible, while adjudicating whether a judgment still holds stays with people.
 
-> This article builds on [The Truth Record Must Be Versioned with the Implementation](/en/argument/truth-record-versioned-with-implementation/) and [Project Truth Should Be Organized by Domain](/en/argument/project-truth-by-domain/), and discusses how project truth stays currently valid once it lives in the repository and is organized by domain.
+> This article builds on the definition of current validity in [What Is Project Truth](/en/argument/what-is-project-truth/), the version boundary of [The Truth Record Must Be Versioned with the Implementation](/en/argument/truth-record-versioned-with-implementation/), and the domain organization of [Project Truth Should Be Organized by Domain](/en/argument/project-truth-by-domain/), and discusses how project truth stays currently valid once it lives in the repository and is organized by domain.
 
 ## Background
 

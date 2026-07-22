@@ -11,7 +11,7 @@ dependsOn:
 
 留在工具层意味着按缓存语义管理：以来源的内容哈希为键，来源不变则复用，来源变化即失效重算；存储可以随时清空，代价只是重付一次推导成本。
 
-> 本文承接 [什么是项目真相](/argument/what-is-project-truth/) 对项目真相与消费结果的区分，以及 [投影视图应按需编译](/argument/projection-view-compiled-on-demand/) 对编译产物的界定，讨论版本库记录之外内容的归属与管理语义。
+> 本文承接 [什么是项目真相](/argument/what-is-project-truth/) 对项目真相与消费结果的区分、[投影视图应按需编译](/argument/projection-view-compiled-on-demand/) 对编译产物的界定，与 [项目真相需要新鲜度治理](/argument/project-truth-freshness-governance/) 的节点与裁决分工，讨论版本库记录之外内容的归属与管理语义。
 
 ## 背景
 

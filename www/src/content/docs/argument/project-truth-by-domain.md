@@ -10,7 +10,7 @@ dependsOn:
 
 领域组织的基本做法，是让真相记录贴近相关实现，并沿用实现已经形成的目录边界。目录能够同时表达位置和范围。上级目录承载更大范围的记录，下级目录承载更具体范围的记录。当真相记录无法放在对应领域目录中，或目录无法清楚表达领域边界时，可以用外置领域声明补足。
 
-> 本文承接 [真相记录必须随实现版本化](/argument/truth-record-versioned-with-implementation/) 的判断，只讨论真相记录进入版本库后应如何组织。
+> 本文承接 [什么是项目真相](/argument/what-is-project-truth/) 对真相记录的界定，与 [真相记录必须随实现版本化](/argument/truth-record-versioned-with-implementation/) 确立的入库前提，只讨论真相记录进入版本库后应如何组织。
 
 ## 背景
 

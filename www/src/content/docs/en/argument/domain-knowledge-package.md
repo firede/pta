@@ -5,15 +5,14 @@ dependsOn:
   - argument/what-is-project-truth
   - argument/project-truth-by-domain
   - argument/truth-record-work-language
-  - argument/projection-view-compiled-on-demand
-sourceHash: 501f52fc5873de7eb9002a98425ea0f20927aa7c2a272f3af10be8dfc10a4cae
+sourceHash: cde170aedc6622d67b4117265b2756f12eb5e749ca5fdb296311f4d4229935eb
 ---
 
 Domain knowledge should be shared across projects with verifiers at the core. A domain knowledge package is a sharing unit of domain knowledge extracted from project truth after stripping project coupling and private information: the domain's term relationships, rules, edge cases, and the reasons behind tradeoffs — together with content in structural form such as normative data and operation contracts — form the normative content, and verifiers express the machine-verifiable part of it as executable verification; a reference implementation may optionally be attached as informative content.
 
 A domain knowledge package is not project truth for any project. Only after the target project re-implements the packaged knowledge in line with its own structure, technology stack, and working language, passes the package's verifiers, and actually adopts the result, does that content enter the target project's truth.
 
-> This article builds on the definition of domains in [Project Truth Should Be Organized by Domain](/en/argument/project-truth-by-domain/) and the judgment in [Natural-Language Expression Should Match the Working Language](/en/argument/truth-record-work-language/) that cross-project reuse requires re-expression, and discusses in what form domain knowledge should be shared across projects.
+> This article builds on the definition of project truth membership in [What Is Project Truth](/en/argument/what-is-project-truth/), the definition of domains in [Project Truth Should Be Organized by Domain](/en/argument/project-truth-by-domain/), and the judgment in [Natural-Language Expression Should Match the Working Language](/en/argument/truth-record-work-language/) that cross-project reuse requires re-expression, and discusses in what form domain knowledge should be shared across projects.
 
 ## Background
 

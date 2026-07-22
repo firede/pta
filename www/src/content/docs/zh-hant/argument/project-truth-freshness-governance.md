@@ -5,14 +5,14 @@ dependsOn:
   - argument/what-is-project-truth
   - argument/truth-record-versioned-with-implementation
   - argument/project-truth-by-domain
-sourceHash: 7dd579dfb0b21e79c0e2cccabf6bc16d693e21182772790a60bb7348b2ee0d3f
+sourceHash: c50f618ea6e0efec3157c9487aab31cab05876559644bdb0d8f4cb6044e4a636
 ---
 
 專案真相需要新鮮度治理。新鮮度，指進入版本庫的專案真相記錄與專案實際遵循內容之間的一致程度。記錄不會自動跟隨實際變化，治理為它安排固定的核查節點：變更節點處理由版本庫內變更引發的內部漂移，巡檢節點處理不產生版本事件的外部漂移。
 
 治理中的分工按可驗證性劃分：偏離的發現和修訂的起草儘可能交給機器，某條判斷是否仍然成立的裁決留給人。
 
-> 本文承接 [真相記錄必須隨實作版本化](/zh-hant/argument/truth-record-versioned-with-implementation/) 與 [專案真相應按領域組織](/zh-hant/argument/project-truth-by-domain/)，討論專案真相進入版本庫並按領域組織後，如何保持目前有效。
+> 本文承接 [什麼是專案真相](/zh-hant/argument/what-is-project-truth/) 對當前有效的界定、[真相記錄必須隨實作版本化](/zh-hant/argument/truth-record-versioned-with-implementation/) 的版本邊界與 [專案真相應按領域組織](/zh-hant/argument/project-truth-by-domain/) 的領域組織，討論專案真相進入版本庫並按領域組織後，如何保持目前有效。
 
 ## 背景
 

@@ -3,12 +3,14 @@ title: 自然語言表達應與工作語言一致
 description: 真相記錄中的自然語言表達應與工作語言一致，以提升可理解性，並減少轉譯損耗、術語漂移和檢索斷裂。
 dependsOn:
   - argument/what-is-project-truth
-sourceHash: 51fe65869f19b5b6e8cd2c92069982fc413e5a73b90c97efdd76978a66b08b5b
+sourceHash: bf518997d684a2d8914be944dc46260784ee11d77555627809e92f75390c6862
 ---
 
 真相記錄中的自然語言表達，應與工作語言一致。
 
 工作語言，是專案主要維護者理解、討論、記錄和維護專案時持續使用的自然語言。它由專案中穩定複用的表達習慣形成，是專案說明的預設語言。
+
+> 本文承接 [什麼是專案真相](/zh-hant/argument/what-is-project-truth/) 對真相記錄的界定，討論記錄中自然語言表達的語言選擇。
 
 ## 背景
 

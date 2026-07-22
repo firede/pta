@@ -4,14 +4,14 @@ description: After truth records enter the repository, they should be organized 
 dependsOn:
   - argument/what-is-project-truth
   - argument/truth-record-versioned-with-implementation
-sourceHash: 3295f022707c56b8e39077f8803c705654e9aeeeb40598d21b537b26baf31793
+sourceHash: 22a382e376e1df84b489149419581b6d34bd7d182ba347386108f05c6a1ba75a
 ---
 
 Project truth should be organized by domain. A domain is a stable scope for understanding and maintaining a project. The implementation and truth records within a domain need to be understood, changed, verified, and reviewed together in later iterations.
 
 The basic approach to domain organization is to keep truth records close to the related implementation and reuse the directory boundaries already formed by the implementation. Directories can express both location and scope. Higher-level directories carry broader records, while lower-level directories carry more specific records. When a truth record cannot be placed in the corresponding domain directory, or when directories cannot clearly express domain boundaries, an external domain declaration can fill the gap.
 
-> This article builds on the judgment in [The Truth Record Must Be Versioned with the Implementation](/en/argument/truth-record-versioned-with-implementation/), and discusses only how truth records should be organized after they enter the repository.
+> This article builds on the definition of the truth record in [What Is Project Truth](/en/argument/what-is-project-truth/) and the in-repository premise established by [The Truth Record Must Be Versioned with the Implementation](/en/argument/truth-record-versioned-with-implementation/), and discusses only how truth records should be organized after they enter the repository.
 
 ## Background
 

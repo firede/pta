@@ -5,14 +5,14 @@ dependsOn:
   - argument/what-is-project-truth
   - argument/projection-view-compiled-on-demand
   - argument/project-truth-freshness-governance
-sourceHash: 7496d6d86bfdb3caf4c2797cbfa5496dcdb7b047940812b951e7b113217927c9
+sourceHash: d399c8fbacbd38e682b801587fd01af774aaef89f4ee0e73137b343eb2bc6441
 ---
 
 可推導內容應留在工具層。可推導內容，是能夠由機器從真相記錄與實作重新得出的內容，如摘要、顯示名、類型判斷和反向依賴關係。工具層，是版本庫之外、由消費和治理工具管理的儲存空間。
 
 留在工具層意味著按快取語義管理：以來源的內容雜湊為鍵，來源不變則複用，來源變化即失效重算；儲存可以隨時清空，代價只是重付一次推導成本。
 
-> 本文承接 [什麼是專案真相](/zh-hant/argument/what-is-project-truth/) 對專案真相與消費結果的區分，以及 [投影視圖應按需編譯](/zh-hant/argument/projection-view-compiled-on-demand/) 對編譯產物的界定，討論版本庫記錄之外內容的歸屬與管理語義。
+> 本文承接 [什麼是專案真相](/zh-hant/argument/what-is-project-truth/) 對專案真相與消費結果的區分、[投影視圖應按需編譯](/zh-hant/argument/projection-view-compiled-on-demand/) 對編譯產物的界定，與 [專案真相需要新鮮度治理](/zh-hant/argument/project-truth-freshness-governance/) 的節點與裁決分工，討論版本庫記錄之外內容的歸屬與管理語義。
 
 ## 背景
 

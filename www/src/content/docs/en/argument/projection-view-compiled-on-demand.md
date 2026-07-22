@@ -4,15 +4,14 @@ description: A projection view is a compiled artifact of truth and implementatio
 dependsOn:
   - argument/what-is-project-truth
   - argument/truth-record-versioned-with-implementation
-  - argument/project-truth-by-domain
-sourceHash: 94e8693c0f364fdaa2f592dbe70789ae03c349fd932feda05b2257fd00e28a54
+sourceHash: f879ec27aaf22363e9c195ab99b29e147e45dec6a609dbf45ba3d257df89804c
 ---
 
 Projection views should be compiled on demand. A projection view targets a specific usage context and extracts, reorganizes, and presents content from project truth and the implementation. Its relationship to its sources resembles the relationship between build artifacts and source code: it is generated from the current sources when needed, can be cached and distributed, and can be discarded and rebuilt at any time.
 
 Projection views are read-only. When content in a projection needs correction, the correction should land on the sources — a judgment's deviation lands on the truth record, an implementation defect lands on the implementation — and the projection should then be regenerated.
 
-> This article builds on the definition of projection views as consumption results in [What Is Project Truth](/en/argument/what-is-project-truth/), and discusses how projection views should be produced and maintained.
+> This article builds on the definition of projection views as consumption results in [What Is Project Truth](/en/argument/what-is-project-truth/) and the version boundary provided by [The Truth Record Must Be Versioned with the Implementation](/en/argument/truth-record-versioned-with-implementation/), and discusses how projection views should be produced and maintained.
 
 ## Background
 

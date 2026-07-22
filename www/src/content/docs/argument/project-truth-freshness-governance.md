@@ -11,7 +11,7 @@ dependsOn:
 
 治理中的分工按可验证性划分：偏离的发现和修订的起草尽可能交给机器，某条判断是否仍然成立的裁决留给人。
 
-> 本文承接 [真相记录必须随实现版本化](/argument/truth-record-versioned-with-implementation/) 与 [项目真相应按领域组织](/argument/project-truth-by-domain/)，讨论项目真相进入版本库并按领域组织后，如何保持当前有效。
+> 本文承接 [什么是项目真相](/argument/what-is-project-truth/) 对当前有效的界定、[真相记录必须随实现版本化](/argument/truth-record-versioned-with-implementation/) 的版本边界与 [项目真相应按领域组织](/argument/project-truth-by-domain/) 的领域组织，讨论项目真相进入版本库并按领域组织后，如何保持当前有效。
 
 ## 背景
 

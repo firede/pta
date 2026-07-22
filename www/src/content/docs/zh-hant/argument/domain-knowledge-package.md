@@ -5,15 +5,14 @@ dependsOn:
   - argument/what-is-project-truth
   - argument/project-truth-by-domain
   - argument/truth-record-work-language
-  - argument/projection-view-compiled-on-demand
-sourceHash: 501f52fc5873de7eb9002a98425ea0f20927aa7c2a272f3af10be8dfc10a4cae
+sourceHash: cde170aedc6622d67b4117265b2756f12eb5e749ca5fdb296311f4d4229935eb
 ---
 
 領域知識應以驗證器為核心跨專案分享。領域知識包，是從專案真相中剝離專案耦合與隱私後提取的領域知識分享單元：領域的術語關係、規則、邊界情況和取捨原因，連同規範資料與操作契約這類結構形態的內容，構成規範性內容，驗證器把其中可機驗的部分表達為可執行的驗證；參考實作作為範例性內容可選附帶。
 
 領域知識包對任何專案都不是專案真相。目標專案結合自身結構、技術堆疊和工作語言重新實作包中知識，通過包附帶的驗證器驗證，並實際採用後，這些內容才進入目標專案真相。
 
-> 本文承接 [專案真相應按領域組織](/zh-hant/argument/project-truth-by-domain/) 對領域的界定，以及 [自然語言表達應與工作語言一致](/zh-hant/argument/truth-record-work-language/) 中跨專案複用需重新表達的判斷，討論領域知識以什麼形態跨專案分享。
+> 本文承接 [什麼是專案真相](/zh-hant/argument/what-is-project-truth/) 對專案真相成員資格的界定、[專案真相應按領域組織](/zh-hant/argument/project-truth-by-domain/) 對領域的界定，以及 [自然語言表達應與工作語言一致](/zh-hant/argument/truth-record-work-language/) 中跨專案複用需重新表達的判斷，討論領域知識以什麼形態跨專案分享。
 
 ## 背景
 

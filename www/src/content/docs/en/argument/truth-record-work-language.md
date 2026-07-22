@@ -3,12 +3,14 @@ title: Natural Language Expression Should Match the Working Language
 description: Natural language expression in the truth record should match the working language, improving understandability and reducing translation loss, term drift, and retrieval gaps.
 dependsOn:
   - argument/what-is-project-truth
-sourceHash: 51fe65869f19b5b6e8cd2c92069982fc413e5a73b90c97efdd76978a66b08b5b
+sourceHash: bf518997d684a2d8914be944dc46260784ee11d77555627809e92f75390c6862
 ---
 
 Natural language expression in the truth record should match the working language.
 
 The working language is the natural language that the project's primary maintainers continuously use to understand, discuss, record, and maintain the project. It is formed by expression patterns that are reused consistently in the project, and is the default language for project explanations.
+
+> This article builds on the definition of the truth record in [What Is Project Truth](/en/argument/what-is-project-truth/), and discusses the choice of language for natural language expression in the record.
 
 ## Background
 

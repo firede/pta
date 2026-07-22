@@ -5,14 +5,13 @@ dependsOn:
   - argument/what-is-project-truth
   - argument/project-truth-by-domain
   - argument/truth-record-work-language
-  - argument/projection-view-compiled-on-demand
 ---
 
 领域知识应以验证器为核心跨项目分享。领域知识包，是从项目真相中剥离项目耦合与隐私后提取的领域知识分享单元：领域的术语关系、规则、边界情况和取舍原因，连同规范数据与操作契约这类结构形态的内容，构成规范性内容，验证器把其中可机验的部分表达为可执行的验证；参考实现作为示例性内容可选附带。
 
 领域知识包对任何项目都不是项目真相。目标项目结合自身结构、技术栈和工作语言重新实现包中知识，通过包附带的验证器验证，并实际采用后，这些内容才进入目标项目真相。
 
-> 本文承接 [项目真相应按领域组织](/argument/project-truth-by-domain/) 对领域的界定，以及 [自然语言表达应与工作语言一致](/argument/truth-record-work-language/) 中跨项目复用需重新表达的判断，讨论领域知识以什么形态跨项目分享。
+> 本文承接 [什么是项目真相](/argument/what-is-project-truth/) 对项目真相成员资格的界定、[项目真相应按领域组织](/argument/project-truth-by-domain/) 对领域的界定，以及 [自然语言表达应与工作语言一致](/argument/truth-record-work-language/) 中跨项目复用需重新表达的判断，讨论领域知识以什么形态跨项目分享。
 
 ## 背景
 

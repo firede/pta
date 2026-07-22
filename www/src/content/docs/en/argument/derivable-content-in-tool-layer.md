@@ -5,14 +5,14 @@ dependsOn:
   - argument/what-is-project-truth
   - argument/projection-view-compiled-on-demand
   - argument/project-truth-freshness-governance
-sourceHash: 7496d6d86bfdb3caf4c2797cbfa5496dcdb7b047940812b951e7b113217927c9
+sourceHash: d399c8fbacbd38e682b801587fd01af774aaef89f4ee0e73137b343eb2bc6441
 ---
 
 Derivable content should stay in the tool layer. Derivable content is content that machines can re-derive from the truth record and the implementation, such as summaries, display names, type judgments, and reverse dependency relationships. The tool layer is storage outside the repository, managed by the tools that consume and govern project truth.
 
 Staying in the tool layer means being managed with cache semantics: keyed by the content hash of the source, reused while the source is unchanged, invalidated and recomputed when the source changes; the storage can be cleared at any time, at the cost of paying for one round of re-derivation.
 
-> This article builds on the distinction between project truth and derived results in [What Is Project Truth](/en/argument/what-is-project-truth/), and on the framing of compiled artifacts in [Projection Views Should Be Compiled on Demand](/en/argument/projection-view-compiled-on-demand/), to discuss where content outside the repository's records belongs and under what management semantics.
+> This article builds on the distinction between project truth and derived results in [What Is Project Truth](/en/argument/what-is-project-truth/), the framing of compiled artifacts in [Projection Views Should Be Compiled on Demand](/en/argument/projection-view-compiled-on-demand/), and the checkpoint and adjudication division of [Project Truth Needs Freshness Governance](/en/argument/project-truth-freshness-governance/), to discuss where content outside the repository's records belongs and under what management semantics.
 
 ## Background
 
