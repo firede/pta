@@ -3,6 +3,7 @@ export const argumentIds = [
   'argument/what-is-project-truth',
   'argument/truth-record-versioned-with-implementation',
   'argument/identity-bound-to-concept',
+  'argument/judgment-carried-by-exemplar',
   'argument/project-truth-by-domain',
   'argument/truth-record-work-language',
   'argument/projection-view-compiled-on-demand',
