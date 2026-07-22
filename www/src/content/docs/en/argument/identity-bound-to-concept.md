@@ -1,12 +1,12 @@
 ---
-title: The Identity of the Truth Record Should Be Bound to Concepts
+title: Truth Record Identity Should Be Bound to Concepts
 description: Identity answers whether content is still the same one - dependencies, references, adjudications, and caches attach to it, and accumulation survives only as long as identity does. Coordinates move with the implementation's convenience while concepts change with what the project cares about, so a good identity expires in step with that caring; identity should therefore be bound to explicitly named concepts, with coordinates demoted to revisable claims.
 dependsOn:
   - argument/what-is-project-truth
 sourceHash: 3dc71e4032375e91fa902adc47ae2575f68d604580b70baffc41ca9ebfe72ad1
 ---
 
-The identity of the truth record should be bound to concepts. Identity answers whether a piece of content is "still the same one": dependencies and references between records, people's adjudication confirmations, and tools' derived results all attach to an identity. While the identity survives, the accumulation survives; when the identity breaks, the accumulation is wiped. A concept is a stable unit of understanding the project has explicitly named. Coordinates are a content's current location and wording. A claim is a statement of which coordinates a concept currently corresponds to. When identity is bound to concepts, coordinate movement is absorbed by claims: when coordinates change, the claim is revised, and the identity, together with everything attached to it, is untouched.
+Truth record identity should be bound to concepts. Identity answers whether a piece of content is "still the same one": dependencies and references between records, people's adjudication confirmations, and tools' derived results all attach to an identity. While the identity survives, the accumulation survives; when the identity breaks, the accumulation is wiped. A concept is a stable unit of understanding the project has explicitly named. Coordinates are a content's current location and wording. A claim is a statement of which coordinates a concept currently corresponds to. When identity is bound to concepts, coordinate movement is absorbed by claims: when coordinates change, the claim is revised, and the identity, together with everything attached to it, is untouched.
 
 > This article builds on the definition of naming judgments and consumption results in [What Is Project Truth](/en/argument/what-is-project-truth/), and discusses what should carry the identity that accumulation attaches to.
 
@@ -86,6 +86,6 @@ The frequency premise has changed; the background section gives the observable p
 
 ## Conclusion
 
-The identity of the truth record should be bound to concepts. The criterion for a good identity is expiry in step with what the project cares about: concept identity expires when the concept changes, while coordinate identity misaligns with caring in both directions. Concept identity cannot be derived from coordinates and must be pinned down explicitly as a naming judgment. Coordinates are demoted to claims and their movement is absorbed by revision; a claim pointing at coordinates that no longer exist is decided by machine, and content changing hands goes to checks and adjudication.
+Truth record identity should be bound to concepts. The criterion for a good identity is expiry in step with what the project cares about: concept identity expires when the concept changes, while coordinate identity misaligns with caring in both directions. Concept identity cannot be derived from coordinates and must be pinned down explicitly as a naming judgment. Coordinates are demoted to claims and their movement is absorbed by revision; a claim pointing at coordinates that no longer exist is decided by machine, and content changing hands goes to checks and adjudication.
 
 With identity bound to concepts, dependencies, references, adjudications, and caches gain a lifespan of the same order as the judgments themselves; truth can exist before structure, and survive structure's convergence.
