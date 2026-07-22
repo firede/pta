@@ -3,7 +3,7 @@ title: The Identity of the Truth Record Should Be Bound to Concepts
 description: Identity answers whether content is still the same one - dependencies, references, adjudications, and caches attach to it, and accumulation survives only as long as identity does. Coordinates move with the implementation's convenience while concepts change with what the project cares about, so a good identity expires in step with that caring; identity should therefore be bound to explicitly named concepts, with coordinates demoted to revisable claims.
 dependsOn:
   - argument/what-is-project-truth
-sourceHash: ea9393426ac75c010c7b791a7c3304bb6930e87bb4680781f5eb92159b7c7051
+sourceHash: 3dc71e4032375e91fa902adc47ae2575f68d604580b70baffc41ca9ebfe72ad1
 ---
 
 The identity of the truth record should be bound to concepts. Identity answers whether a piece of content is "still the same one": dependencies and references between records, people's adjudication confirmations, and tools' derived results all attach to an identity. While the identity survives, the accumulation survives; when the identity breaks, the accumulation is wiped. A concept is a stable unit of understanding the project has explicitly named. Coordinates are a content's current location and wording. A claim is a statement of which coordinates a concept currently corresponds to. When identity is bound to concepts, coordinate movement is absorbed by claims: when coordinates change, the claim is revised, and the identity, together with everything attached to it, is untouched.
@@ -30,7 +30,7 @@ Both failures of path identity are observable: when a directory is renamed, the 
 
 **The lifespan gap between concepts and coordinates is structural.**
 
-Coordinates change with the implementation's convenience; concepts change with what the project cares about. Concepts like "account" and "session" survive one restructuring after another, while the files that carry them are renamed, split, and merged many times over. Cheaper restructuring accelerates only the coordinate side. Bind identity to concepts, and the accumulation's lifespan follows the judgment itself; bind it to coordinates, and the lifespan follows the intervals of implementation convenience. Making a judgment explicit is a one-time expense exchanged for a reusable asset, and lifespan decides how deeply it amortizes; the expense of naming is paid once, while the lifespan gap compounds with every consumption, so the [economic premise](/en/argument/judgment-bandwidth-scarcity/) demands choosing the longer one.
+Coordinates change with the implementation's convenience; concepts change with what the project cares about. Concepts like "account" and "session" survive one restructuring after another, while the files that carry them are renamed, split, and merged many times over. Cheaper restructuring accelerates only the coordinate side. Bind identity to concepts, and the accumulation's lifespan follows the judgment itself; bind it to coordinates, and the lifespan follows the intervals of implementation convenience. Making a judgment explicit is a one-time expense exchanged for a reusable asset, and lifespan decides how deeply it amortizes; the expense of naming is paid once, while the lifespan gap compounds with every consumption, so the economic premise demands choosing the longer one.
 
 **Concept identity cannot be derived; it must be explicitly named.**
 

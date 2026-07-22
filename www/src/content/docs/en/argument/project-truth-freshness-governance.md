@@ -5,7 +5,7 @@ dependsOn:
   - argument/what-is-project-truth
   - argument/truth-record-versioned-with-implementation
   - argument/project-truth-by-domain
-sourceHash: 310639f718ca1a6a1735c74a87243e943e4e17632d0f6f25cfe582e1f3484b9c
+sourceHash: 7dd579dfb0b21e79c0e2cccabf6bc16d693e21182772790a60bb7348b2ee0d3f
 ---
 
 Project truth needs freshness governance. Freshness is the degree of consistency between the project truth recorded in the repository and what the project actually follows. Records do not track reality on their own; governance assigns them fixed checkpoints: change points handle internal drift triggered by changes inside the repository, and inspection points handle external drift that produces no version events.
@@ -90,7 +90,7 @@ Fully automated governance also has a structural problem: it substitutes the mod
 
 **Projection views are already compiled on demand, so consumers always get the latest content — why is governance still needed?**
 
-[On-demand compilation](/en/argument/projection-view-compiled-on-demand/) guarantees that projections match the recorded project truth; governance guarantees that the record matches what the project actually follows. The two handle correspondence at different layers.
+On-demand compilation guarantees that projections match the recorded project truth; governance guarantees that the record matches what the project actually follows. The two handle correspondence at different layers.
 
 Without governance, on-demand compilation merely projects stale records faithfully into every usage context — spreading them faster, farther, and more credibly. The value of compilation presupposes truthful records, and that presupposition is maintained by governance.
 
